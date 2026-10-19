@@ -1,0 +1,43 @@
+name: User story
+description: A unit of value for the family, traceable to a requirement
+title: "[R?.?] "
+labels: ['type:story']
+body:
+  - type: input
+    id: requirement
+    attributes:
+      label: Requirement ID
+      description: The ID from docs/REQUIREMENTS.md, e.g. R1.3
+      placeholder: R1.1
+    validations:
+      required: true
+  - type: textarea
+    id: story
+    attributes:
+      label: Story
+      value: |
+        **As** a
+        **I want**
+        **so that**
+    validations:
+      required: true
+  - type: textarea
+    id: criteria
+    attributes:
+      label: Acceptance criteria
+      description: Given/When/Then. Each one needs a test before this can be closed.
+      value: |
+        - [ ] **Given** … **when** … **then** …
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options: [MUST, SHOULD, COULD, WONT]
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Design notes, risks, open questions

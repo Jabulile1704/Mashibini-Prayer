@@ -84,3 +84,17 @@ A story is done when all of these are true:
 [Semantic Versioning](https://semver.org). Until v1.0.0 the app is `0.x`, and
 `0.x` minor bumps may still change behaviour. The version lives in
 `pubspec.yaml` and is bumped on the release branch, never on a feature branch.
+
+## A note on issue closing
+
+GitHub only auto-closes a linked issue when the pull request merges into the
+**default** branch. Every PR here merges into `develop`, so the keyword in the
+PR body does nothing on its own.
+
+`.github/workflows/close-linked-issues.yml` fills the gap: on a merged PR into
+`develop` it reads `Closes #n` / `Fixes #n` / `Resolves #n` out of the body and
+closes those issues with a comment pointing back at the PR. The board's own
+"item closed → Done" automation then moves the card.
+
+So the rule stands — **close issues by merging, never by hand** — it is just
+this repository that has to implement it rather than GitHub.

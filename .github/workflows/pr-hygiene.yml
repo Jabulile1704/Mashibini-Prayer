@@ -1,0 +1,56 @@
+name: PR hygiene
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  conventions:
+    name: Title, branch and body conventions
+    runs-on: ubuntu-latest
+    steps:
+      - name: PR title is a Conventional Commit
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          echo "Title: $TITLE"
+          if ! printf '%s' "$TITLE" | grep -Eq '^(feat|fix|docs|test|refactor|perf|build|ci|chore)(\([a-z0-9._-]+\))?!?: .{1,72}$'; then
+            echo "::error::PR title must look like 'feat(rota): add skip handling' — see docs/WORKFLOW.md"
+            exit 1
+          fi
+
+      - name: Branch name follows the model
+        env:
+          BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          echo "Branch: $BRANCH"
+          if ! printf '%s' "$BRANCH" | grep -Eq '^(feature|fix|chore|release|hotfix)/[A-Za-z0-9._-]+$'; then
+            echo "::error::Branch must be feature/*, fix/*, chore/*, release/* or hotfix/* — see docs/WORKFLOW.md"
+            exit 1
+          fi
+
+      - name: Body says how it was verified
+        env:
+          BODY: ${{ github.event.pull_request.body }}
+        run: |
+          if ! printf '%s' "$BODY" | grep -qi 'how it was verified'; then
+            echo "::error::PR body must keep the 'How it was verified' section from the template"
+            exit 1
+          fi
+
+  target:
+    name: Base branch is allowed
+    runs-on: ubuntu-latest
+    steps:
+      - name: main only takes release and hotfix branches
+        env:
+          BASE: ${{ github.event.pull_request.base.ref }}
+          HEAD: ${{ github.event.pull_request.head.ref }}
+        run: |
+          if [ "$BASE" = "main" ] && ! printf '%s' "$HEAD" | grep -Eq '^(release|hotfix)/'; then
+            echo "::error::Only release/* and hotfix/* may target main. Target develop instead."
+            exit 1
+          fi

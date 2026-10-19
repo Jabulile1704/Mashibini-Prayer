@@ -1,0 +1,37 @@
+# GitHub closes "Closes #n" issues only for pull requests merged into the
+# default branch. Ours merge into `develop`, so without this the backlog would
+# have to be closed by hand every day — and would quietly drift the first time
+# somebody forgot.
+name: Close linked issues
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [develop]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  close:
+    if: github.event.pull_request.merged == true
+    name: Close issues this PR says it closes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close them
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BODY: ${{ github.event.pull_request.body }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          printf '%s' "$BODY" \
+            | grep -Eio '(close[sd]?|fix(e[sd])?|resolve[sd]?)[[:space:]]+#[0-9]+' \
+            | grep -Eo '[0-9]+' \
+            | sort -u \
+            | while read -r N; do
+                echo "Closing #$N"
+                gh issue close "$N" --repo "$REPO" \
+                  --comment "Closed by #${PR_NUMBER}, squash-merged into \`develop\`." || true
+              done

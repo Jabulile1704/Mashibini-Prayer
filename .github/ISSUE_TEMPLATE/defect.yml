@@ -1,0 +1,44 @@
+name: Defect
+description: Something behaves differently from the acceptance criteria
+title: "[BUG] "
+labels: ['type:defect']
+body:
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected, per the acceptance criteria
+      description: Quote the criterion and its requirement ID.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What actually happens
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Where it was seen
+      placeholder: Pixel 6a, Android 14, debug build, commit abc1234
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - S1 — the rota shows the wrong person
+        - S2 — a feature is unusable, with no workaround
+        - S3 — wrong behaviour with a workaround
+        - S4 — cosmetic
+    validations:
+      required: true

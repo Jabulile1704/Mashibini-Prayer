@@ -1,0 +1,31 @@
+# Stricter than the Flutter default. The rota engine has to be correct, and
+# most of the ways it could quietly go wrong are things the analyser can see.
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - build/**
+    - android/**
+    - ios/**
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  errors:
+    # A TODO without an issue number is a decision nobody wrote down.
+    todo: warning
+
+linter:
+  rules:
+    - always_declare_return_types
+    - avoid_dynamic_calls
+    - avoid_slow_async_io
+    - cancel_subscriptions
+    - close_sinks
+    - prefer_final_in_for_each
+    - prefer_final_locals
+    - prefer_single_quotes
+    - require_trailing_commas
+    - throw_in_finally
+    - unawaited_futures
+    - use_super_parameters

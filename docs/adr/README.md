@@ -1,0 +1,14 @@
+# Architecture Decision Records
+
+One file per decision that will make someone ask "why is it like this?".
+
+Format: context, decision, consequences — including the ones we did not like.
+An ADR is never edited once accepted; it is superseded by a later one that
+names it.
+
+| # | Decision | Status |
+|:--|:--|:--|
+| [001](ADR-001-flutter-and-firebase.md) | Flutter and Firebase | Accepted |
+| [002](ADR-002-derive-turns-from-an-anchor.md) | Derive turns from an anchor date | Accepted |
+| [003](ADR-003-offline-first-read-path.md) | Local store is the read path | Accepted |
+| [004](ADR-004-journals-outside-the-family-tree.md) | Journals keyed by author, outside the family tree | Accepted |

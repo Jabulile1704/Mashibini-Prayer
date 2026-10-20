@@ -51,6 +51,30 @@ defends.
 Three fields were cut during writing for tracing to no requirement:
 `member.email`, `member.avatarUrl`, `family.lastActiveAt`.
 
+## Defect found at close of day
+
+**#19 did not close itself, and the first draft of this log claimed it had.**
+
+The work shipped in #26, but that PR's body read "From #19:" above the
+acceptance criteria rather than `Closes #19`. The workflow added yesterday ran,
+found no keyword and correctly did nothing. The keyword *was* in the squash
+merge message — which the workflow does not read, and which GitHub ignores for
+a non-default branch.
+
+So yesterday's automation worked and today's author did not. Two lessons, both
+cheap today and expensive on day 11:
+
+1. The log is written from the repository, not from memory. This entry claimed
+   a closure that had not happened, and was corrected before merge because the
+   claim was checked.
+2. A convention that depends on remembering is the same failure as the privacy
+   model ADR-004 rejects. Filed as #28: PR hygiene now requires a closing
+   keyword on any PR labelled `type:story` — the exact set that implements a
+   backlog item. Chore and day-log PRs legitimately close nothing and are
+   unaffected.
+
+#19 was closed by hand with that explanation on it.
+
 ## Open questions
 
 No new ones. **Q3** (individual sign-in vs one shared install) was pinned down

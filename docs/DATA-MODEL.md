@@ -211,6 +211,23 @@ Everything else — the rota, the cycle epochs, the skips, the verse — works
 identically either way. So Day 3 through Day 6 are not blocked by Q3, and the
 decision is genuinely needed by Day 7.
 
+## The test cases this model implies
+
+The arithmetic above was executed before this document was merged, not just
+reasoned about. Order A, B, C, D; turnover Sunday; `effectiveFrom` 2026-10-18.
+Day 3 implements `leaderOn` and these become its unit tests:
+
+| Case | Expectation | Why it matters |
+|:--|:--|:--|
+| No skips, six consecutive weeks | A, B, C, D, A, B | The ordinary case |
+| A's first week skipped | B, C, D, A | The cycle moves on; A is not owed a double turn (R1.4) |
+| Two skips in the same week | C, D, A, B | Two people away advances by two, not by one |
+| All seven days of one week | the same leader for each | The turnover is a calendar boundary, not an hour (R1.2) |
+| 26 weeks later, app untouched | `order[26 % 4]` | Six months in a drawer costs one modulo (R1.3) |
+| Every week across ten years | `order[i % 4]` for all 521 | No drift, ever (R1.3) |
+| A date before `effectiveFrom` | no leader | The rota did not exist yet — an error, not a guess |
+| An id in `order` with no member | logged, dropped from the cycle | Denormalisation can drift; it must not crash |
+
 ## Schema versioning
 
 `family.schemaVersion` starts at `1`. A change that cannot be read by an older

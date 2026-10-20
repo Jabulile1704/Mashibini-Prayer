@@ -41,6 +41,26 @@ jobs:
             exit 1
           fi
 
+      - name: A story PR says which issue it closes
+        env:
+          BODY: ${{ github.event.pull_request.body }}
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        run: |
+          echo "Labels: $LABELS"
+          case ",$LABELS," in
+            *,type:story,*|*,type:defect,*) ;;
+            *) echo "Not a story or defect PR — no linked issue required."; exit 0 ;;
+          esac
+          if ! printf '%s' "$BODY" \
+            | grep -Eiq '(close[sd]?|fix(e[sd])?|resolve[sd]?)[[:space:]]+#[0-9]+'; then
+            echo "::error::A type:story or type:defect PR must say 'Closes #n' in its body."
+            echo "::error::Naming the issue in prose is not enough — close-linked-issues.yml reads the keyword, and GitHub does not auto-close for PRs into develop."
+            exit 1
+          fi
+          printf '%s' "$BODY" \
+            | grep -Eio '(close[sd]?|fix(e[sd])?|resolve[sd]?)[[:space:]]+#[0-9]+' \
+            | sed 's/^/Will close: /'
+
   target:
     name: Base branch is allowed
     runs-on: ubuntu-latest

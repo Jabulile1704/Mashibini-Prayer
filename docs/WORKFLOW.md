@@ -98,3 +98,19 @@ closes those issues with a comment pointing back at the PR. The board's own
 
 So the rule stands — **close issues by merging, never by hand** — it is just
 this repository that has to implement it rather than GitHub.
+
+### Linking the issue is a check, not a courtesy
+
+A pull request labelled `type:story` or `type:defect` must say `Closes #n`
+(or `Fixes`/`Resolves`) **in its body**. PR hygiene fails without it.
+
+Two things make this stricter than it looks:
+
+- Naming the issue in prose — "From #19:" above the acceptance criteria — does
+  not count. `close-linked-issues.yml` reads the keyword, not the number.
+- Putting the keyword in the merge commit message does not count either. The
+  workflow reads the pull request body, and GitHub itself ignores the keyword
+  entirely for pull requests into a non-default branch.
+
+This rule exists because exactly that happened on Day 2: #19 shipped in #26 and
+stayed open, and the log nearly recorded a closure that had not occurred.

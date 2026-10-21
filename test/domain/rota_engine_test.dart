@@ -291,6 +291,36 @@ void main() {
       expect(engineOf().turnsFrom(start.addDays(3)).first.weekStart, start);
     });
 
+    test('consecutive turns are contiguous, with no gap and no overlap', () {
+      final List<Turn> turns = engineOf().turnsFrom(start, count: 6);
+      for (int i = 1; i < turns.length; i++) {
+        expect(
+          turns[i - 1].weekEnd.addDays(1),
+          turns[i].weekStart,
+          reason:
+              'turn ${i - 1} ends ${turns[i - 1].weekEnd}, '
+              'turn $i starts ${turns[i].weekStart} - the weeks must abut',
+        );
+        expect(
+          turns[i - 1].contains(turns[i].weekStart),
+          isFalse,
+          reason: 'turn ${i - 1} must not contain the next turn\'s first day',
+        );
+      }
+    });
+
+    test('a turn contains the date it was asked about', () {
+      final RotaEngine engine = engineOf();
+      for (int offset = 0; offset < 30; offset++) {
+        final CalendarDate date = start.addDays(offset);
+        expect(
+          engine.turnOn(date)!.contains(date),
+          isTrue,
+          reason: '$date should fall inside the turn computed for it',
+        );
+      }
+    });
+
     test('a count of zero or less asks for nothing', () {
       expect(engineOf().turnsFrom(start, count: 0), isEmpty);
       expect(engineOf().turnsFrom(start, count: -3), isEmpty);

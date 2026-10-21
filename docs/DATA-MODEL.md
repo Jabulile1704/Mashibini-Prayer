@@ -123,6 +123,15 @@ erDiagram
 
 `TURN` is deliberately absent. It is a value the domain computes, not a row.
 
+Two naming notes, so the diagram and the code can be read together:
+
+- `SKIP` is the Dart class **`SkippedTurn`**. `package:flutter_test` exports a
+  `Skip` of its own — the annotation that skips a test — and a domain type
+  colliding with it would oblige every test file to remember a `hide` clause.
+  The Firestore collection is still `skips`.
+- Every `date` field above is the Dart type **`CalendarDate`**, not `DateTime`.
+  See [ADR-005](adr/ADR-005-a-calendar-date-type.md).
+
 ## Firestore layout
 
 ```

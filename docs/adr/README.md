@@ -12,3 +12,4 @@ names it.
 | [002](ADR-002-derive-turns-from-an-anchor.md) | Derive turns from an anchor date | Accepted |
 | [003](ADR-003-offline-first-read-path.md) | Local store is the read path | Accepted |
 | [004](ADR-004-journals-outside-the-family-tree.md) | Journals keyed by author, outside the family tree | Accepted |
+| [005](ADR-005-a-calendar-date-type.md) | A CalendarDate type, not DateTime | Accepted |

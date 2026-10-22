@@ -1,12 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+
+import '../src/data/repositories/family_repository.dart';
+import 'presentation/screens/this_week_screen.dart';
+
+/// Which locales the app speaks, and in what order it falls back.
+///
+/// This matters for one small, visible reason: date order. Flutter's default
+/// `MaterialLocalizations` formats a full date American-style — "Sunday,
+/// October 25, 2026" — and this app is read by a family in South Africa, who
+/// write "Sunday 25 October 2026".
+///
+/// Flutter ships `MaterialLocalizationEnZa`, so this is a matter of asking
+/// for it. `en_ZA` is listed first because Flutter falls back to the first
+/// supported locale when the device's own is not matched: a phone set to a
+/// locale we do not list gets South African formatting rather than American.
+abstract final class AppLocales {
+  static const List<Locale> supported = <Locale>[
+    Locale('en', 'ZA'),
+    Locale('en', 'GB'),
+    Locale('en'),
+  ];
+
+  static const List<LocalizationsDelegate<Object?>> delegates =
+      <LocalizationsDelegate<Object?>>[
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ];
+}
 
 /// The application shell.
 ///
-/// Day 1: the scaffold only. The rota engine lands on Day 3 and this
-/// placeholder is replaced by the real home screen on Day 5 — see
-/// `docs/SDLC.md` for the plan.
+/// Takes its repository rather than building one, so a test can hand it a
+/// fake and the whole app runs without a device, a plugin or a disk.
 class MashibiniPrayerApp extends StatelessWidget {
-  const MashibiniPrayerApp({super.key});
+  const MashibiniPrayerApp({required this.repository, super.key});
+
+  final FamilyRepository repository;
 
   static const String title = 'Mashibini Prayer';
 
@@ -15,50 +46,12 @@ class MashibiniPrayerApp extends StatelessWidget {
     return MaterialApp(
       title: title,
       debugShowCheckedModeBanner: false,
+      localizationsDelegates: AppLocales.delegates,
+      supportedLocales: AppLocales.supported,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF3F5E8C)),
       ),
-      home: const _UnderConstruction(),
-    );
-  }
-}
-
-class _UnderConstruction extends StatelessWidget {
-  const _UnderConstruction();
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme text = Theme.of(context).textTheme;
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Text(
-                  MashibiniPrayerApp.title,
-                  style: text.headlineMedium,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Whose week it is to lead family prayer.',
-                  style: text.bodyLarge,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'In build — the rota arrives on day 5.',
-                  style: text.bodySmall,
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+      home: ThisWeekScreen(repository: repository),
     );
   }
 }

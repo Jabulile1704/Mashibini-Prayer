@@ -73,6 +73,16 @@ class CalendarDate implements Comparable<CalendarDate> {
 
   bool isOnOrAfter(CalendarDate other) => !isBefore(other);
 
+  /// This date as a local [DateTime] at midnight, **for display only**.
+  ///
+  /// The counterpart to [CalendarDate.from]. Formatting is the one job that
+  /// genuinely needs a `DateTime` — `MaterialLocalizations` speaks it — and a
+  /// date being rendered has already stopped being arithmetic.
+  ///
+  /// Nothing in the domain calls this. If something starts to, the thing it
+  /// wants is probably a method on this class instead.
+  DateTime toLocalDateTime() => DateTime(year, month, day);
+
   @override
   int compareTo(CalendarDate other) => _at.compareTo(other._at);
 

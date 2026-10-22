@@ -57,11 +57,15 @@ about whether R6.1 holds on day one of an install.
 - No partial reads: the whole family is parsed on open. At this size that is
   below the threshold of measurement.
 
-**Not covered by tests, deliberately**
+**On testing the wrapper**
 
-`PreferencesKeyValueStore` is three one-line delegations to the package and
-has no logic of its own. `TEST-STRATEGY.md` says thin vendor wrappers are
-proven by integration rather than by mocking a vendor SDK into a shape we
-invented, so it is the one file in `lib/src/data` with no unit test. It is
-exercised for real the first time the app reads its own storage on a device
-(Day 5), and it is on the release checklist for Day 13.
+`PreferencesKeyValueStore` is three one-line delegations with no logic, and on
+Day 4 it was left untested on the grounds that thin vendor wrappers belong to
+integration. That was half right, and the half that was wrong mattered: the
+wrapper is exactly where a wiring mistake would hide while every other test
+still passed.
+
+It is now tested against `InMemorySharedPreferencesAsync` — the package's own
+implementation of its own interface, which encodes no guess of ours about how
+`shared_preferences` behaves. See `TEST-STRATEGY.md`, "Vendor code: a
+distinction worth making".

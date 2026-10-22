@@ -71,12 +71,38 @@ A number is not a goal, except where it is:
 | Area | Expectation |
 |:--|:--|
 | `lib/src/domain/` | **100% of lines and branches.** It is pure, it is small, and it is the part that can be confidently wrong. Anything uncovered here is either untested or dead; both need action. |
-| `lib/src/data/` | High, against fakes. The thin wrappers over Firestore are proven by integration, not by mocking a vendor SDK into a shape we invented. |
+| `lib/src/data/` | High. Our own logic against fakes; a vendor wrapper against the **vendor's own** in-memory implementation where one exists. |
 | `lib/src/presentation/` | No target. One meaningful widget test per screen beats a high number made of pumping widgets and asserting nothing. |
 
 CI uploads `coverage/lcov.info` on every run. **No threshold fails the build
 yet** — one introduced before there is much code only teaches you to game it.
 It should be added once the domain is complete, and that is a Day 12 item.
+
+## Vendor code: a distinction worth making
+
+"Do not mock a vendor SDK" and "do not test the code that talks to it" are not
+the same rule, and conflating them left a real gap on Day 4.
+
+**Do not** hand-write a double that encodes our *guess* at how a package
+behaves. The test then proves the code matches the guess, and passes just as
+happily when the guess is wrong.
+
+**Do** use the package's own in-memory implementation when it ships one.
+`shared_preferences_platform_interface` provides `InMemorySharedPreferencesAsync`,
+which is the maintainers' implementation of their own interface — no guess of
+ours is encoded in it.
+
+The difference matters because the wrapper is exactly where a wiring mistake
+hides: a wrong key, a value written but never read back, an API used
+incorrectly. Every test above the seam would still pass, and the family would
+open the app one morning to "no rota set up".
+
+Proven rather than asserted: writing under a different key fails 6 tests, and
+a `delete` that does nothing fails 2.
+
+Where a package ships no such implementation — Firestore, for instance — the
+wrapper stays thin enough to read in one sitting and is covered by integration
+instead.
 
 ## Defects
 

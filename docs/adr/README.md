@@ -13,3 +13,4 @@ names it.
 | [003](ADR-003-offline-first-read-path.md) | Local store is the read path | Accepted |
 | [004](ADR-004-journals-outside-the-family-tree.md) | Journals keyed by author, outside the family tree | Accepted |
 | [005](ADR-005-a-calendar-date-type.md) | A CalendarDate type, not DateTime | Accepted |
+| [006](ADR-006-a-key-value-store-not-a-database.md) | A key-value store for the family, not a database | Accepted |

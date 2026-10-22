@@ -1,5 +1,6 @@
 import '../entities/calendar_date.dart';
 import '../entities/cycle.dart';
+import '../entities/family.dart';
 import '../entities/member.dart';
 import '../entities/skipped_turn.dart';
 import '../entities/turn.dart';
@@ -52,6 +53,17 @@ class RotaEngine {
       }
     }
   }
+
+  /// Builds an engine for [family].
+  ///
+  /// The engine takes data; it never fetches any. This factory is the only
+  /// place the aggregate and the computation meet.
+  factory RotaEngine.forFamily(Family family) => RotaEngine(
+    turnoverWeekday: family.turnoverWeekday,
+    members: family.membersById,
+    cycles: family.cycles,
+    skips: family.skips,
+  );
 
   /// ISO weekday the rota hands over on: 1 is Monday, 7 is Sunday.
   final int turnoverWeekday;

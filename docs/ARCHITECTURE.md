@@ -52,11 +52,14 @@ lib/
         rota_engine.dart     leaderOn(date), turnsFrom(date, count)
         week.dart            week arithmetic against the turnover weekday
     data/
-      repositories/          the interfaces the application layer talks to
+      repositories/          the interfaces the application layer talks to,
+                             and their local implementation
+      serialization/         JSON in and out — the storage format lives here,
+                             not on the entities
       sources/
         local/               on-device store — the read path
-        remote/              Firestore — the sync path
-        assets/              bundled verses
+        remote/              Firestore — the sync path (day 7)
+        assets/              bundled verses (day 9)
     application/             controllers, one per screen
     presentation/
       screens/               ThisWeek, Setup, Journal, Verse
@@ -96,6 +99,21 @@ Recorded properly in `docs/adr/`:
 | [002](adr/ADR-002-derive-turns-from-an-anchor.md) | Turns are computed from an anchor date, never stored as a pointer |
 | [003](adr/ADR-003-offline-first-read-path.md) | The local store is the read path; the network is a background writer |
 | [004](adr/ADR-004-journals-outside-the-family-tree.md) | Journal entries live outside the family tree, keyed by author |
+| [005](adr/ADR-005-a-calendar-date-type.md) | The domain has its own date type, not `DateTime` |
+| [006](adr/ADR-006-a-key-value-store-not-a-database.md) | A key-value store holds the family, not a database |
+
+## Why serialization is not on the entities
+
+`toJson` on a `Family` would be convenient and would tie the domain to a
+storage format. The entities would then have two reasons to change: the rota's
+rules, and whatever the database wanted this month.
+
+So the mapping lives in `data/serialization/`, as pure functions over
+`Map<String, Object?>`. The domain does not know it is ever written down, and
+the format can change — a Firestore document shape, a migration, a different
+store entirely — without touching a single entity.
+
+It also keeps the round-trip tests pure: no I/O, no device, no plugin.
 
 ## What is deliberately not here
 

@@ -70,9 +70,31 @@ Measured rather than assumed, via the contributions API:
   becomes belt-and-braces. It is left in place: it costs one job, and it is
   what keeps the behaviour working if the default branch ever moves back.
 
-**Note on what this does not do**
+**Note on the backfill, and on checking too early**
 
-Changing the default branch did **not** retroactively credit the sixteen
-commits already on `develop` at the time of the change. The contribution graph
-was re-checked immediately afterwards and still reported zero for this
-repository. Future commits count; the first six days do not appear to.
+This ADR originally stated that changing the default branch did **not**
+retroactively credit the sixteen commits already on `develop`. That was wrong.
+
+It was written from a single query made immediately after the setting changed,
+which still reported zero. GitHub had not recalculated yet. A re-check a few
+minutes later showed all sixteen commits credited, on the days they were
+authored:
+
+| Date | Contributions |
+|:--|--:|
+| 2026-10-19 | 37 |
+| 2026-10-20 | 12 |
+| 2026-10-21 | 5 |
+| 2026-10-22 | 11 |
+| 2026-10-23 | 6 |
+
+The correction is left here rather than the original sentence being deleted,
+because the mistake is the more useful record: **a single measurement taken
+immediately after a change is not evidence that the change had no effect.**
+Eventual consistency looks exactly like failure if you only look once, and this
+project has now made that error twice — the other being issue #20 on Day 3,
+which appeared not to have closed because the check came before the workflow
+finished.
+
+The rule that follows: when a remote system is expected to recompute something,
+check twice, with a gap, before writing down what it did.

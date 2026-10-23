@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mashibini_prayer/src/app.dart';
+import 'package:mashibini_prayer/src/data/repositories/device_settings_repository.dart';
 import 'package:mashibini_prayer/src/data/repositories/local_family_repository.dart';
 import 'package:mashibini_prayer/src/domain/entities/calendar_date.dart';
 import 'package:mashibini_prayer/src/domain/entities/cycle.dart';
@@ -13,18 +14,27 @@ import '../support/family_fixtures.dart';
 
 void main() {
   late LocalFamilyRepository repository;
+  late LocalDeviceSettingsRepository settings;
 
   setUp(() {
-    repository = LocalFamilyRepository(store: FakeKeyValueStore());
+    final FakeKeyValueStore store = FakeKeyValueStore();
+    repository = LocalFamilyRepository(store: store);
+    settings = LocalDeviceSettingsRepository(store: store);
   });
 
-  tearDown(() async => repository.dispose());
+  tearDown(() async {
+    await repository.dispose();
+    await settings.dispose();
+  });
 
   Future<void> show(
     WidgetTester tester, {
     required CalendarDate on,
     String? youAre,
   }) async {
+    if (youAre != null) {
+      await settings.saveYouAre(youAre);
+    }
     await tester.pumpWidget(
       MaterialApp(
         // The same locale configuration as the real app, so these assertions
@@ -34,8 +44,8 @@ void main() {
         locale: const Locale('en', 'ZA'),
         home: ThisWeekScreen(
           repository: repository,
+          settings: settings,
           today: () => on,
-          youAre: youAre,
         ),
       ),
     );
@@ -254,6 +264,49 @@ void main() {
 
       expect(find.text('Bhuti'), findsOneWidget);
       expect(find.text('Jabulile'), findsNothing);
+    });
+  });
+
+  group('getting to setup', () {
+    testWidgets('the empty state opens the setup screen', (
+      WidgetTester tester,
+    ) async {
+      await show(tester, on: anchor);
+
+      await tester.tap(find.text('Set up the rota'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Who takes a week?'), findsOneWidget);
+    });
+
+    testWidgets('coming back from setup shows the rota that was made', (
+      WidgetTester tester,
+    ) async {
+      await show(tester, on: anchor);
+      await tester.tap(find.text('Set up the rota'));
+      await tester.pumpAndSettle();
+
+      // Save a family as the setup screen would, then leave it.
+      await repository.save(familyOfFour());
+      await tester.pumpAndSettle();
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Jabulile'), findsOneWidget);
+      expect(find.text('No rota yet'), findsNothing);
+    });
+
+    testWidgets('a name saved for this phone makes it speak to you', (
+      WidgetTester tester,
+    ) async {
+      await repository.save(familyOfFour());
+      await show(tester, on: anchor);
+      expect(find.text('Jabulile'), findsOneWidget);
+
+      await settings.saveYouAre(jabulile.id);
+      await tester.pumpAndSettle();
+
+      expect(find.text("It's your week"), findsOneWidget);
     });
   });
 

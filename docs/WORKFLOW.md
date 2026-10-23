@@ -15,7 +15,7 @@ feature/*        ●      ●      ●             ●             one story eac
 | Branch | Cut from | Merges into | Lives for |
 |:--|:--|:--|:--|
 | `main` | — | — | forever; every commit is a release |
-| `develop` | `main` | `main` via a release branch | forever; integration |
+| `develop` | `main` | `main` via a release branch | forever; integration, **and the default branch** |
 | `feature/<id>-<slug>` | `develop` | `develop` | one story |
 | `fix/<id>-<slug>` | `develop` | `develop` | one defect |
 | `chore/<slug>` | `develop` | `develop` | tooling, docs, CI |
@@ -57,8 +57,15 @@ Every PR must:
 4. Carry a `role:*` label saying which hat the work was done under.
 5. Describe how it was verified. "It builds" is not verification.
 
-PRs are squash-merged into `develop` so the branch reads as one commit per
-story, and the feature branch is deleted on merge.
+PRs are **rebase-merged** into `develop` and the feature branch is deleted on
+merge. Squash and merge commits are disabled at the repository level, so the
+convention cannot be forgotten.
+
+Rebasing keeps every commit, with its own message and author date, on the
+default branch. That matters for two reasons: the commit bodies in this
+repository explain *why* and squashing was discarding them, and the
+contribution record should show the work that actually happened. See
+[ADR-007](adr/ADR-007-develop-is-default-and-prs-rebase.md).
 
 ### Review
 

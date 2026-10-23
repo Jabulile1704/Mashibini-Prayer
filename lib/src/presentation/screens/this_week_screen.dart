@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../data/repositories/device_settings_repository.dart';
 import '../../data/repositories/family_repository.dart';
 import '../../domain/entities/calendar_date.dart';
 import '../../domain/entities/family.dart';
@@ -8,6 +9,7 @@ import '../../domain/rota/rota_engine.dart';
 import '../widgets/date_text.dart';
 import '../widgets/leading_card.dart';
 import '../widgets/next_turn_tile.dart';
+import 'setup_screen.dart';
 
 /// The home screen: whose week it is, who is next, and when it changes hands.
 ///
@@ -24,19 +26,19 @@ import '../widgets/next_turn_tile.dart';
 class ThisWeekScreen extends StatefulWidget {
   const ThisWeekScreen({
     required this.repository,
-    this.youAre,
+    required this.settings,
     this.today,
     super.key,
   });
 
   final FamilyRepository repository;
 
-  /// Which member is holding this phone, if that is known.
+  /// Which member is holding this phone — recorded during setup, absent
+  /// until somebody says.
   ///
-  /// Null until setup records it (Day 6). When null the screen simply uses
-  /// names — it never guesses that the leader is you, because being told
-  /// someone else's turn is yours is worse than being told a name.
-  final String? youAre;
+  /// When it is absent the screen uses names. It never guesses, because being
+  /// told someone else's turn is yours is worse than being told a name.
+  final DeviceSettingsRepository settings;
 
   /// The clock, injectable so a test can stand on any date.
   ///
@@ -51,9 +53,22 @@ class ThisWeekScreen extends StatefulWidget {
 
 class _ThisWeekScreenState extends State<ThisWeekScreen> {
   late final Stream<Family?> _families = widget.repository.watch();
+  late final Stream<String?> _youAre = widget.settings.watchYouAre();
 
   CalendarDate get _today =>
       widget.today?.call() ?? CalendarDate.from(DateTime.now());
+
+  Future<void> _openSetup() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (BuildContext context) => SetupScreen(
+          familyRepository: widget.repository,
+          settingsRepository: widget.settings,
+          today: widget.today,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,9 +83,13 @@ class _ThisWeekScreenState extends State<ThisWeekScreen> {
             }
             final Family? family = snapshot.data;
             if (family == null) {
-              return const _NoFamilyYet();
+              return _NoFamilyYet(onSetUp: _openSetup);
             }
-            return _Rota(family: family, today: _today, youAre: widget.youAre);
+            return StreamBuilder<String?>(
+              stream: _youAre,
+              builder: (BuildContext context, AsyncSnapshot<String?> who) =>
+                  _Rota(family: family, today: _today, youAre: who.data),
+            );
           },
         ),
       ),
@@ -92,7 +111,9 @@ class _Loading extends StatelessWidget {
 }
 
 class _NoFamilyYet extends StatelessWidget {
-  const _NoFamilyYet();
+  const _NoFamilyYet({required this.onSetUp});
+
+  final Future<void> Function() onSetUp;
 
   @override
   Widget build(BuildContext context) {
@@ -116,9 +137,10 @@ class _NoFamilyYet extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
-            // Setup arrives on day 6; the button is here so the empty state
-            // says what happens next rather than only what is missing.
-            FilledButton(onPressed: null, child: const Text('Set up the rota')),
+            FilledButton(
+              onPressed: onSetUp,
+              child: const Text('Set up the rota'),
+            ),
           ],
         ),
       ),

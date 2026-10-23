@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import '../src/data/repositories/device_settings_repository.dart';
 import '../src/data/repositories/family_repository.dart';
 import 'presentation/screens/this_week_screen.dart';
 
@@ -35,9 +36,14 @@ abstract final class AppLocales {
 /// Takes its repository rather than building one, so a test can hand it a
 /// fake and the whole app runs without a device, a plugin or a disk.
 class MashibiniPrayerApp extends StatelessWidget {
-  const MashibiniPrayerApp({required this.repository, super.key});
+  const MashibiniPrayerApp({
+    required this.repository,
+    required this.settings,
+    super.key,
+  });
 
   final FamilyRepository repository;
+  final DeviceSettingsRepository settings;
 
   static const String title = 'Mashibini Prayer';
 
@@ -51,7 +57,7 @@ class MashibiniPrayerApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF3F5E8C)),
       ),
-      home: ThisWeekScreen(repository: repository),
+      home: ThisWeekScreen(repository: repository, settings: settings),
     );
   }
 }

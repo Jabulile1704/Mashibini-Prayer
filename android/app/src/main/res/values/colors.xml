@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Palette.ink. Kept in step with lib/src/presentation/brand/palette.dart
+         by hand: there is one launch colour and it changes about never. -->
+    <color name="launch_ink">#1F2A44</color>
+</resources>

@@ -7,6 +7,7 @@ import '../../domain/entities/family.dart';
 import '../../domain/entities/turn.dart';
 import '../../domain/ids.dart';
 import '../../domain/rota/rota_engine.dart';
+import '../brand/mark.dart';
 import '../widgets/date_text.dart';
 import '../widgets/leading_card.dart';
 import '../widgets/next_turn_tile.dart';
@@ -125,11 +126,23 @@ class _NoFamilyYet extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
+            // A ring with nothing filled: the shape of the thing, waiting.
+            ExcludeSemantics(
+              child: RotaMark(
+                size: 84,
+                current: -1,
+                ringColour: theme.colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.22,
+                ),
+                currentColour: theme.colorScheme.secondary,
+              ),
+            ),
+            const SizedBox(height: 32),
             Text(
               'No rota yet',
               style: theme.textTheme.headlineSmall,
@@ -142,7 +155,7 @@ class _NoFamilyYet extends StatelessWidget {
               style: theme.textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
             FilledButton(
               onPressed: onSetUp,
               child: const Text('Set up the rota'),
@@ -175,19 +188,36 @@ class _Rota extends StatelessWidget {
       count: 1,
     );
 
-    return ListView(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      children: <Widget>[
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: LeadingCard(turn: current, isYou: _isYou(current)),
-        ),
-        if (ahead.isNotEmpty) ...<Widget>[
-          const SizedBox(height: 8),
-          const Divider(indent: 24, endIndent: 24),
-          NextTurnTile(turn: ahead.single, isYou: _isYou(ahead.single)),
-        ],
-      ],
+    // The card sits in the upper middle rather than at the top, and the
+    // space below it is left on purpose: this screen answers one question,
+    // and crowding it with a second thing would make the first harder to
+    // find. The verse and the journal arrive on days 10 and 11 and have a
+    // place waiting.
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) =>
+          SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    const SizedBox(height: 24),
+                    LeadingCard(turn: current, isYou: _isYou(current)),
+                    if (ahead.isNotEmpty) ...<Widget>[
+                      const SizedBox(height: 28),
+                      NextTurnTile(
+                        turn: ahead.single,
+                        isYou: _isYou(ahead.single),
+                      ),
+                    ],
+                    const SizedBox(height: 48),
+                  ],
+                ),
+              ),
+            ),
+          ),
     );
   }
 

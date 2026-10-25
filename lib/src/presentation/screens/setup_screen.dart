@@ -5,6 +5,7 @@ import '../../data/repositories/family_repository.dart';
 import '../../domain/entities/calendar_date.dart';
 import '../../domain/entities/family.dart';
 import '../../domain/entities/member.dart';
+import '../../domain/ids.dart';
 import '../../domain/rota/rota_setup.dart';
 import '../widgets/weekday_names.dart';
 
@@ -17,6 +18,7 @@ class SetupScreen extends StatefulWidget {
   const SetupScreen({
     required this.familyRepository,
     required this.settingsRepository,
+    required this.ids,
     this.today,
     super.key,
   });
@@ -28,6 +30,9 @@ class SetupScreen extends StatefulWidget {
 
   final FamilyRepository familyRepository;
   final DeviceSettingsRepository settingsRepository;
+
+  /// Mints ids that will not collide with another phone's (R6.2).
+  final IdGenerator ids;
   final CalendarDate Function()? today;
 
   @override
@@ -97,8 +102,8 @@ class _SetupScreenState extends State<SetupScreen> {
     }
 
     final List<Member> members = <Member>[
-      for (int i = 0; i < filled.length; i++)
-        Member(id: 'm${i + 1}', displayName: filled[i].$2),
+      for (final (int, String) entry in filled)
+        Member(id: widget.ids.newId('m'), displayName: entry.$2),
     ];
     final int leaderPosition = filled.indexWhere(
       ((int, String) entry) => entry.$1 == _currentLeader,
@@ -116,6 +121,7 @@ class _SetupScreenState extends State<SetupScreen> {
         turnoverWeekday: _turnoverWeekday,
         currentLeaderId: members[leaderPosition].id,
         today: _today,
+        ids: widget.ids,
       );
       await widget.familyRepository.save(family);
       if (youPosition != null && youPosition >= 0) {

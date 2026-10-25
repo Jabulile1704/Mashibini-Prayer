@@ -5,6 +5,7 @@ import 'package:mashibini_prayer/src/domain/entities/family.dart';
 import 'package:mashibini_prayer/src/domain/rota/rota_engine.dart';
 import 'package:mashibini_prayer/src/domain/rota/rota_setup.dart';
 
+import '../support/fake_id_generator.dart';
 import '../support/family_fixtures.dart';
 
 void main() {
@@ -22,6 +23,7 @@ void main() {
     turnoverWeekday: turnoverWeekday,
     currentLeaderId: currentLeaderId,
     today: today ?? anchor,
+    ids: FakeIdGenerator(),
   );
 
   group('the answers a person can give', () {
@@ -95,6 +97,7 @@ void main() {
         turnoverWeekday: DateTime.sunday,
         currentLeaderId: sisi.id,
         today: anchor.addDays(5),
+        ids: FakeIdGenerator(),
       );
 
       final RotaEngine engine = RotaEngine.forFamily(family);

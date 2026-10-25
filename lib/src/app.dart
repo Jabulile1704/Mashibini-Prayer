@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import '../src/data/repositories/device_settings_repository.dart';
 import '../src/data/repositories/family_repository.dart';
 import '../src/domain/ids.dart';
+import 'presentation/brand/theme.dart';
 import 'presentation/screens/this_week_screen.dart';
 
 /// Which locales the app speaks, and in what order it falls back.
@@ -57,9 +58,8 @@ class MashibiniPrayerApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       localizationsDelegates: AppLocales.delegates,
       supportedLocales: AppLocales.supported,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF3F5E8C)),
-      ),
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
       home: ThisWeekScreen(
         repository: repository,
         settings: settings,

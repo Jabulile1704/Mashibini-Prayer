@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import '../src/data/repositories/device_settings_repository.dart';
 import '../src/data/repositories/family_repository.dart';
+import '../src/domain/ids.dart';
 import 'presentation/screens/this_week_screen.dart';
 
 /// Which locales the app speaks, and in what order it falls back.
@@ -39,11 +40,13 @@ class MashibiniPrayerApp extends StatelessWidget {
   const MashibiniPrayerApp({
     required this.repository,
     required this.settings,
+    required this.ids,
     super.key,
   });
 
   final FamilyRepository repository;
   final DeviceSettingsRepository settings;
+  final IdGenerator ids;
 
   static const String title = 'Mashibini Prayer';
 
@@ -57,7 +60,11 @@ class MashibiniPrayerApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF3F5E8C)),
       ),
-      home: ThisWeekScreen(repository: repository, settings: settings),
+      home: ThisWeekScreen(
+        repository: repository,
+        settings: settings,
+        ids: ids,
+      ),
     );
   }
 }

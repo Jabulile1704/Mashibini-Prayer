@@ -4,6 +4,7 @@ import 'package:mashibini_prayer/src/app.dart';
 import 'package:mashibini_prayer/src/data/repositories/device_settings_repository.dart';
 import 'package:mashibini_prayer/src/data/repositories/local_family_repository.dart';
 
+import 'support/fake_id_generator.dart';
 import 'support/fake_key_value_store.dart';
 
 void main() {
@@ -24,7 +25,11 @@ void main() {
   group('MashibiniPrayerApp', () {
     testWidgets('builds and names itself', (WidgetTester tester) async {
       await tester.pumpWidget(
-        MashibiniPrayerApp(repository: repository, settings: settings),
+        MashibiniPrayerApp(
+          repository: repository,
+          settings: settings,
+          ids: FakeIdGenerator(),
+        ),
       );
       await tester.pumpAndSettle();
 
@@ -34,7 +39,11 @@ void main() {
 
     testWidgets('hides the debug banner', (WidgetTester tester) async {
       await tester.pumpWidget(
-        MashibiniPrayerApp(repository: repository, settings: settings),
+        MashibiniPrayerApp(
+          repository: repository,
+          settings: settings,
+          ids: FakeIdGenerator(),
+        ),
       );
 
       final MaterialApp app = tester.widget<MaterialApp>(
@@ -47,7 +56,11 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        MashibiniPrayerApp(repository: repository, settings: settings),
+        MashibiniPrayerApp(
+          repository: repository,
+          settings: settings,
+          ids: FakeIdGenerator(),
+        ),
       );
       await tester.pumpAndSettle();
 

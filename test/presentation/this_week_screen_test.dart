@@ -9,6 +9,7 @@ import 'package:mashibini_prayer/src/domain/entities/family.dart';
 import 'package:mashibini_prayer/src/domain/entities/member.dart';
 import 'package:mashibini_prayer/src/presentation/screens/this_week_screen.dart';
 
+import '../support/fake_id_generator.dart';
 import '../support/fake_key_value_store.dart';
 import '../support/family_fixtures.dart';
 
@@ -45,6 +46,7 @@ void main() {
         home: ThisWeekScreen(
           repository: repository,
           settings: settings,
+          ids: FakeIdGenerator(),
           today: () => on,
         ),
       ),

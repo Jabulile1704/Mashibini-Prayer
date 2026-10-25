@@ -5,6 +5,7 @@ import '../../data/repositories/family_repository.dart';
 import '../../domain/entities/calendar_date.dart';
 import '../../domain/entities/family.dart';
 import '../../domain/entities/turn.dart';
+import '../../domain/ids.dart';
 import '../../domain/rota/rota_engine.dart';
 import '../widgets/date_text.dart';
 import '../widgets/leading_card.dart';
@@ -27,6 +28,7 @@ class ThisWeekScreen extends StatefulWidget {
   const ThisWeekScreen({
     required this.repository,
     required this.settings,
+    required this.ids,
     this.today,
     super.key,
   });
@@ -39,6 +41,9 @@ class ThisWeekScreen extends StatefulWidget {
   /// When it is absent the screen uses names. It never guesses, because being
   /// told someone else's turn is yours is worse than being told a name.
   final DeviceSettingsRepository settings;
+
+  /// Passed through to setup, which mints ids for new members and cycles.
+  final IdGenerator ids;
 
   /// The clock, injectable so a test can stand on any date.
   ///
@@ -64,6 +69,7 @@ class _ThisWeekScreenState extends State<ThisWeekScreen> {
         builder: (BuildContext context) => SetupScreen(
           familyRepository: widget.repository,
           settingsRepository: widget.settings,
+          ids: widget.ids,
           today: widget.today,
         ),
       ),

@@ -2,6 +2,7 @@ import '../entities/calendar_date.dart';
 import '../entities/cycle.dart';
 import '../entities/family.dart';
 import '../entities/member.dart';
+import '../ids.dart';
 import 'week.dart';
 
 /// Turns the answers a person can actually give into the data the engine
@@ -33,6 +34,7 @@ abstract final class RotaSetup {
     required int turnoverWeekday,
     required String currentLeaderId,
     required CalendarDate today,
+    required IdGenerator ids,
   }) {
     Week.assertValidWeekday(turnoverWeekday);
 
@@ -44,10 +46,10 @@ abstract final class RotaSetup {
       );
     }
 
-    final Set<String> ids = <String>{
+    final Set<String> seenIds = <String>{
       for (final Member member in members) member.id,
     };
-    if (ids.length != members.length) {
+    if (seenIds.length != members.length) {
       throw ArgumentError.value(
         members.map((Member m) => m.id).toList(),
         'members',
@@ -78,7 +80,7 @@ abstract final class RotaSetup {
       members: List<Member>.unmodifiable(members),
       cycles: <Cycle>[
         Cycle(
-          id: 'c1',
+          id: ids.newId('c'),
           effectiveFrom: Week.startOf(today, turnoverWeekday),
           order: rotated,
         ),

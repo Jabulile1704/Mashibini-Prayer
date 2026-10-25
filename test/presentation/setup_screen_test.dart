@@ -9,6 +9,7 @@ import 'package:mashibini_prayer/src/domain/entities/member.dart';
 import 'package:mashibini_prayer/src/domain/rota/rota_engine.dart';
 import 'package:mashibini_prayer/src/presentation/screens/setup_screen.dart';
 
+import '../support/fake_id_generator.dart';
 import '../support/fake_key_value_store.dart';
 import '../support/family_fixtures.dart';
 
@@ -36,6 +37,7 @@ void main() {
         home: SetupScreen(
           familyRepository: repository,
           settingsRepository: settings,
+          ids: FakeIdGenerator(),
           today: () => on ?? anchor,
         ),
       ),

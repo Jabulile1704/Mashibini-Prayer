@@ -19,10 +19,21 @@ the repository rather than in somebody's head.
 The phases overlap — testing starts on Day 3, not Day 11 — but each one has a
 named artifact that has to exist before the phase is called complete.
 
-## The 14-day plan
+## The 15-day plan
 
 One working day per row. Each day ends with something merged into `develop`;
 a day that merges nothing is a day that has to explain itself in the log.
+
+**This plan was fourteen days and is now fifteen.** The original had no design
+day at all: Day 2's "design" is architecture, and Day 13's hardening is
+accessibility. Nothing anywhere scheduled an icon, a splash or a considered
+look — so on Day 7 the app still shipped Flutter's default logo and a stock
+Material card, which the owner noticed before the plan did.
+
+Day 8 was inserted rather than appended, because the verse and the journal land
+on Days 10 and 11 and it is far cheaper to decide what the home screen *is*
+before filling it than to retrofit a layout around three features that were
+each added on their own.
 
 | Day | Phase | Deliverable | Role on point |
 |:--:|:--|:--|:--|
@@ -33,13 +44,14 @@ a day that merges nothing is a day that has to explain itself in the log.
 | 5 | Implementation | Home screen: this week, next week, handover date (R1.1, R1.2) | Developer |
 | 6 | Implementation | Family setup: members, order, turnover day, anchor (R2.1, R2.2) | Developer, PO |
 | 7 | Implementation | Firebase: project, auth decision, Firestore wiring (R6.2) | DevOps, DBA |
-| 8 | Security | Firestore security rules and their tests (N3, R4.2) | DBA, QA |
-| 9 | Implementation | Daily verse, bundled and licensed (R3.1, R3.2) | Developer |
-| 10 | Implementation | Prayer journal, private by construction (R4.1, R4.2) | Developer, DBA |
-| 11 | Implementation | Handover reminders, opt-in (R5.1) | Developer |
-| 12 | Hardening | Skip a turn (R1.4), offline states, accessibility pass (N5, N7) | QA |
-| 13 | Deployment | Release branch, version bump, changelog, signed build, tag v1.0.0 | DevOps |
-| 14 | Closure | Retrospective, metrics, v1.1 backlog | PM, PO |
+| 8 | Design | The mark, the app icon, the splash, and the home screen as a designed thing | Developer, PO |
+| 9 | Security | Firestore security rules and their tests (N3, R4.2) | DBA, QA |
+| 10 | Implementation | Daily verse, bundled and licensed (R3.1, R3.2) | Developer |
+| 11 | Implementation | Prayer journal, private by construction (R4.1, R4.2) | Developer, DBA |
+| 12 | Implementation | Handover reminders, opt-in (R5.1) | Developer |
+| 13 | Hardening | Skip a turn (R1.4), offline states, accessibility pass (N5, N7) | QA |
+| 14 | Deployment | Release branch, version bump, changelog, signed build, tag v1.0.0 | DevOps |
+| 15 | Closure | Retrospective, metrics, v1.1 backlog | PM, PO |
 
 ## Working agreements
 

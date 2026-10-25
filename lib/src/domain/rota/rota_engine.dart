@@ -119,6 +119,8 @@ class RotaEngine {
       leader: order[position],
       weekStart: weekStart,
       weekEnd: weekStart.addDays(6),
+      position: position,
+      cycleLength: order.length,
     );
   }
 

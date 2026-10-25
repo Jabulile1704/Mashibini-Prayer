@@ -31,11 +31,7 @@ class RotaEngine {
     required Map<String, Member> members,
     List<SkippedTurn> skips = const <SkippedTurn>[],
   }) : _members = Map<String, Member>.unmodifiable(members),
-       _cycles = List<Cycle>.unmodifiable(
-         <Cycle>[...cycles]..sort(
-           (Cycle a, Cycle b) => a.effectiveFrom.compareTo(b.effectiveFrom),
-         ),
-       ),
+       _cycles = List<Cycle>.unmodifiable(<Cycle>[...cycles]..sort(_byDate)),
        _skips = List<SkippedTurn>.unmodifiable(skips) {
     Week.assertValidWeekday(turnoverWeekday);
     if (_cycles.isEmpty) {
@@ -64,6 +60,18 @@ class RotaEngine {
     cycles: family.cycles,
     skips: family.skips,
   );
+
+  /// Orders cycles by date, and by id when two share a date.
+  ///
+  /// The id tie-break is not tidiness. Two devices editing the family while
+  /// offline can both write an epoch effective from the same turnover, and a
+  /// sort that left their order to chance would have the two phones naming
+  /// different leaders for the same week. Comparing ids makes the answer the
+  /// same everywhere without anything having to coordinate (R6.2).
+  static int _byDate(Cycle a, Cycle b) {
+    final int byDate = a.effectiveFrom.compareTo(b.effectiveFrom);
+    return byDate != 0 ? byDate : a.id.compareTo(b.id);
+  }
 
   /// ISO weekday the rota hands over on: 1 is Monday, 7 is Sunday.
   final int turnoverWeekday;

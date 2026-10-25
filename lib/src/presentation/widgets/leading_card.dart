@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 
 import '../../domain/entities/turn.dart';
+import '../brand/mark.dart';
 import 'date_text.dart';
 
 /// Whose week it is — the one thing this app exists to say.
 ///
-/// Deliberately the largest thing on the screen. Everything else is context
-/// for it.
+/// The ring above the name is the app's own mark, drawn live: as many arcs as
+/// there are people, with this week's filled. So the icon on the home screen
+/// is a generic cycle, and the same shape inside the app is *your* cycle,
+/// showing where the family has got to. It answers "who is next after next"
+/// without anybody reading a list.
 class LeadingCard extends StatelessWidget {
   const LeadingCard({required this.turn, required this.isYou, super.key});
 
@@ -31,27 +35,33 @@ class LeadingCard extends StatelessWidget {
           : '${turn.leader.displayName} is leading family prayer this week',
       child: Card(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.fromLTRB(28, 36, 28, 32),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text(
-                'This week',
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+              ExcludeSemantics(
+                child: RotaMark(
+                  size: 92,
+                  parts: turn.cycleLength,
+                  current: turn.position,
+                  ringColour: theme.colorScheme.onSurfaceVariant.withValues(
+                    alpha: 0.28,
+                  ),
+                  currentColour: theme.colorScheme.secondary,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 28),
+              Text('This week', style: theme.textTheme.labelLarge),
+              const SizedBox(height: 10),
               Text(
                 headline,
-                style: theme.textTheme.displaySmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: theme.textTheme.displaySmall,
+                textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
               Text(
                 'until ${DateLabels.full(context, turn.weekEnd)}',
                 style: theme.textTheme.bodyMedium,
+                textAlign: TextAlign.center,
               ),
             ],
           ),

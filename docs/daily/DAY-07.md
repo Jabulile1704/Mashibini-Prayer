@@ -108,6 +108,16 @@ individual-sign-in case that ADR-004 already assumes, mark them provisional,
 and leave them undeployed. That is worth saying in advance so it does not look
 like a decision made quietly on the day.
 
-## Tomorrow — Day 8, security rules
+## Tomorrow — Day 8, design
 
-Firestore rules and their tests (#10, R4.2, N3). See the blockers above.
+**The plan changed after this day closed.** Asked how the app looked, the
+honest answer was: Flutter's default logo, untouched since the scaffold, and a
+stock Material card on a mostly empty screen.
+
+The 14-day plan had no design day in it — an omission in the plan written on
+Day 1, not a deferral. A design day is now inserted as Day 8, ahead of the
+security work rather than after it, because the verse and journal land on Days
+10 and 11 and the home screen should be decided before it is filled.
+
+Security rules move to Day 9, still blocked on Q3 and on the Firebase project
+existing.

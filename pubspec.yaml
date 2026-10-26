@@ -21,3 +21,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  assets:
+    # The daily verses. Bundled so they read with no connection (R3.1), and
+    # because a public-domain translation never changes under us.
+    - assets/verses.json

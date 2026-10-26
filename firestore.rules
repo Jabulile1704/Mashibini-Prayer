@@ -1,0 +1,74 @@
+rules_version = '2';
+
+// Mashibini Prayer — Firestore security rules.
+//
+// Two trees with opposite access rules, which is why they are two trees
+// rather than one (ADR-004):
+//
+//   families/{familyId}/…   shared with everyone in that family
+//   journals/{uid}/…        readable only by the person who wrote it
+//
+// The journal rule is one line and needs no exception carved into it, because
+// journals do not live inside the family's tree. Privacy you have to remember
+// to enforce is privacy that fails on the day somebody is in a hurry.
+//
+// PROVISIONAL: these rules assume each member signs in as themselves (open
+// question Q3). If the family shares one install, request.auth.uid is the
+// same for all of them, the journal rule protects nothing, and ADR-004 is
+// superseded rather than weakened — journals would become device-local and
+// unsynced. See docs/FIREBASE-SETUP.md.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // Membership is read from the family document rather than by looking up
+    // a member record: one document read answers it, and rules that fan out
+    // into get() calls get slow and expensive in exactly the place nobody
+    // profiles.
+    function isMemberOf(family) {
+      return signedIn() && request.auth.uid in family.memberUids;
+    }
+
+    match /families/{familyId} {
+      allow get, list: if isMemberOf(resource.data);
+
+      // Creating a family is only allowed by somebody who is in it. Without
+      // this, any signed-in account could create a family naming other
+      // people's uids and pull them into it.
+      allow create: if signedIn()
+                    && request.auth.uid in request.resource.data.memberUids
+                    && request.resource.data.memberUids.size() >= 1
+                    && request.resource.data.memberUids.size() <= 12;
+
+      allow update: if isMemberOf(resource.data)
+                    && request.auth.uid in request.resource.data.memberUids;
+
+      // Nothing in the app deletes a family, so nothing may.
+      allow delete: if false;
+
+      // Members, cycles and skips inherit the family's access. They are the
+      // family's data; there is no case where you may read the family and
+      // not its rota.
+      match /{document=**} {
+        allow read, write: if isMemberOf(
+          get(/databases/$(database)/documents/families/$(familyId)).data
+        );
+      }
+    }
+
+    // The whole of R4.2 and N3, in one line. Nothing a family-level query can
+    // do reaches here, because this is not in the family's tree.
+    match /journals/{uid}/{document=**} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
+    // Anything not named above is denied. New collections should have to be
+    // thought about before they can be written, not discovered in a bill.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

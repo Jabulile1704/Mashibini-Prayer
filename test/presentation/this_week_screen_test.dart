@@ -312,6 +312,69 @@ void main() {
     });
   });
 
+  group("today's verse (R3.1, R3.2)", () {
+    testWidgets('a verse appears alongside the rota', (
+      WidgetTester tester,
+    ) async {
+      await repository.save(familyOfFour());
+      await show(tester, on: anchor);
+
+      // Whichever verse today lands on, it is cited and its translation is
+      // named — R3.2 requires the translation wherever a verse is shown.
+      expect(find.textContaining('WEBPB'), findsOneWidget);
+    });
+
+    testWidgets('the verse is quieter than the leader', (
+      WidgetTester tester,
+    ) async {
+      await repository.save(familyOfFour());
+      await show(tester, on: anchor);
+
+      final double leader = tester
+          .widget<Text>(find.text('Jabulile'))
+          .style!
+          .fontSize!;
+      final Text citation = tester.widget<Text>(find.textContaining('WEBPB'));
+      expect(citation.style!.fontSize, lessThan(leader));
+    });
+
+    testWidgets('the same date gives the same verse on a rebuild', (
+      WidgetTester tester,
+    ) async {
+      await repository.save(familyOfFour());
+      await show(tester, on: anchor);
+      final String first = tester
+          .widget<Text>(find.textContaining('WEBPB'))
+          .data!;
+
+      await show(tester, on: anchor);
+      expect(tester.widget<Text>(find.textContaining('WEBPB')).data, first);
+    });
+
+    testWidgets('a different date gives a different verse', (
+      WidgetTester tester,
+    ) async {
+      await repository.save(familyOfFour());
+      await show(tester, on: anchor);
+      final String today = tester
+          .widget<Text>(find.textContaining('WEBPB'))
+          .data!;
+
+      await show(tester, on: anchor.addDays(1));
+      expect(
+        tester.widget<Text>(find.textContaining('WEBPB')).data,
+        isNot(today),
+      );
+    });
+
+    testWidgets('the empty state shows no verse', (WidgetTester tester) async {
+      await show(tester, on: anchor);
+
+      expect(find.text('No rota yet'), findsOneWidget);
+      expect(find.textContaining('WEBPB'), findsNothing);
+    });
+  });
+
   group('a rota whose data has drifted', () {
     testWidgets('a cycle naming nobody who exists does not crash the screen', (
       WidgetTester tester,

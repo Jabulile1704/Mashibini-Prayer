@@ -145,6 +145,22 @@ journals/{uid}/entries/{entryId}        outside the family tree, on purpose
 (verses are a bundled asset, not a collection — see below)
 ```
 
+### One field exists only for the rules
+
+The family document carries **`memberUids`**: the auth uids of everyone who
+may read it. Nothing in the app's own logic uses it — membership of the rota
+is `cycle.order`, and that has not changed.
+
+It exists because a security rule has to answer "may this person read this
+document?" from the document itself. The alternative is a `get()` into the
+members subcollection on every read, which turns one document read into two
+and does so in the place nobody profiles.
+
+So it is denormalised **for the rules, not for the app**, and it is the one
+field in this model that serves the database rather than the family. It is
+written and maintained by whatever creates or edits the family remotely; the
+local store neither needs nor writes it.
+
 ### Why journals sit outside the family tree
 
 Privacy you have to remember to enforce is privacy you will eventually forget.

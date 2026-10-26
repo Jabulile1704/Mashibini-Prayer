@@ -1,0 +1,14 @@
+{
+  "name": "mashibini-prayer-rules-tests",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Security rules tests, run against the Firestore emulator.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test rules.test.js"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^4.0.1",
+    "firebase": "^11.1.0"
+  }
+}

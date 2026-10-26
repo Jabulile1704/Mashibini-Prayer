@@ -184,7 +184,7 @@ nobody has to ask.
 | # | Question | Owner | Needed by |
 |:--|:--|:--|:--|
 | ~~Q1~~ | ~~Which weekday does the family's week actually turn over on?~~ **Closed Day 6: the setup screen asks. The weekday is a required answer and the app stores whichever one the family chooses; the picker merely opens on Sunday as a starting position.** | Stakeholder | — |
-| Q2 | Which Bible translation may be bundled and redistributed? | PO + Developer | Day 9 (verse feature) |
+| ~~Q2~~ | ~~Which Bible translation may be bundled and redistributed?~~ **Closed Day 10: the World English Bible, British Edition (WEBPB). Public domain by explicit dedication, no required attribution, one trademark condition — do not call it the WEB if you change the text. See ADR-009.** | PO + Developer | — |
 | Q3 | Do members sign in individually, or is it one shared family install? | PO | Day 7 (auth) |
 | Q4 | Should the journal ever be shareable with the family by choice? | PO | Post-v1 |
 
@@ -194,3 +194,4 @@ nobody has to ask.
 |:--|:--|:--|
 | 2026-10-19 | Baselined at v1.0 scope | Day 1 inception |
 | 2026-10-23 | Q1 closed without an answer being needed | Day 6: setup asks the family rather than the project assuming |
+| 2026-10-27 | Q2 closed: WEBPB, public domain | Day 10: owner chose the WEB; the edition was chosen for "The LORD" over "Yahweh" and British spelling |

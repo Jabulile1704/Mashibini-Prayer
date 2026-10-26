@@ -16,3 +16,4 @@ names it.
 | [006](ADR-006-a-key-value-store-not-a-database.md) | A key-value store for the family, not a database | Accepted |
 | [007](ADR-007-develop-is-default-and-prs-rebase.md) | `develop` is the default branch, and PRs rebase | Accepted |
 | [008](ADR-008-merging-is-a-union-of-append-only-logs.md) | Merging is a union of append-only logs | Accepted |
+| [009](ADR-009-the-verses-are-bundled-webpb.md) | The verses are bundled, and they are the WEBPB | Accepted |

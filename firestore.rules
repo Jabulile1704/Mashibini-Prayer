@@ -32,6 +32,14 @@ service cloud.firestore {
       return signedIn() && request.auth.uid in family.memberUids;
     }
 
+    // The same question, asked from inside a subcollection where the family
+    // document is not already in hand.
+    function isMemberOfFamily(familyId) {
+      return isMemberOf(
+        get(/databases/$(database)/documents/families/$(familyId)).data
+      );
+    }
+
     match /families/{familyId} {
       allow get, list: if isMemberOf(resource.data);
 
@@ -52,10 +60,27 @@ service cloud.firestore {
       // Members, cycles and skips inherit the family's access. They are the
       // family's data; there is no case where you may read the family and
       // not its rota.
-      match /{document=**} {
-        allow read, write: if isMemberOf(
-          get(/databases/$(database)/documents/families/$(familyId)).data
-        );
+      //
+      // Named one by one rather than with a recursive wildcard. `match
+      // /{document=**}` here would ALSO match the family document itself —
+      // the wildcard matches zero segments — and its `allow write` would
+      // then grant delete, silently overriding the `allow delete: if false`
+      // six lines above. Rules are OR-ed, so the narrower rule loses.
+      //
+      // That bug was written first and caught by the test that says nobody
+      // can delete a family. Spelling the subcollections out also means a
+      // new one has to be added here deliberately rather than inheriting
+      // access by accident.
+      match /members/{memberId} {
+        allow read, write: if isMemberOfFamily(familyId);
+      }
+
+      match /cycles/{cycleId} {
+        allow read, write: if isMemberOfFamily(familyId);
+      }
+
+      match /skips/{skipId} {
+        allow read, write: if isMemberOfFamily(familyId);
       }
     }
 

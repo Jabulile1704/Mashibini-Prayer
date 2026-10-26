@@ -21,7 +21,14 @@ import {
   initializeTestEnvironment,
 } from '@firebase/rules-unit-testing';
 import { readFileSync } from 'node:fs';
-import { doc, getDoc, setDoc, collection, getDocs } from 'firebase/firestore';
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+} from 'firebase/firestore';
 
 let env;
 
@@ -149,10 +156,31 @@ describe('the family is shared with its members', () => {
     await assertFails(getDoc(doc(db, 'families/f1')));
   });
 
-  it('nobody can delete a family', async () => {
+  it('nobody can delete a family, not even a member', async () => {
+    // This one caught a real hole: a recursive `match /{document=**}` inside
+    // the family also matches the family document itself, and its `allow
+    // write` granted delete over the top of `allow delete: if false`.
     const db = env.authenticatedContext(JABU).firestore();
-    const { deleteDoc } = await import('firebase/firestore');
     await assertFails(deleteDoc(doc(db, 'families/f1')));
+  });
+
+  it('a member can still delete a skip, which is not append-only', async () => {
+    const db = env.authenticatedContext(JABU).firestore();
+    await assertSucceeds(
+      setDoc(doc(db, 'families/f1/skips/s1'), {
+        weekStart: '2026-11-08',
+        memberId: 'm1',
+      }),
+    );
+    await assertSucceeds(deleteDoc(doc(db, 'families/f1/skips/s1')));
+  });
+
+  it('a subcollection nobody named is denied', async () => {
+    // Spelling out members, cycles and skips means a new subcollection has
+    // to be added to the rules on purpose rather than inheriting access.
+    const db = env.authenticatedContext(JABU).firestore();
+    await assertFails(getDoc(doc(db, 'families/f1/invoices/i1')));
+    await assertFails(setDoc(doc(db, 'families/f1/invoices/i1'), { a: 1 }));
   });
 });
 

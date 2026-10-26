@@ -50,6 +50,40 @@ jobs:
           path: coverage/lcov.info
           if-no-files-found: warn
 
+  rules:
+    name: Security rules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The Firestore emulator is a Java program. This is also why the rules
+      # tests do not run on the author's Mac, which has no JDK — see the day 9
+      # log.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: test/rules/package-lock.json
+
+      - name: Install
+        working-directory: test/rules
+        run: npm ci
+
+      - name: Run the rules against the emulator
+        # A project id beginning with "demo-" keeps the emulator offline: it
+        # never looks for a real Firebase project, which is what lets these
+        # tests pass before one exists.
+        run: |
+          npx --yes firebase-tools@14 emulators:exec \
+            --only firestore \
+            --project demo-mashibini \
+            "cd test/rules && npm test"
+
   build-android:
     name: Android build
     runs-on: ubuntu-latest

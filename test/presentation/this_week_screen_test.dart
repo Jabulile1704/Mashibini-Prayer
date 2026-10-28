@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mashibini_prayer/src/app.dart';
 import 'package:mashibini_prayer/src/data/repositories/device_settings_repository.dart';
+import 'package:mashibini_prayer/src/data/repositories/journal_repository.dart';
 import 'package:mashibini_prayer/src/data/repositories/local_family_repository.dart';
 import 'package:mashibini_prayer/src/domain/entities/calendar_date.dart';
 import 'package:mashibini_prayer/src/domain/entities/cycle.dart';
@@ -16,16 +17,19 @@ import '../support/family_fixtures.dart';
 void main() {
   late LocalFamilyRepository repository;
   late LocalDeviceSettingsRepository settings;
+  late LocalJournalRepository journal;
 
   setUp(() {
     final FakeKeyValueStore store = FakeKeyValueStore();
     repository = LocalFamilyRepository(store: store);
     settings = LocalDeviceSettingsRepository(store: store);
+    journal = LocalJournalRepository(store: store, ids: FakeIdGenerator());
   });
 
   tearDown(() async {
     await repository.dispose();
     await settings.dispose();
+    await journal.dispose();
   });
 
   Future<void> show(
@@ -46,6 +50,7 @@ void main() {
         home: ThisWeekScreen(
           repository: repository,
           settings: settings,
+          journal: journal,
           ids: FakeIdGenerator(),
           today: () => on,
         ),
@@ -372,6 +377,32 @@ void main() {
 
       expect(find.text('No rota yet'), findsOneWidget);
       expect(find.textContaining('WEBPB'), findsNothing);
+    });
+  });
+
+  group('reaching the journal', () {
+    testWidgets('there is a way in from the rota', (WidgetTester tester) async {
+      await repository.save(familyOfFour());
+      await show(tester, on: anchor);
+
+      await tester.tap(find.byTooltip('Journal'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Nothing written yet'), findsOneWidget);
+    });
+
+    testWidgets('coming back shows the rota again', (
+      WidgetTester tester,
+    ) async {
+      await repository.save(familyOfFour());
+      await show(tester, on: anchor);
+      await tester.tap(find.byTooltip('Journal'));
+      await tester.pumpAndSettle();
+
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Jabulile'), findsOneWidget);
     });
   });
 

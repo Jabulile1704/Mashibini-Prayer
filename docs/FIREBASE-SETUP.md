@@ -1,9 +1,24 @@
 # Firebase: what has to be done by hand
 
-> **Status: not done.** Nothing in this repository talks to Firebase yet, and
-> no Firebase project exists. This document is the handover for the part that
-> cannot be automated, written on Day 7 so that the work around it could carry
-> on without it.
+> **Status: part done.** The project exists and is configured; the apps are
+> not registered yet and nothing in this repository talks to Firebase.
+
+## Where the project actually is
+
+| | |
+|:--|:--|
+| Project ID | `mashibini-prayer` |
+| Project number | 647724958585 |
+| Firestore | created 2026-10-28, **`africa-south1`** (Johannesburg), Standard edition |
+| Sign-in | Google enabled |
+| Plan | Spark — see [ADR-010](adr/ADR-010-the-free-tier-is-a-design-constraint.md) |
+| Apps registered | **none yet** — this is the next step |
+| Rules deployed | **not yet** — `firestore.rules` is written and tested, not pushed |
+
+`africa-south1` is better than this project expected. ADR-001 assumed Firestore
+had no South African region and accepted the latency and the POPIA question as
+a cost; that assumption was wrong and has been corrected. The family's data
+stays in the country.
 
 ## Why this is not already done
 

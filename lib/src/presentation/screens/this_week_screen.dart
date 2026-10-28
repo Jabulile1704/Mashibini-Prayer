@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../data/repositories/device_settings_repository.dart';
 import '../../data/repositories/family_repository.dart';
+import '../../data/repositories/journal_repository.dart';
 import '../../domain/entities/calendar_date.dart';
 import '../../domain/entities/family.dart';
 import '../../domain/entities/turn.dart';
@@ -14,6 +15,7 @@ import '../widgets/date_text.dart';
 import '../widgets/leading_card.dart';
 import '../widgets/next_turn_tile.dart';
 import '../widgets/verse_card.dart';
+import 'journal_screen.dart';
 import 'setup_screen.dart';
 
 /// The home screen: whose week it is, who is next, and when it changes hands.
@@ -32,6 +34,7 @@ class ThisWeekScreen extends StatefulWidget {
   const ThisWeekScreen({
     required this.repository,
     required this.settings,
+    required this.journal,
     required this.ids,
     this.today,
     super.key,
@@ -45,6 +48,8 @@ class ThisWeekScreen extends StatefulWidget {
   /// When it is absent the screen uses names. It never guesses, because being
   /// told someone else's turn is yours is worse than being told a name.
   final DeviceSettingsRepository settings;
+
+  final JournalRepository journal;
 
   /// Passed through to setup, which mints ids for new members and cycles.
   final IdGenerator ids;
@@ -68,6 +73,15 @@ class _ThisWeekScreenState extends State<ThisWeekScreen> {
   CalendarDate get _today =>
       widget.today?.call() ?? CalendarDate.from(DateTime.now());
 
+  Future<void> _openJournal() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (BuildContext context) =>
+            JournalScreen(journal: widget.journal, today: widget.today),
+      ),
+    );
+  }
+
   Future<void> _openSetup() async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -84,7 +98,16 @@ class _ThisWeekScreenState extends State<ThisWeekScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Mashibini Prayer')),
+      appBar: AppBar(
+        title: const Text('Mashibini Prayer'),
+        actions: <Widget>[
+          IconButton(
+            onPressed: _openJournal,
+            icon: const Icon(Icons.menu_book_outlined),
+            tooltip: 'Journal',
+          ),
+        ],
+      ),
       body: SafeArea(
         child: StreamBuilder<Family?>(
           stream: _families,

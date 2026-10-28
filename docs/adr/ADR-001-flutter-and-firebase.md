@@ -35,10 +35,17 @@ of our own.
 
 - Vendor lock-in. Moving off Firestore later means rewriting the data layer —
   bounded by the repository interfaces in ADR-003, but real.
-- Firestore has no `africa-south1` region at the time of writing, so data sits
-  further away than it ideally would. For four users' names and a weekly
-  rota this is latency we will not notice, but it is a POPIA conversation if
-  the app ever leaves the family.
+- ~~Firestore has no `africa-south1` region at the time of writing, so data
+  sits further away than it ideally would.~~ **Wrong, corrected Day 11.**
+  Firestore does offer `africa-south1` (Johannesburg), and the project's
+  database was created there. Data stays in South Africa, which removes the
+  POPIA conversation this entry worried about rather than merely deferring
+  it.
+
+  The claim was written on Day 2 from memory and never checked, because it
+  read as a cost we were accepting rather than a fact we were asserting.
+  Pessimistic assumptions get waved through in a way optimistic ones do not —
+  which is exactly why this one survived nine days in a decision record.
 - The free tier is generous but not infinite; an accidental listener loop
   could cost real money. Mitigated by reads being served locally (ADR-003).
 

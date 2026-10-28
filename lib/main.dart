@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'src/app.dart';
 import 'src/data/random_id_generator.dart';
 import 'src/data/repositories/device_settings_repository.dart';
+import 'src/data/repositories/journal_repository.dart';
 import 'src/data/repositories/local_family_repository.dart';
 import 'src/data/sources/local/preferences_key_value_store.dart';
 
@@ -28,11 +29,14 @@ void main() {
     },
   );
 
+  final RandomIdGenerator ids = RandomIdGenerator();
+
   runApp(
     MashibiniPrayerApp(
       repository: repository,
       settings: LocalDeviceSettingsRepository(store: store),
-      ids: RandomIdGenerator(),
+      journal: LocalJournalRepository(store: store, ids: ids),
+      ids: ids,
     ),
   );
 }

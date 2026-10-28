@@ -102,23 +102,17 @@ flutterfire configure --project=mashibini-prayer
 That writes `lib/firebase_options.dart`, plus `android/app/google-services.json`
 and `ios/Runner/GoogleService-Info.plist`.
 
-### 4. Tell git what not to commit
+### 4. The generated files are committed — decided, not defaulted
 
-The generated files are not secrets in the usual sense — they identify the
-project, they do not grant access to it, and security rules are what protect
-the data. They are still configuration for *your* project rather than part of
-the source, so add them to `.gitignore` and keep a copy somewhere safe:
+`lib/firebase_options.dart`, `android/app/google-services.json` and
+`ios/Runner/GoogleService-Info.plist` are **in the repository**, which is
+public.
 
-```
-lib/firebase_options.dart
-android/app/google-services.json
-ios/Runner/GoogleService-Info.plist
-```
-
-CI builds will then need them supplied as secrets, or the Android build job
-will need to skip the Firebase-dependent build. **That is a real decision this
-document does not make for you**, and it should become an issue when the
-project exists.
+They identify the project; they do not authorise anything. The security rules
+decide access. The risk that is real is quota exhaustion rather than
+disclosure, and it was accepted knowingly for a four-person family app — see
+[ADR-011](adr/ADR-011-the-firebase-config-is-committed.md) for the full
+reasoning and what would change the answer.
 
 ### 5. Tell me it is done
 

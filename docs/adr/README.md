@@ -17,3 +17,4 @@ names it.
 | [007](ADR-007-develop-is-default-and-prs-rebase.md) | `develop` is the default branch, and PRs rebase | Accepted |
 | [008](ADR-008-merging-is-a-union-of-append-only-logs.md) | Merging is a union of append-only logs | Accepted |
 | [009](ADR-009-the-verses-are-bundled-webpb.md) | The verses are bundled, and they are the WEBPB | Accepted |
+| [010](ADR-010-the-free-tier-is-a-design-constraint.md) | The free tier is a design constraint, not a billing preference | Accepted |

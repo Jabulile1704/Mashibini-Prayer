@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mashibini_prayer/src/app.dart';
 import 'package:mashibini_prayer/src/data/repositories/device_settings_repository.dart';
+import 'package:mashibini_prayer/src/data/repositories/journal_repository.dart';
 import 'package:mashibini_prayer/src/data/repositories/local_family_repository.dart';
 
 import 'support/fake_id_generator.dart';
@@ -10,16 +11,19 @@ import 'support/fake_key_value_store.dart';
 void main() {
   late LocalFamilyRepository repository;
   late LocalDeviceSettingsRepository settings;
+  late LocalJournalRepository journal;
 
   setUp(() {
     final FakeKeyValueStore store = FakeKeyValueStore();
     repository = LocalFamilyRepository(store: store);
     settings = LocalDeviceSettingsRepository(store: store);
+    journal = LocalJournalRepository(store: store, ids: FakeIdGenerator());
   });
 
   tearDown(() async {
     await repository.dispose();
     await settings.dispose();
+    await journal.dispose();
   });
 
   group('MashibiniPrayerApp', () {
@@ -28,6 +32,7 @@ void main() {
         MashibiniPrayerApp(
           repository: repository,
           settings: settings,
+          journal: journal,
           ids: FakeIdGenerator(),
         ),
       );
@@ -42,6 +47,7 @@ void main() {
         MashibiniPrayerApp(
           repository: repository,
           settings: settings,
+          journal: journal,
           ids: FakeIdGenerator(),
         ),
       );
@@ -59,6 +65,7 @@ void main() {
         MashibiniPrayerApp(
           repository: repository,
           settings: settings,
+          journal: journal,
           ids: FakeIdGenerator(),
         ),
       );

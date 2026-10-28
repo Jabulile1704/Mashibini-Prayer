@@ -1,0 +1,82 @@
+{
+  "project_info": {
+    "project_number": "647724958585",
+    "project_id": "mashibini-prayer",
+    "storage_bucket": "mashibini-prayer.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:647724958585:android:1e39b99cdac0ce0e1f25a8",
+        "android_client_info": {
+          "package_name": "Mashibini.Prayer"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "647724958585-d0f8hojk88obhlr70ealth3cl294ebns.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAl6_MPRELO0FT5nAWmnXTlU3iX5pn0rmg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "647724958585-d0f8hojk88obhlr70ealth3cl294ebns.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "647724958585-f1jahmjkc3kvbnacnkuqj38q37a4e21v.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "Mashibini-Prayer"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:647724958585:android:bf792a77933ddfa81f25a8",
+        "android_client_info": {
+          "package_name": "com.mashibini.mashibini_prayer"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "647724958585-d0f8hojk88obhlr70ealth3cl294ebns.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAl6_MPRELO0FT5nAWmnXTlU3iX5pn0rmg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "647724958585-d0f8hojk88obhlr70ealth3cl294ebns.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "647724958585-f1jahmjkc3kvbnacnkuqj38q37a4e21v.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "Mashibini-Prayer"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

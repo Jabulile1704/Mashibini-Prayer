@@ -47,6 +47,27 @@ Until this is answered, Day 8's rules cannot be written honestly, because
 "only the author may read a journal entry" is either a rule or a fiction
 depending on the answer.
 
+## Before you click anything: the free plan has teeth
+
+The project stays on **Spark**, the no-cost plan. Checked against Firebase's
+own pages, not from memory — the full write-up is
+[ADR-010](adr/ADR-010-the-free-tier-is-a-design-constraint.md). Three things
+matter while you are in the console:
+
+1. **Do not enable email-link (passwordless) sign-in.** It is capped at
+   **five emails per day for the whole project**. Four people, one of them
+   retrying on a bad evening, and nobody can sign in. If you want individual
+   accounts, use **Google sign-in** or **email and password**.
+2. **Phone/SMS sign-in is not available** on Spark at all.
+3. **Do not link a billing account**, accept the $300 trial credit, or enable
+   a paid Google Cloud API in this project. Any of those **auto-upgrades it to
+   Blaze**, which is how a free project quietly becomes a billable one.
+
+Cloud Functions and Cloud Storage are also unavailable on Spark. The app is
+built not to need either — see ADR-010 — so there is nothing for you to work
+around, but it is why the rota will never send a notification to anybody
+else's phone.
+
 ## Steps
 
 Roughly twenty minutes. Nothing here needs a card.

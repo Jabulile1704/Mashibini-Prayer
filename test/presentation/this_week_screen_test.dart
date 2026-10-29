@@ -12,6 +12,7 @@ import 'package:mashibini_prayer/src/presentation/screens/this_week_screen.dart'
 
 import '../support/fake_id_generator.dart';
 import '../support/fake_key_value_store.dart';
+import '../support/fake_reminders.dart';
 import '../support/family_fixtures.dart';
 
 void main() {
@@ -51,6 +52,7 @@ void main() {
           repository: repository,
           settings: settings,
           journal: journal,
+          reminders: FakeReminders(),
           ids: FakeIdGenerator(),
           today: () => on,
         ),
@@ -403,6 +405,18 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Jabulile'), findsOneWidget);
+    });
+  });
+
+  group('reaching reminders', () {
+    testWidgets('there is a way in from the rota', (WidgetTester tester) async {
+      await repository.save(familyOfFour());
+      await show(tester, on: anchor);
+
+      await tester.tap(find.byTooltip('Reminders'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Remind me before my week'), findsOneWidget);
     });
   });
 

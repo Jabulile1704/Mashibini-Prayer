@@ -7,6 +7,7 @@ import 'package:mashibini_prayer/src/data/repositories/local_family_repository.d
 
 import 'support/fake_id_generator.dart';
 import 'support/fake_key_value_store.dart';
+import 'support/fake_reminders.dart';
 
 void main() {
   late LocalFamilyRepository repository;
@@ -33,6 +34,7 @@ void main() {
           repository: repository,
           settings: settings,
           journal: journal,
+          reminders: FakeReminders(),
           ids: FakeIdGenerator(),
         ),
       );
@@ -48,6 +50,7 @@ void main() {
           repository: repository,
           settings: settings,
           journal: journal,
+          reminders: FakeReminders(),
           ids: FakeIdGenerator(),
         ),
       );
@@ -66,6 +69,7 @@ void main() {
           repository: repository,
           settings: settings,
           journal: journal,
+          reminders: FakeReminders(),
           ids: FakeIdGenerator(),
         ),
       );

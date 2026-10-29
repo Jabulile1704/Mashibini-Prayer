@@ -20,6 +20,18 @@ abstract interface class DeviceSettingsRepository {
 
   Stream<String?> watchYouAre();
 
+  /// Whether this phone should remind its owner before their week.
+  ///
+  /// Absent means never asked, which is different from "off" only in what
+  /// the app may do about it: R5.1 says an install that has never been asked
+  /// sends nothing, so absent and off behave identically and the distinction
+  /// is not worth storing.
+  Future<bool> loadRemindersEnabled();
+
+  Future<void> saveRemindersEnabled({required bool enabled});
+
+  Stream<bool> watchRemindersEnabled();
+
   Future<void> dispose();
 }
 
@@ -27,11 +39,14 @@ class LocalDeviceSettingsRepository implements DeviceSettingsRepository {
   LocalDeviceSettingsRepository({required this.store});
 
   static const String youAreKey = 'device.youAre.v1';
+  static const String remindersKey = 'device.reminders.v1';
 
   final KeyValueStore store;
 
   final StreamController<String?> _changes =
       StreamController<String?>.broadcast();
+  final StreamController<bool> _reminderChanges =
+      StreamController<bool>.broadcast();
 
   bool _disposed = false;
 
@@ -57,12 +72,31 @@ class LocalDeviceSettingsRepository implements DeviceSettingsRepository {
   }
 
   @override
+  Future<bool> loadRemindersEnabled() async =>
+      await store.read(remindersKey) == 'true';
+
+  @override
+  Future<void> saveRemindersEnabled({required bool enabled}) async {
+    _assertUsable();
+    await store.write(remindersKey, enabled ? 'true' : 'false');
+    _reminderChanges.add(enabled);
+  }
+
+  @override
+  Stream<bool> watchRemindersEnabled() async* {
+    _assertUsable();
+    yield await loadRemindersEnabled();
+    yield* _reminderChanges.stream;
+  }
+
+  @override
   Future<void> dispose() async {
     if (_disposed) {
       return;
     }
     _disposed = true;
     await _changes.close();
+    await _reminderChanges.close();
   }
 
   void _assertUsable() {

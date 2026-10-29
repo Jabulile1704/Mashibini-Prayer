@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../data/repositories/device_settings_repository.dart';
 import '../../data/repositories/family_repository.dart';
 import '../../data/repositories/journal_repository.dart';
+import '../../data/sources/notifications/reminders.dart';
 import '../../domain/entities/calendar_date.dart';
 import '../../domain/entities/family.dart';
 import '../../domain/entities/turn.dart';
@@ -16,6 +17,7 @@ import '../widgets/leading_card.dart';
 import '../widgets/next_turn_tile.dart';
 import '../widgets/verse_card.dart';
 import 'journal_screen.dart';
+import 'reminders_screen.dart';
 import 'setup_screen.dart';
 
 /// The home screen: whose week it is, who is next, and when it changes hands.
@@ -35,6 +37,7 @@ class ThisWeekScreen extends StatefulWidget {
     required this.repository,
     required this.settings,
     required this.journal,
+    required this.reminders,
     required this.ids,
     this.today,
     super.key,
@@ -50,6 +53,8 @@ class ThisWeekScreen extends StatefulWidget {
   final DeviceSettingsRepository settings;
 
   final JournalRepository journal;
+
+  final Reminders reminders;
 
   /// Passed through to setup, which mints ids for new members and cycles.
   final IdGenerator ids;
@@ -72,6 +77,19 @@ class _ThisWeekScreenState extends State<ThisWeekScreen> {
 
   CalendarDate get _today =>
       widget.today?.call() ?? CalendarDate.from(DateTime.now());
+
+  Future<void> _openReminders() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (BuildContext context) => RemindersScreen(
+          familyRepository: widget.repository,
+          settings: widget.settings,
+          reminders: widget.reminders,
+          today: widget.today,
+        ),
+      ),
+    );
+  }
 
   Future<void> _openJournal() async {
     await Navigator.of(context).push(
@@ -105,6 +123,11 @@ class _ThisWeekScreenState extends State<ThisWeekScreen> {
             onPressed: _openJournal,
             icon: const Icon(Icons.menu_book_outlined),
             tooltip: 'Journal',
+          ),
+          IconButton(
+            onPressed: _openReminders,
+            icon: const Icon(Icons.notifications_none),
+            tooltip: 'Reminders',
           ),
         ],
       ),

@@ -6,6 +6,7 @@ import 'src/data/repositories/device_settings_repository.dart';
 import 'src/data/repositories/journal_repository.dart';
 import 'src/data/repositories/local_family_repository.dart';
 import 'src/data/sources/local/preferences_key_value_store.dart';
+import 'src/data/sources/notifications/local_reminders.dart';
 
 void main() {
   // shared_preferences talks over a platform channel, so the binding has to
@@ -36,6 +37,7 @@ void main() {
       repository: repository,
       settings: LocalDeviceSettingsRepository(store: store),
       journal: LocalJournalRepository(store: store, ids: ids),
+      reminders: LocalReminders(),
       ids: ids,
     ),
   );

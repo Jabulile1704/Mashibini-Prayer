@@ -141,6 +141,16 @@ nobody has to ask.
   **then** it sends nothing until asked — an app that starts notifying uninvited
   is not a good houseguest.
 
+**Delivered as a per-device reminder only (Day 12).** The first criterion is met
+for the person holding the phone and cannot be met for anybody else: sending a
+push needs a sender in a trusted environment, and the Spark plan has no Cloud
+Functions to host one (ADR-010). No device can notify another.
+
+What that leaves open: somebody who never opens the app and never switches
+reminders on is told nothing. Closing it needs either a paid plan or a nominated
+device volunteering to be the sender — a product decision, not an implementation
+one, and not taken here.
+
 ---
 
 ## E6 — Sync and offline

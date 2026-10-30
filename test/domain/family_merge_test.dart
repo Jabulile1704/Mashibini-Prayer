@@ -31,7 +31,15 @@ void main() {
     f.cycles
         .map((Cycle c) => '${c.id}@${c.effectiveFrom}:${c.order.join("-")}')
         .join(','),
-    f.skips.map((SkippedTurn s) => '${s.id}@${s.weekStart}').join(','),
+    // `withdrawn` is part of the fingerprint on purpose: without it, a merge
+    // that dropped a withdrawal would look identical to one that kept it,
+    // and the commutativity tests below would pass through the bug.
+    f.skips
+        .map(
+          (SkippedTurn s) =>
+              '${s.id}@${s.weekStart}${s.withdrawn ? "(withdrawn)" : ""}',
+        )
+        .join(','),
   ].join('|');
 
   group('merging is deterministic', () {
@@ -236,6 +244,77 @@ void main() {
       expect(
         () => FamilyMerge.merge(familyOfFour(), other),
         throwsArgumentError,
+      );
+    });
+  });
+
+  group('a withdrawn skip survives the merge (R1.4, R6.2)', () {
+    /// One phone skips a week; both phones have that. Then one takes it back.
+    (Family withdrawn, Family stillSkipped) phonesDisagreeingAboutASkip() {
+      final Family skipped = FamilyEditor.skipTurn(
+        familyOfFour(),
+        weekStart: anchor.addDays(7),
+        today: anchor,
+        ids: DistinctIdGenerator('a'),
+      );
+      return (
+        FamilyEditor.unskipTurn(skipped, weekStart: anchor.addDays(7)),
+        skipped,
+      );
+    }
+
+    test('the withdrawal wins, whichever side is holding it', () {
+      final (Family withdrawn, Family stillSkipped) =
+          phonesDisagreeingAboutASkip();
+
+      for (final Family merged in <Family>[
+        FamilyMerge.merge(withdrawn, stillSkipped),
+        FamilyMerge.merge(stillSkipped, withdrawn),
+      ]) {
+        expect(merged.skips.single.withdrawn, isTrue);
+        expect(
+          leaders(merged, anchor.addDays(7), 1).single,
+          'Sisi',
+          reason: 'taking a skip back must not be undone by syncing',
+        );
+      }
+    });
+
+    test('merging again changes nothing', () {
+      final (Family withdrawn, Family stillSkipped) =
+          phonesDisagreeingAboutASkip();
+      final Family once = FamilyMerge.merge(withdrawn, stillSkipped);
+
+      expect(shapeOf(FamilyMerge.merge(once, stillSkipped)), shapeOf(once));
+      expect(shapeOf(FamilyMerge.merge(once, once)), shapeOf(once));
+    });
+
+    test('a skip neither side withdrew is still a skip', () {
+      final (Family _, Family stillSkipped) = phonesDisagreeingAboutASkip();
+
+      final Family merged = FamilyMerge.merge(stillSkipped, stillSkipped);
+
+      expect(merged.skips.single.withdrawn, isFalse);
+      expect(leaders(merged, anchor.addDays(7), 1).single, 'Mama');
+    });
+
+    test('re-skipping after a withdrawal survives as a separate record', () {
+      final (Family withdrawn, Family stillSkipped) =
+          phonesDisagreeingAboutASkip();
+      final Family again = FamilyEditor.skipTurn(
+        withdrawn,
+        weekStart: anchor.addDays(7),
+        today: anchor,
+        ids: DistinctIdGenerator('b'),
+      );
+
+      final Family merged = FamilyMerge.merge(again, stillSkipped);
+
+      expect(merged.skips, hasLength(2));
+      expect(
+        leaders(merged, anchor.addDays(7), 1).single,
+        'Mama',
+        reason: 'the live skip counts; the withdrawn one does not',
       );
     });
   });

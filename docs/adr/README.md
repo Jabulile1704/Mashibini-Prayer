@@ -19,3 +19,4 @@ names it.
 | [009](ADR-009-the-verses-are-bundled-webpb.md) | The verses are bundled, and they are the WEBPB | Accepted |
 | [010](ADR-010-the-free-tier-is-a-design-constraint.md) | The free tier is a design constraint, not a billing preference | Accepted |
 | [011](ADR-011-the-firebase-config-is-committed.md) | The Firebase config is committed to a public repository | Accepted |
+| [012](ADR-012-a-skip-is-withdrawn-not-deleted.md) | A skip is withdrawn, never deleted | Accepted |

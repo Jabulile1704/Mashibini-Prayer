@@ -168,9 +168,16 @@ class RotaEngine {
   ///
   /// Bounded below by the cycle's own start so that a skip in an earlier epoch
   /// cannot shift a later one.
+  ///
+  /// Withdrawn skips are not counted. They stay in the log because that is
+  /// how two phones agree one was taken back (ADR-012), but a skip somebody
+  /// changed their mind about must not move the rota.
   int _skipsUpTo(Cycle cycle, CalendarDate weekStart) {
     int count = 0;
     for (final SkippedTurn skip in _skips) {
+      if (skip.withdrawn) {
+        continue;
+      }
       final bool withinEpoch = skip.weekStart.isOnOrAfter(cycle.effectiveFrom);
       final bool notInFuture = skip.weekStart.isOnOrBefore(weekStart);
       if (withinEpoch && notInFuture) {

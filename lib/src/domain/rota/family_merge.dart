@@ -65,6 +65,12 @@ abstract final class FamilyMerge {
         b.skips,
         id: (SkippedTurn s) => s.id,
         preferFirst: identical(newer, a),
+        // A withdrawal wins over the skip it withdraws, whichever side holds
+        // it. Everything else here resolves by preferring a side, which is a
+        // guess; this is not. `withdrawn` only ever goes false to true, so
+        // taking the withdrawn one is the same answer in either argument
+        // order and the same answer again if the merge is run twice.
+        resolve: (SkippedTurn x, SkippedTurn y) => x.withdrawn ? x : y,
         order: (SkippedTurn x, SkippedTurn y) {
           final int byDate = x.weekStart.compareTo(y.weekStart);
           return byDate != 0 ? byDate : x.id.compareTo(y.id);
@@ -99,7 +105,9 @@ abstract final class FamilyMerge {
   ///
   /// Where both hold the same id, the preferred side's version is kept — the
   /// only way the two can differ for the same id is an edit, and an edit
-  /// should not be lost to whichever argument came first.
+  /// should not be lost to whichever argument came first. [resolve] replaces
+  /// that preference where the type can decide for itself, which is strictly
+  /// better: preferring a side is a tie-break, not an answer.
   ///
   /// The result is sorted by [order] rather than left in arrival order. That
   /// is not tidiness: two phones merging the same pair in opposite orders
@@ -112,12 +120,16 @@ abstract final class FamilyMerge {
     required String Function(T) id,
     required bool preferFirst,
     required int Function(T, T) order,
+    T Function(T existing, T incoming)? resolve,
   }) {
     final Map<String, T> byId = <String, T>{};
     // Whichever side is preferred is applied last, so it overwrites.
     for (final T item
         in preferFirst ? <T>[...second, ...first] : <T>[...first, ...second]) {
-      byId[id(item)] = item;
+      final T? existing = byId[id(item)];
+      byId[id(item)] = existing == null || resolve == null
+          ? item
+          : resolve(existing, item);
     }
 
     return byId.values.toList()..sort(order);

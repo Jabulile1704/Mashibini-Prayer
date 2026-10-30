@@ -12,6 +12,7 @@ import 'package:mashibini_prayer/src/presentation/screens/this_week_screen.dart'
 
 import '../support/fake_id_generator.dart';
 import '../support/fake_key_value_store.dart';
+import '../support/fake_app_version.dart';
 import '../support/fake_reminders.dart';
 import '../support/family_fixtures.dart';
 
@@ -37,6 +38,8 @@ void main() {
     WidgetTester tester, {
     required CalendarDate on,
     String? youAre,
+    FakeAppVersion? appVersion,
+    bool settle = true,
   }) async {
     if (youAre != null) {
       await settings.saveYouAre(youAre);
@@ -53,12 +56,17 @@ void main() {
           settings: settings,
           journal: journal,
           reminders: FakeReminders(),
+          appVersion: appVersion ?? FakeAppVersion(),
           ids: FakeIdGenerator(),
           today: () => on,
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    if (settle) {
+      await tester.pumpAndSettle();
+    } else {
+      await tester.pump();
+    }
   }
 
   group('nothing set up yet', () {
@@ -444,6 +452,42 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text('The rota starts on'), findsOneWidget);
+    });
+  });
+  group('which build this is', () {
+    testWidgets('the version is shown at the foot of the screen', (
+      WidgetTester tester,
+    ) async {
+      // The owner ships often. Without this, "which version is on my phone"
+      // is unanswerable without plugging the phone into a Mac.
+      await repository.save(familyOfFour());
+
+      await show(tester, on: anchor, appVersion: FakeAppVersion('2.3.1 (47)'));
+
+      expect(find.text('Version 2.3.1 (47)'), findsOneWidget);
+    });
+
+    testWidgets('nothing is shown until the real answer arrives', (
+      WidgetTester tester,
+    ) async {
+      // A placeholder would shift the layout when it is replaced, on the one
+      // screen whose whole job is to be read at a glance.
+      await repository.save(familyOfFour());
+
+      await show(tester, on: anchor, settle: false);
+
+      expect(find.textContaining('Version'), findsNothing);
+    });
+
+    testWidgets('it is not shown before there is a rota', (
+      WidgetTester tester,
+    ) async {
+      // Nothing saved: the first-run screen asks one thing, and a version
+      // string is not it.
+      await show(tester, on: anchor);
+
+      expect(find.textContaining('Version'), findsNothing);
+      expect(find.text('No rota yet'), findsOneWidget);
     });
   });
 }

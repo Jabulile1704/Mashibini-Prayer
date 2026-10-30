@@ -5,6 +5,7 @@ import '../src/data/repositories/device_settings_repository.dart';
 import '../src/data/repositories/family_repository.dart';
 import '../src/data/repositories/journal_repository.dart';
 import '../src/data/sources/notifications/reminders.dart';
+import '../src/data/sources/platform/app_version.dart';
 import '../src/domain/ids.dart';
 import 'presentation/brand/theme.dart';
 import 'presentation/screens/this_week_screen.dart';
@@ -45,6 +46,7 @@ class MashibiniPrayerApp extends StatelessWidget {
     required this.settings,
     required this.journal,
     required this.reminders,
+    required this.appVersion,
     required this.ids,
     super.key,
   });
@@ -53,6 +55,7 @@ class MashibiniPrayerApp extends StatelessWidget {
   final DeviceSettingsRepository settings;
   final JournalRepository journal;
   final Reminders reminders;
+  final AppVersion appVersion;
   final IdGenerator ids;
 
   static const String title = 'Mashibini Prayer';
@@ -71,6 +74,7 @@ class MashibiniPrayerApp extends StatelessWidget {
         settings: settings,
         journal: journal,
         reminders: reminders,
+        appVersion: appVersion,
         ids: ids,
       ),
     );

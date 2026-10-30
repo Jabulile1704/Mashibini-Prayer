@@ -86,6 +86,6 @@ echo
 echo "Read the changelog and edit it. Commit messages are written for"
 echo "reviewers; a changelog is written for the family. Then:"
 echo
-echo "  git commit -am 'chore(release): v$VERSION'"
+echo "  git add -A && git commit -m 'chore(release): v$VERSION'"
 echo "  git push -u origin release/v$VERSION"
 echo "  gh pr create --base main --title 'chore(release): v$VERSION'"

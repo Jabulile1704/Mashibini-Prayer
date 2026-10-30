@@ -52,7 +52,7 @@ a turn" becomes "You can now skip somebody's week when they are away." The
 script drafts, it does not author.
 
 ```bash
-git commit -am "chore(release): v1.1.0"
+git add -A && git commit -m "chore(release): v1.1.0"
 git push -u origin release/v1.1.0
 gh pr create --base main --title "chore(release): v1.1.0"
 ```

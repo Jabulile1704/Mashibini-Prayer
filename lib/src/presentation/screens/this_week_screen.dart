@@ -18,6 +18,7 @@ import '../widgets/next_turn_tile.dart';
 import '../widgets/verse_card.dart';
 import 'journal_screen.dart';
 import 'reminders_screen.dart';
+import 'schedule_screen.dart';
 import 'setup_screen.dart';
 
 /// The home screen: whose week it is, who is next, and when it changes hands.
@@ -66,6 +67,8 @@ class ThisWeekScreen extends StatefulWidget {
   /// screen is testable on any week of the next decade.
   final CalendarDate Function()? today;
 
+  static const Key scheduleButton = Key('home.schedule');
+
   @override
   State<ThisWeekScreen> createState() => _ThisWeekScreenState();
 }
@@ -85,6 +88,19 @@ class _ThisWeekScreenState extends State<ThisWeekScreen> {
           familyRepository: widget.repository,
           settings: widget.settings,
           reminders: widget.reminders,
+          today: widget.today,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openSchedule() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (BuildContext context) => ScheduleScreen(
+          familyRepository: widget.repository,
+          settings: widget.settings,
+          ids: widget.ids,
           today: widget.today,
         ),
       ),
@@ -119,6 +135,12 @@ class _ThisWeekScreenState extends State<ThisWeekScreen> {
       appBar: AppBar(
         title: const Text('Mashibini Prayer'),
         actions: <Widget>[
+          IconButton(
+            key: ThisWeekScreen.scheduleButton,
+            onPressed: _openSchedule,
+            icon: const Icon(Icons.event_outlined),
+            tooltip: 'The weeks ahead',
+          ),
           IconButton(
             onPressed: _openJournal,
             icon: const Icon(Icons.menu_book_outlined),

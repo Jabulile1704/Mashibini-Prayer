@@ -16,6 +16,7 @@ class SkippedTurn {
     required this.id,
     required this.weekStart,
     required this.memberId,
+    this.withdrawn = false,
     this.note,
   });
 
@@ -27,8 +28,31 @@ class SkippedTurn {
   /// The member who would otherwise have led that week.
   final String memberId;
 
+  /// Whether this skip has been taken back.
+  ///
+  /// Withdrawing rather than deleting, because skips are an append-only log
+  /// and two phones merge by union (ADR-008): a record removed on one device
+  /// would simply come back from the other. A flag merges instead — and only
+  /// ever in one direction, which is what makes the merge safe to run twice
+  /// or in either order.
+  ///
+  /// It never goes back to false. Skipping the same week again appends a new
+  /// record with a new id rather than reviving this one, so the one-way rule
+  /// holds without costing anybody the ability to change their mind twice.
+  final bool withdrawn;
+
   final String? note;
 
+  SkippedTurn withdraw() => SkippedTurn(
+    id: id,
+    weekStart: weekStart,
+    memberId: memberId,
+    withdrawn: true,
+    note: note,
+  );
+
   @override
-  String toString() => 'SkippedTurn($memberId, week of $weekStart)';
+  String toString() =>
+      'SkippedTurn($memberId, week of $weekStart'
+      '${withdrawn ? ', withdrawn' : ''})';
 }

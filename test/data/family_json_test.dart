@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mashibini_prayer/src/data/serialization/family_json.dart';
 import 'package:mashibini_prayer/src/domain/entities/calendar_date.dart';
@@ -37,6 +39,43 @@ void main() {
       expect(restored.skips.single.memberId, 'm1');
       expect(restored.skips.single.weekStart, anchor);
       expect(restored.skips.single.note, 'away for a week');
+      expect(restored.skips.single.withdrawn, isFalse);
+    });
+
+    test('a withdrawn skip is still withdrawn after a round trip', () {
+      // It has to be. The flag is the only thing standing between "we took
+      // that skip back" and the rota quietly shifting again on next launch.
+      final Family original = familyOfFour(
+        skips: <SkippedTurn>[
+          SkippedTurn(id: 's1', weekStart: anchor, memberId: 'm1').withdraw(),
+        ],
+      );
+
+      final Family restored = FamilyJson.decode(FamilyJson.encode(original));
+
+      expect(restored.skips.single.withdrawn, isTrue);
+    });
+
+    test('a skip written before the flag existed reads as a live skip', () {
+      // Forward compatibility the cheap way: absent means false, which is
+      // what every document written before today means.
+      final String encoded = FamilyJson.encode(
+        familyOfFour(
+          skips: <SkippedTurn>[
+            SkippedTurn(id: 's1', weekStart: anchor, memberId: 'm1'),
+          ],
+        ),
+      );
+      final Map<String, Object?> asMap =
+          jsonDecode(encoded) as Map<String, Object?>;
+      final List<Object?> skips = asMap['skips']! as List<Object?>;
+
+      expect(
+        (skips.single as Map<String, Object?>).containsKey('withdrawn'),
+        isFalse,
+        reason: 'a family that never withdrew a skip should not carry the key',
+      );
+      expect(FamilyJson.decode(encoded).skips.single.withdrawn, isFalse);
     });
 
     test('the restored family computes the same rota as the original', () {

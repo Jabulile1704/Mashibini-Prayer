@@ -115,6 +115,11 @@ abstract final class FamilyJson {
     'id': skip.id,
     'weekStart': skip.weekStart.toString(),
     'memberId': skip.memberId,
+    // Written only when true. A family that has never taken a skip back
+    // should not carry a field about it on every record, and absent reads
+    // as false — which is also what every document written before this
+    // field existed means.
+    if (skip.withdrawn) 'withdrawn': true,
     if (skip.note != null) 'note': skip.note,
   };
 
@@ -122,6 +127,7 @@ abstract final class FamilyJson {
     id: readString(json, 'id'),
     weekStart: CalendarDate.parse(readString(json, 'weekStart')),
     memberId: readString(json, 'memberId'),
+    withdrawn: readBoolOr(json, 'withdrawn', false),
     note: readStringOrNull(json, 'note'),
   );
 }

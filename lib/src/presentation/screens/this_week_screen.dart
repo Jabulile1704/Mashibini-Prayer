@@ -12,6 +12,7 @@ import '../../domain/rota/rota_engine.dart';
 import '../../data/sources/assets/bundled_verses.dart';
 import '../../domain/verse/verse_for_the_day.dart';
 import '../brand/mark.dart';
+import '../widgets/centred_message.dart';
 import '../widgets/date_text.dart';
 import '../widgets/leading_card.dart';
 import '../widgets/next_turn_tile.dart';
@@ -135,20 +136,33 @@ class _ThisWeekScreenState extends State<ThisWeekScreen> {
       appBar: AppBar(
         title: const Text('Mashibini Prayer'),
         actions: <Widget>[
+          // Label *and* tooltip on each. A tooltip alone reaches the
+          // semantics tree as a tooltip, not a label, which leaves an
+          // icon-only button announcing as "button" with the name as an
+          // afterthought. The label is what a screen reader leads with.
           IconButton(
             key: ThisWeekScreen.scheduleButton,
             onPressed: _openSchedule,
-            icon: const Icon(Icons.event_outlined),
+            icon: const Icon(
+              Icons.event_outlined,
+              semanticLabel: 'The weeks ahead',
+            ),
             tooltip: 'The weeks ahead',
           ),
           IconButton(
             onPressed: _openJournal,
-            icon: const Icon(Icons.menu_book_outlined),
+            icon: const Icon(
+              Icons.menu_book_outlined,
+              semanticLabel: 'Journal',
+            ),
             tooltip: 'Journal',
           ),
           IconButton(
             onPressed: _openReminders,
-            icon: const Icon(Icons.notifications_none),
+            icon: const Icon(
+              Icons.notifications_none,
+              semanticLabel: 'Reminders',
+            ),
             tooltip: 'Reminders',
           ),
         ],
@@ -202,44 +216,36 @@ class _NoFamilyYet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            // A ring with nothing filled: the shape of the thing, waiting.
-            ExcludeSemantics(
-              child: RotaMark(
-                size: 84,
-                current: -1,
-                ringColour: theme.colorScheme.onSurfaceVariant.withValues(
-                  alpha: 0.22,
-                ),
-                currentColour: theme.colorScheme.secondary,
-              ),
+    return CentredMessage(
+      padding: const EdgeInsets.all(32),
+      children: <Widget>[
+        // A ring with nothing filled: the shape of the thing, waiting.
+        ExcludeSemantics(
+          child: RotaMark(
+            size: 84,
+            current: -1,
+            ringColour: theme.colorScheme.onSurfaceVariant.withValues(
+              alpha: 0.22,
             ),
-            const SizedBox(height: 32),
-            Text(
-              'No rota yet',
-              style: theme.textTheme.headlineSmall,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Add everyone who takes a week, and the day your week turns '
-              'over. The app will keep track from there.',
-              style: theme.textTheme.bodyMedium,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-            FilledButton(
-              onPressed: onSetUp,
-              child: const Text('Set up the rota'),
-            ),
-          ],
+            currentColour: theme.colorScheme.secondary,
+          ),
         ),
-      ),
+        const SizedBox(height: 32),
+        Text(
+          'No rota yet',
+          style: theme.textTheme.headlineSmall,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'Add everyone who takes a week, and the day your week turns '
+          'over. The app will keep track from there.',
+          style: theme.textTheme.bodyMedium,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 32),
+        FilledButton(onPressed: onSetUp, child: const Text('Set up the rota')),
+      ],
     );
   }
 }
@@ -350,26 +356,21 @@ class _NotStartedYet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Text(
-              'The rota starts on',
-              style: theme.textTheme.bodyLarge,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              DateLabels.full(context, startsOn),
-              style: theme.textTheme.headlineSmall,
-              textAlign: TextAlign.center,
-            ),
-          ],
+    return CentredMessage(
+      padding: const EdgeInsets.all(32),
+      children: <Widget>[
+        Text(
+          'The rota starts on',
+          style: theme.textTheme.bodyLarge,
+          textAlign: TextAlign.center,
         ),
-      ),
+        const SizedBox(height: 8),
+        Text(
+          DateLabels.full(context, startsOn),
+          style: theme.textTheme.headlineSmall,
+          textAlign: TextAlign.center,
+        ),
+      ],
     );
   }
 }

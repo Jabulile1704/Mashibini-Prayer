@@ -32,11 +32,28 @@ fi
 
 CURRENT=$(grep -E '^version:' pubspec.yaml | awk '{print $2}')
 BUILD=$((${CURRENT##*+} + 1))
-PREVIOUS=$(git describe --tags --abbrev=0 2>/dev/null || echo '')
+
+# Where the last release ended, *on this branch*.
+#
+# Not the tag. Pull requests rebase onto `main` (ADR-007), so a tag on `main`
+# shares no commits with the ones still sitting on `develop` — they are
+# copies with different hashes. `git log v1.0.0..develop` therefore lists the
+# entire project, and `git cherry` cannot help either, because the back-merge
+# puts both copies on `develop` and leaves nothing on the other side to
+# compare against.
+#
+# The back-merge commit is the honest boundary: everything behind it has
+# shipped, everything after it has not. Found by running this script a second
+# time and watching it offer the whole history as the changelog for a patch
+# release.
+PREVIOUS=$(git log --merges --grep='back into develop' --pretty=%H -1 2>/dev/null || echo '')
+if [ -z "$PREVIOUS" ]; then
+  PREVIOUS=$(git describe --tags --abbrev=0 2>/dev/null || echo '')
+fi
 
 echo "  from $CURRENT"
 echo "    to $VERSION+$BUILD"
-echo "  since ${PREVIOUS:-the first commit}"
+echo "  since $(git log -1 --pretty=%s "$PREVIOUS" 2>/dev/null || echo "the first commit")"
 echo
 
 git checkout -q develop

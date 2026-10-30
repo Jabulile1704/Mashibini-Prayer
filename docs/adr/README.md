@@ -20,3 +20,4 @@ names it.
 | [010](ADR-010-the-free-tier-is-a-design-constraint.md) | The free tier is a design constraint, not a billing preference | Accepted |
 | [011](ADR-011-the-firebase-config-is-committed.md) | The Firebase config is committed to a public repository | Accepted |
 | [012](ADR-012-a-skip-is-withdrawn-not-deleted.md) | A skip is withdrawn, never deleted | Accepted |
+| [013](ADR-013-releases-are-tags-and-are-not-signed.md) | A release is a tag, and it is not signed for distribution | Accepted |

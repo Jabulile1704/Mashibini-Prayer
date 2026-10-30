@@ -1,0 +1,112 @@
+name: Release
+
+# Fires on a version tag, never on a branch. The tag is the decision to
+# release; everything here is consequence, so there is no way to ship
+# something that was not tagged and no way to tag something without shipping.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+env:
+  FLUTTER_VERSION: '3.47.4'
+
+jobs:
+  verify:
+    name: The tag and the app agree
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.read.outputs.version }}
+      build: ${{ steps.read.outputs.build }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read the version out of pubspec.yaml
+        id: read
+        run: |
+          FULL=$(grep -E '^version:' pubspec.yaml | awk '{print $2}')
+          VERSION=${FULL%%+*}
+          BUILD=${FULL##*+}
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "build=$BUILD" >> "$GITHUB_OUTPUT"
+          echo "pubspec says $VERSION+$BUILD"
+
+      # A tag that disagrees with pubspec.yaml ships a build whose own
+      # "Version" line contradicts the release it came from. Caught here
+      # rather than discovered on somebody's phone.
+      - name: It matches the tag
+        run: |
+          TAG=${GITHUB_REF_NAME#v}
+          if [ "$TAG" != "${{ steps.read.outputs.version }}" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match pubspec version ${{ steps.read.outputs.version }}"
+            exit 1
+          fi
+
+      - name: The changelog has an entry for it
+        run: |
+          if ! grep -q "^## \[${{ steps.read.outputs.version }}\]" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no '## [${{ steps.read.outputs.version }}]' section"
+            exit 1
+          fi
+
+  build:
+    name: Android build
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+
+      # Release shape, debug keys. ADR-013: this project has no distribution
+      # channel and no signing identity, so a "signed build" would be signing
+      # with a throwaway key and calling it provenance.
+      - run: flutter build apk --release
+      - name: Name it after the release
+        run: |
+          mv build/app/outputs/flutter-apk/app-release.apk \
+             "mashibini-prayer-${{ needs.verify.outputs.version }}.apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk
+          path: mashibini-prayer-*.apk
+
+  publish:
+    name: GitHub Release
+    needs: [verify, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: apk
+
+      # The notes are the changelog section, not a generated commit dump.
+      # Somebody reading a release wants to know what changed for them.
+      - name: Take the notes from the changelog
+        run: |
+          awk -v v="${{ needs.verify.outputs.version }}" '
+            $0 ~ "^## \\[" v "\\]" { show = 1; next }
+            show && /^## \[/ { exit }
+            show { print }
+          ' CHANGELOG.md > notes.md
+          echo "" >> notes.md
+          echo "Built from \`${GITHUB_SHA}\` · build ${{ needs.verify.outputs.build }}" >> notes.md
+          cat notes.md
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: v${{ needs.verify.outputs.version }}
+          body_path: notes.md
+          files: mashibini-prayer-*.apk
+          fail_on_unmatched_files: true

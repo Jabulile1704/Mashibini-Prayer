@@ -32,6 +32,22 @@ abstract interface class JournalRepository {
 
   Stream<List<JournalEntry>> watch();
 
+  /// Keeps text that has been typed but not saved (N7).
+  ///
+  /// The OS can kill the app at any moment and gives no promise of warning.
+  /// Everything else in this app already survives that because it is written
+  /// when it changes; a half-written entry was the one thing that did not,
+  /// and it is the one nobody would forgive losing.
+  ///
+  /// A draft is not an entry. It never appears in [all] or [watch], it has no
+  /// id, and saving the entry clears it.
+  Future<void> saveDraft({required CalendarDate date, required String text});
+
+  /// Unsaved text for [date], or null if there is none.
+  Future<String?> loadDraft(CalendarDate date);
+
+  Future<void> clearDraft(CalendarDate date);
+
   Future<void> dispose();
 }
 
@@ -53,6 +69,10 @@ class LocalJournalRepository implements JournalRepository {
 
   static const String indexKey = 'journal.index.v1';
   static const String entryPrefix = 'journal.entry.v1.';
+
+  /// Drafts are keyed by date rather than by entry id, because a draft can
+  /// exist for a day that has no entry yet — which is the common case.
+  static const String draftPrefix = 'journal.draft.v1.';
 
   final KeyValueStore _store;
   final IdGenerator _ids;
@@ -120,6 +140,7 @@ class LocalJournalRepository implements JournalRepository {
       if (existing != null) {
         await delete(existing.id);
       }
+      await clearDraft(date);
       return;
     }
 
@@ -136,6 +157,9 @@ class LocalJournalRepository implements JournalRepository {
     if (existing == null) {
       await _writeIndex(<String>[...await _readIndex(), entry.id]);
     }
+    // The draft has become the entry; leaving it would restore the same text
+    // over the top next time the day is opened.
+    await clearDraft(date);
     await _announce();
   }
 
@@ -156,6 +180,29 @@ class LocalJournalRepository implements JournalRepository {
     yield await all();
     yield* _changes.stream;
   }
+
+  @override
+  Future<void> saveDraft({
+    required CalendarDate date,
+    required String text,
+  }) async {
+    _assertUsable();
+    // An empty draft is no draft. Somebody who clears the box and leaves
+    // meant to abandon it, and should not be handed a blank one back.
+    if (text.trim().isEmpty) {
+      await clearDraft(date);
+      return;
+    }
+    await _store.write('$draftPrefix$date', text);
+  }
+
+  @override
+  Future<String?> loadDraft(CalendarDate date) =>
+      _store.read('$draftPrefix$date');
+
+  @override
+  Future<void> clearDraft(CalendarDate date) =>
+      _store.delete('$draftPrefix$date');
 
   @override
   Future<void> dispose() async {

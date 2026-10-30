@@ -44,6 +44,17 @@ int readIntOr(Map<String, Object?> json, String key, int fallback) {
   _bad(key, value, 'an integer or absent');
 }
 
+bool readBoolOr(Map<String, Object?> json, String key, bool fallback) {
+  final Object? value = json[key];
+  if (value == null) {
+    return fallback;
+  }
+  if (value is bool) {
+    return value;
+  }
+  _bad(key, value, 'a boolean or absent');
+}
+
 List<String> readStringList(Map<String, Object?> json, String key) {
   final Object? value = json[key];
   if (value is List<Object?>) {

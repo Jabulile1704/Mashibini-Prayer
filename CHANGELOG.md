@@ -4,6 +4,20 @@ What changed, written for the family rather than for whoever wrote it.
 Versions follow [Semantic Versioning](https://semver.org); the process is in
 [docs/RELEASING.md](docs/RELEASING.md).
 
+## [1.0.1] — 2026-10-30
+
+Nothing visible changed. **Install this one rather than 1.0.0** — it is the
+first build Android will let you update in place.
+
+### Fixed
+
+- Android builds are now signed with a key that stays the same from one
+  release to the next. Before this, every release carried a different key,
+  and Android refuses to install a new version over an old one signed by a
+  different key — the only way through would have been to uninstall, which
+  takes that phone's rota and prayer journal with it.
+- The release notes no longer list the whole project's history every time.
+
 ## [1.0.0] — 2026-10-30
 
 The first release. The app knows whose week it is to lead family prayer, and

@@ -14,6 +14,7 @@ import '../../domain/entities/turn.dart';
 import '../../domain/ids.dart';
 import '../../domain/rota/family_editor.dart';
 import '../../domain/rota/rota_engine.dart';
+import '../widgets/centred_message.dart';
 import '../widgets/date_text.dart';
 
 /// The weeks ahead, and the one control that changes them (R1.5, R1.4).
@@ -169,15 +170,15 @@ class _Weeks extends StatelessWidget {
         .turnsFrom(today, count: ScheduleScreen.weeksAhead);
 
     if (turns.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Text(
+      return CentredMessage(
+        padding: const EdgeInsets.all(32),
+        children: <Widget>[
+          Text(
             'The rota has not started yet, so there are no weeks to show.',
             style: theme.textTheme.bodyMedium,
             textAlign: TextAlign.center,
           ),
-        ),
+        ],
       );
     }
 
@@ -237,43 +238,65 @@ class _WeekRow extends StatelessWidget {
     final String when = DateLabels.full(context, turn.weekStart);
     final Member? passedOver = this.passedOver;
 
+    // Read as one thing: three separate lines would be three stops, and
+    // "Sisi" on its own tells somebody nothing about which week it is.
+    final String rowLabel = <String>[
+      isThisWeek ? 'This week' : when,
+      who,
+      if (passedOver != null)
+        "${passedOver.displayName}'s turn was passed over",
+    ].join(', ');
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  isThisWeek ? 'This week' : when,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(who, style: theme.textTheme.titleMedium),
-                if (passedOver != null) ...<Widget>[
-                  const SizedBox(height: 4),
-                  Text(
-                    "${passedOver.displayName}'s turn was passed over",
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+            child: Semantics(
+              container: true,
+              label: rowLabel,
+              child: ExcludeSemantics(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      isThisWeek ? 'This week' : when,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
-                  ),
-                ],
-              ],
+                    const SizedBox(height: 2),
+                    Text(who, style: theme.textTheme.titleMedium),
+                    if (passedOver != null) ...<Widget>[
+                      const SizedBox(height: 4),
+                      Text(
+                        "${passedOver.displayName}'s turn was passed over",
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ),
           ),
           const SizedBox(width: 12),
+          // The buttons carry the week in their label. A list of seven
+          // buttons all announcing "Skip" is a list nobody can use by ear.
           if (passedOver != null)
             TextButton(
               key: ScheduleScreen.undoButton(turn.weekStart),
               onPressed: busy
                   ? null
                   : () => onUndo(turn.weekStart, passedOver.displayName),
-              child: const Text('Undo'),
+              child: Text(
+                'Undo',
+                semanticsLabel:
+                    'Undo, give ${passedOver.displayName} back the week '
+                    'of $when',
+              ),
             )
           else if (!isThisWeek)
             TextButton(
@@ -281,7 +304,11 @@ class _WeekRow extends StatelessWidget {
               onPressed: busy
                   ? null
                   : () => onSkip(turn.weekStart, turn.leader.displayName),
-              child: const Text('Skip'),
+              child: Text(
+                'Skip',
+                semanticsLabel:
+                    'Skip ${turn.leader.displayName}, week of $when',
+              ),
             ),
         ],
       ),

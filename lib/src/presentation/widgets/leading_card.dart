@@ -52,10 +52,21 @@ class LeadingCard extends StatelessWidget {
               const SizedBox(height: 28),
               Text('This week', style: theme.textTheme.labelLarge),
               const SizedBox(height: 10),
-              Text(
-                headline,
-                style: theme.textTheme.displaySmall,
-                textAlign: TextAlign.center,
+              // Shrinks only when it would otherwise break mid-word.
+              //
+              // At the largest accessibility text size a long name is wider
+              // than the card, and Flutter's only recourse is to split the
+              // word: "Jabuli / le". A name is the one word on this screen
+              // that must not be cut in half, so scaleDown gives back just
+              // enough size to keep it whole. Below AX sizes nothing shrinks
+              // at all, and the person's chosen size is honoured in full.
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  headline,
+                  style: theme.textTheme.displaySmall,
+                  textAlign: TextAlign.center,
+                ),
               ),
               const SizedBox(height: 14),
               Text(

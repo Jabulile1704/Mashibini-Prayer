@@ -12,6 +12,7 @@ import 'package:mashibini_prayer/src/presentation/screens/this_week_screen.dart'
 
 import '../support/fake_id_generator.dart';
 import '../support/fake_key_value_store.dart';
+import '../support/fake_app_version.dart';
 import '../support/fake_reminders.dart';
 import '../support/family_fixtures.dart';
 
@@ -53,6 +54,7 @@ void main() {
       settings: settings,
       journal: journal,
       reminders: reminders,
+      appVersion: FakeAppVersion(),
       ids: FakeIdGenerator(),
       today: () => anchor,
     ),
@@ -163,6 +165,7 @@ void main() {
           settings: settings,
           journal: journal,
           reminders: reminders,
+          appVersion: FakeAppVersion(),
           ids: FakeIdGenerator(),
           today: () => anchor.subtractDays(28),
         ),

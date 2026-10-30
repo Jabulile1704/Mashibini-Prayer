@@ -7,6 +7,7 @@ import 'package:mashibini_prayer/src/data/repositories/local_family_repository.d
 
 import 'support/fake_id_generator.dart';
 import 'support/fake_key_value_store.dart';
+import 'support/fake_app_version.dart';
 import 'support/fake_reminders.dart';
 
 void main() {
@@ -35,6 +36,7 @@ void main() {
           settings: settings,
           journal: journal,
           reminders: FakeReminders(),
+          appVersion: FakeAppVersion(),
           ids: FakeIdGenerator(),
         ),
       );
@@ -51,6 +53,7 @@ void main() {
           settings: settings,
           journal: journal,
           reminders: FakeReminders(),
+          appVersion: FakeAppVersion(),
           ids: FakeIdGenerator(),
         ),
       );
@@ -70,6 +73,7 @@ void main() {
           settings: settings,
           journal: journal,
           reminders: FakeReminders(),
+          appVersion: FakeAppVersion(),
           ids: FakeIdGenerator(),
         ),
       );

@@ -7,6 +7,7 @@ import 'src/data/repositories/journal_repository.dart';
 import 'src/data/repositories/local_family_repository.dart';
 import 'src/data/sources/local/preferences_key_value_store.dart';
 import 'src/data/sources/notifications/local_reminders.dart';
+import 'src/data/sources/platform/app_version.dart';
 
 void main() {
   // shared_preferences talks over a platform channel, so the binding has to
@@ -38,6 +39,7 @@ void main() {
       settings: LocalDeviceSettingsRepository(store: store),
       journal: LocalJournalRepository(store: store, ids: ids),
       reminders: LocalReminders(),
+      appVersion: const PlatformAppVersion(),
       ids: ids,
     ),
   );

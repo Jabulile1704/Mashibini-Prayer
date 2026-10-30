@@ -4,6 +4,7 @@ import '../../data/repositories/device_settings_repository.dart';
 import '../../data/repositories/family_repository.dart';
 import '../../data/repositories/journal_repository.dart';
 import '../../data/sources/notifications/reminders.dart';
+import '../../data/sources/platform/app_version.dart';
 import '../../domain/entities/calendar_date.dart';
 import '../../domain/entities/family.dart';
 import '../../domain/entities/turn.dart';
@@ -40,6 +41,7 @@ class ThisWeekScreen extends StatefulWidget {
     required this.settings,
     required this.journal,
     required this.reminders,
+    required this.appVersion,
     required this.ids,
     this.today,
     super.key,
@@ -57,6 +59,9 @@ class ThisWeekScreen extends StatefulWidget {
   final JournalRepository journal;
 
   final Reminders reminders;
+
+  /// Which build this is, shown quietly at the foot of the screen.
+  final AppVersion appVersion;
 
   /// Passed through to setup, which mints ids for new members and cycles.
   final IdGenerator ids;
@@ -186,6 +191,7 @@ class _ThisWeekScreenState extends State<ThisWeekScreen> {
                     today: _today,
                     youAre: who.data,
                     verses: _verses,
+                    appVersion: widget.appVersion,
                   ),
             );
           },
@@ -255,6 +261,7 @@ class _Rota extends StatelessWidget {
     required this.family,
     required this.today,
     required this.verses,
+    required this.appVersion,
     this.youAre,
   });
 
@@ -262,6 +269,7 @@ class _Rota extends StatelessWidget {
   final CalendarDate today;
   final String? youAre;
   final Future<VerseForTheDay> verses;
+  final AppVersion appVersion;
 
   @override
   Widget build(BuildContext context) {
@@ -303,7 +311,9 @@ class _Rota extends StatelessWidget {
                     ],
                     const SizedBox(height: 44),
                     _TodaysVerse(verses: verses, today: today),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 36),
+                    _Version(appVersion: appVersion),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
@@ -342,6 +352,43 @@ class _TodaysVerse extends StatelessWidget {
             verse: loaded.on(today),
             translation: loaded.translation.abbreviation,
           ),
+        );
+      },
+    );
+  }
+}
+
+/// Which build this is, at the foot of the home screen.
+///
+/// This screen is meant to answer one question, and a version string is not
+/// it — so it sits below the verse, at the bottom of the scroll, in the
+/// quietest type the theme has. It is there because the owner ships often
+/// and needs to tell which build is on a phone without plugging it in, and
+/// "which version am I running" is unanswerable from the outside otherwise.
+class _Version extends StatelessWidget {
+  const _Version({required this.appVersion});
+
+  final AppVersion appVersion;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+
+    return FutureBuilder<String>(
+      future: appVersion.describe(),
+      builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+        final String? version = snapshot.data;
+        if (version == null) {
+          // Nothing, rather than a placeholder that shifts the layout when
+          // the real answer arrives.
+          return const SizedBox.shrink();
+        }
+        return Text(
+          'Version $version',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+          ),
+          textAlign: TextAlign.center,
         );
       },
     );

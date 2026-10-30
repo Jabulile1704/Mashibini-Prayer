@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../data/repositories/journal_repository.dart';
 import '../../domain/entities/calendar_date.dart';
 import '../../domain/entities/journal_entry.dart';
+import '../widgets/centred_message.dart';
 import '../widgets/date_text.dart';
 import 'write_entry_screen.dart';
 
@@ -78,27 +79,23 @@ class _NothingWritten extends StatelessWidget {
   final ThemeData theme;
 
   @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(40),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Text(
-            'Nothing written yet',
-            style: theme.textTheme.headlineSmall,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'What you write here stays on this phone. Nobody else can read '
-            'it, and it is not sent anywhere.',
-            style: theme.textTheme.bodyMedium,
-            textAlign: TextAlign.center,
-          ),
-        ],
+  Widget build(BuildContext context) => CentredMessage(
+    // Clears the Write button, which floats over the bottom of this screen.
+    padding: const EdgeInsets.fromLTRB(40, 40, 40, 110),
+    children: <Widget>[
+      Text(
+        'Nothing written yet',
+        style: theme.textTheme.headlineSmall,
+        textAlign: TextAlign.center,
       ),
-    ),
+      const SizedBox(height: 12),
+      Text(
+        'What you write here stays on this phone. Nobody else can read '
+        'it, and it is not sent anywhere.',
+        style: theme.textTheme.bodyMedium,
+        textAlign: TextAlign.center,
+      ),
+    ],
   );
 }
 

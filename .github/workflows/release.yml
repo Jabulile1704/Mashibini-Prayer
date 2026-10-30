@@ -68,10 +68,41 @@ jobs:
           cache: true
       - run: flutter pub get
 
-      # Release shape, debug keys. ADR-013: this project has no distribution
-      # channel and no signing identity, so a "signed build" would be signing
-      # with a throwaway key and calling it provenance.
-      - run: flutter build apk --release
+      # Without this the Android Gradle Plugin silently generates a fresh
+      # debug keystore and signs with that — a different key every run, which
+      # Android refuses to install over the previous release (issue #67).
+      # Failing loudly beats publishing something nobody can update to.
+      - name: The signing key is present
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          missing=
+          [ -n "$KEYSTORE" ] || missing="$missing ANDROID_KEYSTORE_BASE64"
+          [ -n "$PASSWORD" ] || missing="$missing ANDROID_KEYSTORE_PASSWORD"
+          [ -n "$ALIAS" ] || missing="$missing ANDROID_KEY_ALIAS"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing repository secrets:$missing — see docs/RELEASING.md"
+            exit 1
+          fi
+          printf '%s' "$KEYSTORE" | base64 --decode > "$RUNNER_TEMP/upload-keystore.p12"
+
+      - name: Build
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/upload-keystore.p12
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: flutter build apk --release
+
+      # Printed so the fingerprint can be compared across releases without
+      # downloading anything. It is a public value; the key is not.
+      - name: Say which key signed it
+        run: |
+          KEYTOOL="$JAVA_HOME/bin/keytool"
+          "$KEYTOOL" -printcert -jarfile build/app/outputs/flutter-apk/app-release.apk \
+            | grep -E 'Owner:|SHA256:' || true
+
       - name: Name it after the release
         run: |
           mv build/app/outputs/flutter-apk/app-release.apk \

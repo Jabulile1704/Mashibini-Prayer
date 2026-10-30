@@ -88,9 +88,15 @@ A story is done when all of these are true:
 
 ## Versioning
 
-[Semantic Versioning](https://semver.org). Until v1.0.0 the app is `0.x`, and
-`0.x` minor bumps may still change behaviour. The version lives in
-`pubspec.yaml` and is bumped on the release branch, never on a feature branch.
+[Semantic Versioning](https://semver.org), as `MAJOR.MINOR.PATCH+BUILD`. The
+version lives in `pubspec.yaml` and is bumped **on the release branch, never
+on a feature branch** — two features merged in either order would otherwise
+each claim a version.
+
+A release is a tag on `main`, and the tag is the decision to ship: nothing
+publishes without one, and tagging always publishes. The full process, the
+rules for each part of the version, and why builds are not signed for
+distribution are in **[RELEASING.md](RELEASING.md)** and ADR-013.
 
 ## A note on issue closing
 

@@ -99,9 +99,57 @@ provisioning, not a problem with the build — see ADR-013.
 
 Android: the APK is attached to the GitHub Release.
 
-## What a release does not do
+## The Android signing key
 
-It does not sign for distribution. This app has no App Store presence and no
-paid Apple Developer account, so there is no identity to sign with; signing
-with a throwaway key would look like provenance without being any. ADR-013
-records that, and what would change if the app were ever distributed.
+Android identifies an app by package name **and** signing key. A build signed
+by a different key will not install over the previous one — and since
+everything here is kept on the phone, the only way through is an uninstall
+that takes somebody's rota and prayer journal with it.
+
+So there is one stable key, and it never changes. Its job is continuity, not
+provenance: nobody verifies it and no store checks it (ADR-014).
+
+It lives in three repository secrets:
+
+| Secret | What |
+|:--|:--|
+| `ANDROID_KEYSTORE_BASE64` | the PKCS#12 keystore, base64-encoded |
+| `ANDROID_KEYSTORE_PASSWORD` | its password |
+| `ANDROID_KEY_ALIAS` | the key's alias — `mashibini` |
+
+`release.yml` **fails** when any of them is missing rather than falling back
+to a debug key, because a silent fallback is exactly the bug this replaced.
+
+Each release prints the certificate's owner and SHA-256 fingerprint in the
+build log. If that fingerprint ever changes between releases, stop: every
+phone with the app installed is about to be unable to update.
+
+### Building one locally
+
+With the keystore on disk, put an `android/key.properties` beside it:
+
+```properties
+storeFile=upload-keystore.p12
+storePassword=…
+keyAlias=mashibini
+keyPassword=…
+```
+
+Both the file and `*.p12` are gitignored. **Never commit either.**
+
+### If the key is lost
+
+There is no recovery. Every phone with the app installed has to uninstall
+before it can take another update, and uninstalling loses that phone's
+journal, rota and settings.
+
+Keep a copy somewhere that is not this repository and not this laptop. It is
+a 4KB file that cannot be regenerated.
+
+## What a release still does not do
+
+It does not sign for distribution. There is no App Store presence and no paid
+Apple Developer account, so there is no identity that means anything to
+anyone outside the family. ADR-013 records that reasoning; ADR-014 records
+the one job a signature does have here, which is letting Android recognise
+the next build as the same app.

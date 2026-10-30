@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // START: FlutterFire Configuration
@@ -36,11 +38,49 @@ android {
         versionName = flutter.versionName
     }
 
+    // The release key exists so Android recognises the next build as the
+    // same app. It is **not** provenance — ADR-013 explains why signing
+    // means nothing for an app with no store and four users in one house.
+    //
+    // Android identifies an app by package name *and* signing key, so a
+    // build signed by a different key cannot be installed over the previous
+    // one. Everything in this app is device-local, so that would cost
+    // somebody their rota and their prayer journal.
+    //
+    // Read from android/key.properties locally, or from the environment in
+    // CI. Absent, release builds fall back to the debug key so that
+    // `flutter run --release` still works on a developer's own machine —
+    // release.yml refuses to publish in that state (issue #67).
+    signingConfigs {
+        create("release") {
+            val properties = Properties()
+            val file = rootProject.file("key.properties")
+            if (file.exists()) {
+                file.inputStream().use(properties::load)
+            }
+
+            fun setting(key: String, variable: String): String? =
+                properties.getProperty(key) ?: System.getenv(variable)
+
+            val store = setting("storeFile", "ANDROID_KEYSTORE_PATH")
+            if (store != null) {
+                storeFile = rootProject.file(store)
+                storeType = "PKCS12"
+                storePassword = setting("storePassword", "ANDROID_KEYSTORE_PASSWORD")
+                keyAlias = setting("keyAlias", "ANDROID_KEY_ALIAS")
+                keyPassword =
+                    setting("keyPassword", "ANDROID_KEYSTORE_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (signingConfigs.getByName("release").storeFile != null) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 }

@@ -44,7 +44,12 @@ tool/release.sh 1.1.0
 
 That cuts `release/v1.1.0` from an up-to-date `develop`, bumps
 `pubspec.yaml`, and drafts a `CHANGELOG.md` section from the Conventional
-Commit subjects since the last tag.
+Commit subjects since the last release.
+
+"Since the last release" means **since the back-merge commit**, not since the
+tag. Pull requests rebase onto `main`, so a tag on `main` shares no commits
+with the ones on `develop` — they are copies with different hashes, and
+`git log v1.0.0..develop` lists the entire project.
 
 **Then read the changelog and rewrite it.** A commit subject is written for a
 reviewer; a changelog entry is written for the family. "feat(rota): pass over

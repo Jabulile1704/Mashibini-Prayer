@@ -35,18 +35,16 @@ BUILD=$((${CURRENT##*+} + 1))
 
 # Where the last release ended, *on this branch*.
 #
-# Not the tag. Pull requests rebase onto `main` (ADR-007), so a tag on `main`
-# shares no commits with the ones still sitting on `develop` — they are
-# copies with different hashes. `git log v1.0.0..develop` therefore lists the
-# entire project, and `git cherry` cannot help either, because the back-merge
-# puts both copies on `develop` and leaves nothing on the other side to
-# compare against.
+# Not the tag. Pull requests rebase onto `main`, so a tag on `main` shares no
+# commits with the ones on `develop` — they are copies with different hashes,
+# and `git log v1.0.0..develop` lists the entire project.
 #
-# The back-merge commit is the honest boundary: everything behind it has
-# shipped, everything after it has not. Found by running this script a second
-# time and watching it offer the whole history as the changelog for a patch
-# release.
-PREVIOUS=$(git log --merges --grep='back into develop' --pretty=%H -1 2>/dev/null || echo '')
+# `--first-parent` is what makes this exact. It walks only `develop`'s own
+# line, so it finds the cherry-picked release commit (ADR-015) and, for
+# releases made before that decision, the old back-merge — without being
+# confused by the copies those merges dragged in.
+PREVIOUS=$(git log --first-parent -1 --pretty=%H \
+  --grep='^chore(release): v' --grep='back into develop' 2>/dev/null || echo '')
 if [ -z "$PREVIOUS" ]; then
   PREVIOUS=$(git describe --tags --abbrev=0 2>/dev/null || echo '')
 fi
@@ -106,3 +104,10 @@ echo
 echo "  git add -A && git commit -m 'chore(release): v$VERSION'"
 echo "  git push -u origin release/v$VERSION"
 echo "  gh pr create --base main --title 'chore(release): v$VERSION'"
+echo
+echo "After it merges and the tag is pushed, bring the release commit back"
+echo "to develop as a cherry-pick — never a merge (ADR-015):"
+echo
+echo "  git checkout develop && git pull"
+echo "  git cherry-pick \$(git log main -1 --pretty=%H --grep='^chore(release): v$VERSION')"
+echo "  git push"

@@ -94,6 +94,16 @@ nobody has to ask.
 - **Given** an established cycle, **when** a member is removed, **then** past
   turns still display their name, and only future turns are affected.
 
+**Delivered in the domain, unreachable in the app (Day 15).** `FamilyEditor`
+adds and removes members correctly and is covered by tests; nothing in the
+app calls it. The setup screen is the only place a family can be defined, and
+it is reachable only when no rota exists.
+
+So both criteria hold wherever the code is exercised, and a family that has
+started cannot change. This is the same shape of gap R1.4 carried for ten
+days: a requirement finished in the data model and absent from the product.
+Top of the v1.1 backlog.
+
 ---
 
 ## E3 — Daily verse

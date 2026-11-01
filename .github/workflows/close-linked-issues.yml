@@ -1,7 +1,15 @@
-# GitHub closes "Closes #n" issues only for pull requests merged into the
-# default branch. Ours merge into `develop`, so without this the backlog would
-# have to be closed by hand every day — and would quietly drift the first time
-# somebody forgot.
+# A backstop, not the mechanism.
+#
+# GitHub auto-closes linked issues for pull requests merged into the default
+# branch, and `develop` is the default branch (ADR-007) — so it already does
+# this. On Day 2 it did not: `main` was the default then, and this workflow
+# was written to fill a real gap (#19, #28). ADR-007 moved the default on Day
+# 7 and made it redundant without anybody noticing until Day 16.
+#
+# It is kept because it costs nothing — it reports "already closed" and exits
+# — and it would do its job again if the default branch ever moved back.
+# docs/WORKFLOW.md says the same thing, having claimed the opposite for eight
+# days.
 name: Close linked issues
 
 on:

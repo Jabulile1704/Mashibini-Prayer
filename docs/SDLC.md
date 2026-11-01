@@ -53,6 +53,26 @@ each added on their own.
 | 14 | Deployment | Release branch, version bump, changelog, signed build, tag v1.0.0 | DevOps |
 | 15 | Closure | Retrospective, metrics, v1.1 backlog | PM, PO |
 
+## What actually happened
+
+The table above is the plan. Two things diverged enough to be worth writing
+down rather than quietly tidying away.
+
+**Fifteen days took twelve.** Days 6 and 7 landed in one sitting and 24
+October has no commits at all. The work was done in bursts of several hours
+rather than an hour a day — see the retrospective, which gives the
+distribution rather than the impression.
+
+**Day 14 did two days' work.** The plan said "release v1.0.0"; the owner then
+said they intend to ship often. Cutting one release is an afternoon; making
+release fifteen as cheap as release one is a workflow, a script and a page of
+documentation. The second is what got built, and v1.0.0 — then v1.0.1 — is
+what proved it worked.
+
+Day 13 similarly absorbed R1.5, because the screen that lets you skip a week
+is the screen that shows the weeks ahead, and splitting them would have been
+bookkeeping rather than design.
+
 ## Working agreements
 
 - **The board is the truth.** If work is happening, it has a card in **In progress**. One card in progress at a time.

@@ -94,9 +94,13 @@ on a feature branch** — two features merged in either order would otherwise
 each claim a version.
 
 A release is a tag on `main`, and the tag is the decision to ship: nothing
-publishes without one, and tagging always publishes. The full process, the
-rules for each part of the version, and why builds are not signed for
-distribution are in **[RELEASING.md](RELEASING.md)** and ADR-013.
+publishes without one, and tagging always publishes. Afterwards the release
+commit is **cherry-picked** back to `develop`, never merged — ADR-015, which
+explains what the merge broke.
+
+The full process, the rules for each part of the version, and why builds are
+not signed for distribution are in **[RELEASING.md](RELEASING.md)** and
+ADR-013.
 
 ## A note on issue closing
 

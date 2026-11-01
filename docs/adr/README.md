@@ -14,7 +14,7 @@ names it.
 | [004](ADR-004-journals-outside-the-family-tree.md) | Journals keyed by author, outside the family tree | Accepted |
 | [005](ADR-005-a-calendar-date-type.md) | A CalendarDate type, not DateTime | Accepted |
 | [006](ADR-006-a-key-value-store-not-a-database.md) | A key-value store for the family, not a database | Accepted |
-| [007](ADR-007-develop-is-default-and-prs-rebase.md) | `develop` is the default branch, and PRs rebase | Accepted |
+| [007](ADR-007-develop-is-default-and-prs-rebase.md) | `develop` is the default branch, and PRs rebase | Partly superseded by 015 |
 | [008](ADR-008-merging-is-a-union-of-append-only-logs.md) | Merging is a union of append-only logs | Accepted |
 | [009](ADR-009-the-verses-are-bundled-webpb.md) | The verses are bundled, and they are the WEBPB | Accepted |
 | [010](ADR-010-the-free-tier-is-a-design-constraint.md) | The free tier is a design constraint, not a billing preference | Accepted |
@@ -22,3 +22,4 @@ names it.
 | [012](ADR-012-a-skip-is-withdrawn-not-deleted.md) | A skip is withdrawn, never deleted | Accepted |
 | [013](ADR-013-releases-are-tags-and-are-not-signed.md) | A release is a tag, and it is not signed for distribution | Partly superseded by 014 |
 | [014](ADR-014-the-android-key-is-for-continuity.md) | The Android key exists for update continuity, not provenance | Accepted |
+| [015](ADR-015-releases-cherry-pick-back-to-develop.md) | The release goes back to `develop` as a cherry-pick, not a merge | Accepted |

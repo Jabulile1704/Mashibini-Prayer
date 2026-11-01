@@ -104,17 +104,25 @@ ADR-013.
 
 ## A note on issue closing
 
-GitHub only auto-closes a linked issue when the pull request merges into the
-**default** branch. Every PR here merges into `develop`, so the keyword in the
-PR body does nothing on its own.
+**GitHub closes these itself.** It auto-closes a linked issue when the pull
+request merges into the **default** branch, and `develop` *is* the default
+branch here (ADR-007). So `Closes #n` in a PR body works exactly as it does
+on any other repository.
 
-`.github/workflows/close-linked-issues.yml` fills the gap: on a merged PR into
-`develop` it reads `Closes #n` / `Fixes #n` / `Resolves #n` out of the body and
-closes those issues with a comment pointing back at the PR. The board's own
-"item closed → Done" automation then moves the card.
+That was not always true, and this section said the opposite for eight days.
+On Day 2 the default branch was `main`, the keyword genuinely did nothing for
+PRs into `develop`, and `close-linked-issues.yml` was written to fill the gap
+(#19, #28). ADR-007 then made `develop` the default on Day 7 — to fix the
+contribution graph — and silently made the workflow redundant. Nobody
+noticed until Day 16, when the timeline showed every issue being closed by
+GitHub one second *before* the workflow ran.
 
-So the rule stands — **close issues by merging, never by hand** — it is just
-this repository that has to implement it rather than GitHub.
+**The workflow stays, as a backstop rather than as the mechanism.** It now
+reports "already closed — nothing to do" on every run, which is free, and it
+would still do its job if the default branch ever moved back. What it must
+not do is make anybody believe GitHub is not handling this.
+
+The rule is unchanged: **close issues by merging, never by hand.**
 
 ### Linking the issue is a check, not a courtesy
 

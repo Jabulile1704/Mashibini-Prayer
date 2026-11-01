@@ -90,19 +90,73 @@ jobs:
     needs: [analyze, test]
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # The job always runs and always reports, because it is a required
+      # check — skipping it with `paths-ignore` would leave the check never
+      # reporting and the pull request blocked forever. What is skipped is
+      # the expensive part, not the job.
+      - name: Is there anything here that could break an Android build?
+        id: scope
+        run: |
+          BASE="${{ github.event.pull_request.base.sha }}"
+          if [ -z "$BASE" ]; then
+            echo "needed=true" >> "$GITHUB_OUTPUT"
+            echo "Not a pull request — building."
+            exit 0
+          fi
+          CHANGED=$(git diff --name-only "$BASE" HEAD)
+          echo "$CHANGED"
+          # Anything outside docs/ can affect the build. Deliberately
+          # generous: a filter that is too narrow stops guarding real
+          # changes, which is a far worse failure than a build that did not
+          # need to run.
+          if printf '%s\n' "$CHANGED" | grep -qvE '^(docs/|\.github/ISSUE_TEMPLATE/|README\.md$|CHANGELOG\.md$)'; then
+            echo "needed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "needed=false" >> "$GITHUB_OUTPUT"
+            echo "Documentation only — nothing here can break an Android build."
+          fi
+
       - uses: actions/setup-java@v4
+        if: steps.scope.outputs.needed == 'true'
         with:
           distribution: temurin
           java-version: '17'
+          # A warm cache is not re-fetched, which is the cheapest way to
+          # stop hammering Maven Central at all (#30).
+          cache: gradle
       - uses: subosito/flutter-action@v2
+        if: steps.scope.outputs.needed == 'true'
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
           cache: true
       - run: flutter pub get
+        if: steps.scope.outputs.needed == 'true'
+
+      # Flutter's own retry waits 100ms, which against a rate limiter is not
+      # a back-off — it is the same request again. These wait 30s then 90s,
+      # which is long enough for a 429 window to pass (#30).
       - name: Build debug APK
-        run: flutter build apk --debug
+        if: steps.scope.outputs.needed == 'true'
+        run: |
+          for attempt in 1 2 3; do
+            if flutter build apk --debug; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              wait=$((attempt * 60 - 30))
+              echo "::warning::Build attempt $attempt failed. Waiting ${wait}s before retrying."
+              sleep "$wait"
+            fi
+          done
+          echo "::error::Android build failed three times. This is not a rate limit."
+          exit 1
+
       - name: Upload APK
+        if: steps.scope.outputs.needed == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-apk

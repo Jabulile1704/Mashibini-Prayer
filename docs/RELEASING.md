@@ -77,17 +77,31 @@ git push origin v1.1.0
 
 The tag triggers the release. Watch it with `gh run watch`.
 
-**Then merge `main` back into `develop`**, so the version bump and any
-release fixes are not stranded on `main`:
+**Then bring the release commit back to `develop` as a cherry-pick:**
 
 ```bash
 git checkout develop && git pull
-git merge --no-ff main -m "chore: merge v1.1.0 back into develop"
+git cherry-pick $(git log main -1 --pretty=%H --grep='^chore(release): v1.1.0')
 git push
 ```
 
-This is the one merge in this repository that is not a rebase. A release is a
-join of two histories and the merge commit is the record of it.
+**Never `git merge main`.** That was the rule until v1.0.1 and it does not
+work here (ADR-015). Rebasing a release onto `main` makes copies of every
+commit; merging `main` back brings those copies onto `develop` beside the
+originals, which did three things:
+
+- `develop` ended up holding the whole history twice — 148 commits, 76
+  unique;
+- the next release branch inherited the merge commit, and GitHub refuses to
+  rebase a branch containing one, so **releases stopped being mergeable**;
+- the changelog boundary stopped being computable from the tag.
+
+The only thing `develop` needs from a release is the version bump and the
+changelog entry — one commit. The code came from `develop` in the first
+place.
+
+If a fix was made *on* the release branch, cherry-pick that too. Forgetting
+shows up immediately as the fix being missing from `develop`.
 
 ## Installing on a phone
 

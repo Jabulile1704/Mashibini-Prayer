@@ -26,12 +26,56 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           REPO: ${{ github.repository }}
         run: |
+          set -u
+
+          # Collected to a file first. The old version piped straight into
+          # `while read`, which bash runs in a subshell — so a failure flag
+          # set inside the loop could not have escaped it even if anyone had
+          # tried to set one.
           printf '%s' "$BODY" \
             | grep -Eio '(close[sd]?|fix(e[sd])?|resolve[sd]?)[[:space:]]+#[0-9]+' \
             | grep -Eo '[0-9]+' \
-            | sort -u \
-            | while read -r N; do
-                echo "Closing #$N"
-                gh issue close "$N" --repo "$REPO" \
-                  --comment "Closed by #${PR_NUMBER}, squash-merged into \`develop\`." || true
-              done
+            | sort -u > /tmp/linked-issues || true
+
+          if [ ! -s /tmp/linked-issues ]; then
+            echo "No linked issues in the body. Nothing to close."
+            exit 0
+          fi
+
+          failed=
+          while read -r N; do
+            state=$(gh issue view "$N" --repo "$REPO" --json state \
+              --jq .state 2>/dev/null || echo UNKNOWN)
+
+            case "$state" in
+              CLOSED)
+                # Not a failure. A defect fixed across two PRs closes on the
+                # first one, and the second should not turn red for it.
+                echo "#$N is already closed — nothing to do."
+                continue
+                ;;
+              UNKNOWN)
+                echo "::error::#$N could not be read. It may not exist, or the token may lack access."
+                failed="$failed $N"
+                continue
+                ;;
+            esac
+
+            echo "Closing #$N"
+            if gh issue close "$N" --repo "$REPO" \
+              --comment "Closed by #${PR_NUMBER}, rebase-merged into \`develop\`."; then
+              echo "#$N closed."
+            else
+              # The whole point of this job. Swallowing this left a green
+              # tick that could not be used to rule the failure in or out —
+              # the only signal was an issue silently staying open, which is
+              # the exact thing this workflow exists to prevent (#32).
+              echo "::error::Failed to close #$N."
+              failed="$failed $N"
+            fi
+          done < /tmp/linked-issues
+
+          if [ -n "$failed" ]; then
+            echo "::error::These issues were not closed and need closing by hand:$failed"
+            exit 1
+          fi

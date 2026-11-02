@@ -7,6 +7,7 @@ import '../src/data/repositories/journal_repository.dart';
 import '../src/data/sources/notifications/reminders.dart';
 import '../src/data/sources/platform/app_version.dart';
 import '../src/domain/ids.dart';
+import 'presentation/brand/gallery.dart';
 import 'presentation/brand/theme.dart';
 import 'presentation/screens/this_week_screen.dart';
 
@@ -69,14 +70,19 @@ class MashibiniPrayerApp extends StatelessWidget {
       supportedLocales: AppLocales.supported,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
-      home: ThisWeekScreen(
-        repository: repository,
-        settings: settings,
-        journal: journal,
-        reminders: reminders,
-        appVersion: appVersion,
-        ids: ids,
-      ),
+      // Reviewing the design system should not mean editing this file and
+      // remembering to put it back. `--dart-define=GALLERY=true` costs
+      // nothing in a normal build.
+      home: BrandGallery.requested
+          ? const BrandGallery()
+          : ThisWeekScreen(
+              repository: repository,
+              settings: settings,
+              journal: journal,
+              reminders: reminders,
+              appVersion: appVersion,
+              ids: ids,
+            ),
     );
   }
 }

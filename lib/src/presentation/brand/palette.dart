@@ -1,75 +1,103 @@
 import 'package:flutter/material.dart';
 
-/// The app's colours, chosen rather than generated.
+/// The app's colours, taken from the family's totem.
 ///
-/// `ColorScheme.fromSeed` is a good default, and it is a default: every app
-/// that uses it looks like every other app that uses it. These are picked for
-/// one screen a family looks at for about four seconds a week.
+/// The Mashibini totem is the bee, so the palette is a bee's: honey against
+/// something close to black, on a ground the colour of wax. Chosen rather
+/// than generated — `ColorScheme.fromSeed` is a good default and it is a
+/// default, and this is one screen a family looks at for four seconds a week.
 ///
-/// The intent is quiet. A prayer rota should not shout, and the one thing on
-/// screen that earns emphasis is a person's name — so the palette stays
-/// subdued and lets the name carry the weight.
+/// ## Honey is only ever seen against dark
+///
+/// The constraint that shaped everything here was measured, not guessed.
+/// Bright honey on cream is **2.07:1** — below even the 3:1 bar for a
+/// graphic, let alone the 4.5:1 for a word. On the dark ground it is
+/// **8.41:1**.
+///
+/// That is not a limitation to design around. It is how a bee reads: the
+/// yellow is only ever seen against black, never against something pale. So
+/// honey keeps its full strength on dark grounds and deepens to [amber] on
+/// cream. The totem's colours are never dropped — they change register.
+///
+/// Every pair below is asserted in `test/presentation/contrast_test.dart`.
+/// Supersedes the indigo and rust of ADR-008; see ADR-017.
 abstract final class Palette {
-  /// Deep indigo. Dark enough to read white on, soft enough not to be navy.
-  static const Color ink = Color(0xFF1F2A44);
-
-  /// The accent, used for exactly one thing: the current turn.
+  /// Honey. The accent, at full strength — on dark grounds only.
   ///
-  /// Warm against the cool ink, so the eye lands on it without any other part
-  /// of the screen needing to be brighter.
-  static const Color ember = Color(0xFFC2703D);
+  /// 8.41:1 on [ink], which is enough to carry text as well as graphics.
+  static const Color honey = Color(0xFFE8A317);
 
-  /// A deeper ember, for when the accent has to carry text.
+  /// Honey deepened until it can be seen on wax: 4.20:1, which clears the
+  /// 3:1 bar for lines and icons and the 3:1 bar for large text.
+  static const Color amber = Color(0xFFA86B0A);
+
+  /// Deeper still, for accent **words** on a pale ground: 5.86:1.
+  static const Color amberDeep = Color(0xFF8A5606);
+
+  /// The dark of a bee, and of the inside of a hive. Brown rather than
+  /// black, so honey sits warm against it instead of glaring.
+  static const Color ink = Color(0xFF1A1410);
+
+  /// One step up from [ink], for a card on a dark ground.
+  static const Color inkRaised = Color(0xFF241C15);
+
+  /// Wax. The pale ground: warm, so the app never feels clinical.
+  static const Color wax = Color(0xFFFFF9ED);
+
+  /// Wax a shade deeper, for a card on a pale ground.
+  static const Color waxRaised = Color(0xFFF7EDD8);
+
+  /// Muted text on wax: 7.48:1.
+  static const Color waxMuted = Color(0xFF5C5040);
+
+  /// Muted text on ink: 7.80:1.
+  static const Color inkMuted = Color(0xFFB5A892);
+
+  /// A wash of honey, for a chip or a badge on wax.
+  static const Color honeyWash = Color(0xFFF7EDD8);
+
+  /// The same idea on ink.
+  static const Color honeyWashNight = Color(0xFF2E2419);
+
+  static const Color combLine = Color(0xFFE6D7B8);
+
+  /// The comb line on a dark ground.
   ///
-  /// [ember] itself is 3.46:1 on parchment — fine for an icon or an arc of
-  /// the mark, where the bar is 3:1, and **not** fine for a word. Rather
-  /// than darkening the brand colour to solve a problem the app does not yet
-  /// have, there are two: one for graphics, one for text.
-  static const Color emberDeep = Color(0xFF8F4A20);
-
-  /// A pale wash of the accent, for a chip or a badge.
-  static const Color emberWash = Color(0xFFF4EAE0);
-
-  /// The same wash against a dark surface.
-  static const Color emberWashNight = Color(0xFF382F30);
-
-  /// The accent lightened for dark surfaces, where ember is too heavy.
-  static const Color emberLight = Color(0xFFE9B78F);
-
-  static const Color parchment = Color(0xFFFAF7F2);
-  static const Color parchmentDim = Color(0xFFF1ECE4);
-  static const Color slate = Color(0xFF5A6478);
-
-  static const Color nightInk = Color(0xFF11161F);
-  static const Color nightCard = Color(0xFF1A212D);
-  static const Color nightText = Color(0xFFECE7DF);
-  static const Color nightMuted = Color(0xFF99A2B1);
+  /// Started at `#332819`, which measured **1.27:1** — a divider nobody can
+  /// see is a divider that is not there. The contrast test caught it on the
+  /// first run of the new palette, which is exactly the job it was written
+  /// for on Day 17. `#423524` is 1.53:1 and still quiet.
+  static const Color combLineNight = Color(0xFF423524);
 
   static const ColorScheme light = ColorScheme.light(
     primary: ink,
-    onPrimary: parchment,
-    secondary: ember,
-    onSecondary: parchment,
-    surface: parchment,
+    onPrimary: wax,
+    // Honey is the accent on every surface the app has, but on wax it must
+    // deepen to be visible at all. Same colour, different register.
+    secondary: amber,
+    onSecondary: wax,
+    surface: wax,
     onSurface: ink,
-    surfaceContainerHighest: parchmentDim,
-    onSurfaceVariant: slate,
-    outlineVariant: Color(0xFFDFD8CC),
-    secondaryContainer: emberWash,
-    onSecondaryContainer: emberDeep,
+    surfaceContainerHighest: waxRaised,
+    onSurfaceVariant: waxMuted,
+    outlineVariant: combLine,
+    secondaryContainer: honeyWash,
+    onSecondaryContainer: amberDeep,
   );
 
   static const ColorScheme dark = ColorScheme.dark(
-    primary: parchment,
+    // Honey leads on dark, where it is strongest — this is the register the
+    // palette actually wants, and why the design is dark-first.
+    primary: honey,
     onPrimary: ink,
-    secondary: ember,
-    onSecondary: nightInk,
-    surface: nightInk,
-    onSurface: nightText,
-    surfaceContainerHighest: nightCard,
-    onSurfaceVariant: nightMuted,
-    outlineVariant: Color(0xFF2C3545),
-    secondaryContainer: emberWashNight,
-    onSecondaryContainer: emberLight,
+    secondary: honey,
+    onSecondary: ink,
+    surface: ink,
+    onSurface: wax,
+    surfaceContainerHighest: inkRaised,
+    onSurfaceVariant: inkMuted,
+    outlineVariant: combLineNight,
+    secondaryContainer: honeyWashNight,
+    onSecondaryContainer: honey,
   );
 }

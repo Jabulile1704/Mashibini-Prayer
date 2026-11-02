@@ -49,9 +49,9 @@ const Map<String, int> _androidSizes = <String, int>{
 Future<Uint8List> _paintMark(int pixels) async {
   final ui.PictureRecorder recorder = ui.PictureRecorder();
   final Canvas canvas = Canvas(recorder);
-  RotaMarkPainter(
-    ringColour: Palette.parchment.withValues(alpha: 0.36),
-    currentColour: Palette.ember,
+  CombMarkPainter(
+    ringColour: Palette.wax.withValues(alpha: 0.42),
+    currentColour: Palette.honey,
   ).paint(canvas, Size(pixels.toDouble(), pixels.toDouble()));
 
   final ui.Image image = await recorder.endRecording().toImage(pixels, pixels);
@@ -76,9 +76,9 @@ Future<Uint8List> _paintIcon(int pixels) async {
   // a mark to sit inside its rounded mask.
   final double inset = size * 0.2;
   canvas.translate(inset, inset);
-  RotaMarkPainter(
-    ringColour: Palette.parchment.withValues(alpha: 0.36),
-    currentColour: Palette.ember,
+  CombMarkPainter(
+    ringColour: Palette.wax.withValues(alpha: 0.42),
+    currentColour: Palette.honey,
   ).paint(canvas, Size(size - inset * 2, size - inset * 2));
 
   final ui.Image image = await recorder.endRecording().toImage(pixels, pixels);

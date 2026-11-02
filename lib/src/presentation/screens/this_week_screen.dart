@@ -74,6 +74,8 @@ class ThisWeekScreen extends StatefulWidget {
   final CalendarDate Function()? today;
 
   static const Key scheduleButton = Key('home.schedule');
+  static const Key startAgainButton = Key('home.startAgain');
+  static const Key confirmStartAgain = Key('home.startAgain.confirm');
 
   @override
   State<ThisWeekScreen> createState() => _ThisWeekScreenState();
@@ -120,6 +122,45 @@ class _ThisWeekScreenState extends State<ThisWeekScreen> {
             JournalScreen(journal: widget.journal, today: widget.today),
       ),
     );
+  }
+
+  /// Starts the rota over, after asking.
+  ///
+  /// Setup was reachable only from the "No rota yet" state, so a family
+  /// that had started could not change its turnover day, its order, or who
+  /// is in it — R2.3 is built in the domain and has never had a way in
+  /// (#74). This is not that screen; it is the one-line version of it,
+  /// here because somebody needs to change their turnover day today and
+  /// Settings is Day 19.
+  ///
+  /// It asks first, because it replaces the rota. The journal is kept: it
+  /// is stored separately and has nothing to do with the cycle.
+  Future<void> _startAgain() async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text('Start the rota again?'),
+        content: const Text(
+          'This replaces who takes a week, the order, and the day the week '
+          'turns over. Your journal is kept.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Keep it'),
+          ),
+          TextButton(
+            key: ThisWeekScreen.confirmStartAgain,
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Start again'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed ?? false) {
+      await _openSetup();
+    }
   }
 
   Future<void> _openSetup() async {
@@ -169,6 +210,15 @@ class _ThisWeekScreenState extends State<ThisWeekScreen> {
               semanticLabel: 'Reminders',
             ),
             tooltip: 'Reminders',
+          ),
+          IconButton(
+            key: ThisWeekScreen.startAgainButton,
+            onPressed: _startAgain,
+            icon: const Icon(
+              Icons.tune_outlined,
+              semanticLabel: 'Start the rota again',
+            ),
+            tooltip: 'Start the rota again',
           ),
         ],
       ),

@@ -250,7 +250,10 @@ void main() {
         'Mama',
         'Tata',
       ]);
-      expect(saved.turnoverWeekday, DateTime.sunday);
+      // Monday by default: a week that ends on Sunday starts on Monday.
+      // Sunday is the last day somebody leads and the next person begins
+      // the following morning, which is what a family means by "next week".
+      expect(saved.turnoverWeekday, DateTime.monday);
 
       final RotaEngine engine = RotaEngine.forFamily(saved);
       expect(engine.turnOn(anchor)!.leader.displayName, 'Mama');
@@ -323,7 +326,9 @@ void main() {
     testWidgets('setting up mid-week carries on from the week in progress', (
       WidgetTester tester,
     ) async {
-      // Wednesday of the week that began on Sunday 18 October.
+      // Wednesday 21 October. With the default Monday turnover that week
+      // began on Monday 19 October — `anchor` is the Sunday before it, so
+      // the rota starts the day after.
       await open(tester, on: anchor.addDays(3));
       await fillInTheMashibinis(tester);
       await choose(
@@ -335,7 +340,7 @@ void main() {
       await tapStart(tester);
 
       final Family saved = (await repository.load())!;
-      expect(saved.cycles.single.effectiveFrom, anchor);
+      expect(saved.cycles.single.effectiveFrom, anchor.addDays(1));
       expect(
         RotaEngine.forFamily(saved)
             .turnOn(anchor.addDays(3))!

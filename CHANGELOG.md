@@ -4,6 +4,12 @@ What changed, written for the family rather than for whoever wrote it.
 Versions follow [Semantic Versioning](https://semver.org); the process is in
 [docs/RELEASING.md](docs/RELEASING.md).
 
+## [1.2.1] — 2026-11-02
+
+Nothing in the app changed. This release exists to prove that releasing
+works again: the previous two had to be assembled by hand because the
+process had broken itself, and this is the first one in three that did not.
+
 ## [1.2.0] — 2026-11-02
 
 ### Changed

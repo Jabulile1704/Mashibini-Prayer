@@ -49,7 +49,17 @@ class _SetupScreenState extends State<SetupScreen> {
     TextEditingController(),
   ];
 
-  int _turnoverWeekday = DateTime.sunday;
+  /// One per name, so the keyboard's "next" key can move between them
+  /// rather than dismissing itself.
+  final List<FocusNode> _focus = <FocusNode>[FocusNode(), FocusNode()];
+
+  /// Monday, because a week that ends on Sunday starts on Monday.
+  ///
+  /// The rota runs Monday to Sunday: Sunday is the last day somebody leads,
+  /// and the next person starts the following morning. Any day can be
+  /// chosen below — the engine has never cared (ADR-002) — but this is the
+  /// one a family means when they say "next week".
+  int _turnoverWeekday = DateTime.monday;
   int? _currentLeader;
   int? _youAre;
   bool _saving = false;
@@ -59,6 +69,9 @@ class _SetupScreenState extends State<SetupScreen> {
   void dispose() {
     for (final TextEditingController controller in _names) {
       controller.dispose();
+    }
+    for (final FocusNode node in _focus) {
+      node.dispose();
     }
     super.dispose();
   }
@@ -73,16 +86,32 @@ class _SetupScreenState extends State<SetupScreen> {
   ];
 
   void _addPerson() {
-    setState(() => _names.add(TextEditingController()));
+    setState(() {
+      _names.add(TextEditingController());
+      _focus.add(FocusNode());
+    });
   }
 
   void _removePerson(int index) {
     setState(() {
       _names.removeAt(index).dispose();
+      _focus.removeAt(index).dispose();
       // The dropdowns point at row indices, which have just shifted.
       _currentLeader = null;
       _youAre = null;
     });
+  }
+
+  /// Moves to the next name when the keyboard's "next" key is pressed.
+  ///
+  /// Without this the return key dismisses the keyboard and somebody
+  /// re-taps four times to enter four names.
+  void _moveOn(int from) {
+    if (from + 1 < _focus.length) {
+      FocusScope.of(context).requestFocus(_focus[from + 1]);
+    } else {
+      FocusScope.of(context).unfocus();
+    }
   }
 
   Future<void> _save() async {
@@ -172,10 +201,22 @@ class _SetupScreenState extends State<SetupScreen> {
                       Expanded(
                         child: TextFormField(
                           controller: _names[i],
+                          focusNode: _focus[i],
+                          // These four lines are what shape the keyboard
+                          // somebody actually sees. Flutter uses each
+                          // platform's own keyboard — iOS's on an iPhone,
+                          // Samsung's on a Samsung — and what the app
+                          // controls is which variant of it opens.
+                          keyboardType: TextInputType.name,
                           textCapitalization: TextCapitalization.words,
+                          textInputAction: i == _names.length - 1
+                              ? TextInputAction.done
+                              : TextInputAction.next,
+                          autofillHints: const <String>[AutofillHints.name],
+                          onFieldSubmitted: (_) => _moveOn(i),
                           decoration: InputDecoration(
                             labelText: 'Person ${i + 1}',
-                            border: const OutlineInputBorder(),
+                            hintText: 'Their name',
                           ),
                           onChanged: (_) => setState(() {}),
                           validator: (String? value) {

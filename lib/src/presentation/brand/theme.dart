@@ -77,13 +77,57 @@ abstract final class AppTheme {
         ),
       ),
 
+      // Filled rather than outlined. An outline is a box drawn around
+      // nothing; a fill says "type here" before anybody reads the label,
+      // and it is what both platforms' own apps have settled on.
       inputDecorationTheme: InputDecorationTheme(
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(Radii.sm),
-        ),
+        filled: true,
+        fillColor: colours.surfaceContainerHighest,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: Space.lg,
-          vertical: Space.md,
+          vertical: Space.lg,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(Radii.md),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(Radii.md),
+          borderSide: BorderSide(color: colours.outlineVariant),
+        ),
+        // The focused field is the only place the accent appears at full
+        // strength on a pale ground, and it is two pixels rather than one
+        // so that "which field am I in" is answerable without looking for
+        // the caret.
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(Radii.md),
+          borderSide: BorderSide(color: colours.secondary, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(Radii.md),
+          borderSide: BorderSide(color: colours.error),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(Radii.md),
+          borderSide: BorderSide(color: colours.error, width: 2),
+        ),
+        labelStyle: TypeScale.body.copyWith(color: colours.onSurfaceVariant),
+        floatingLabelStyle: TypeScale.caption.copyWith(
+          color: colours.onSecondaryContainer,
+          fontWeight: FontWeight.w600,
+        ),
+        hintStyle: TypeScale.body.copyWith(
+          color: colours.onSurfaceVariant.withValues(alpha: 0.75),
+        ),
+      ),
+
+      dropdownMenuTheme: DropdownMenuThemeData(
+        menuStyle: MenuStyle(
+          shape: WidgetStatePropertyAll<OutlinedBorder>(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(Radii.md),
+            ),
+          ),
         ),
       ),
 

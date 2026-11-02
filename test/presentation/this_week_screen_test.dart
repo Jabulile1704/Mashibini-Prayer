@@ -490,4 +490,49 @@ void main() {
       expect(find.text('No rota yet'), findsOneWidget);
     });
   });
+  group('changing a rota that has already started', () {
+    testWidgets('setup can be reached again, after confirming', (
+      WidgetTester tester,
+    ) async {
+      // Before this, setup was reachable only from "No rota yet" — a family
+      // that had started could not change its turnover day at all.
+      await repository.save(familyOfFour());
+      await show(tester, on: anchor);
+
+      await tester.tap(find.byKey(ThisWeekScreen.startAgainButton));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(ThisWeekScreen.confirmStartAgain));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Who takes a week?'), findsOneWidget);
+    });
+
+    testWidgets('declining leaves the rota alone', (WidgetTester tester) async {
+      // It replaces the family, so it asks. A rota lost to a mis-tap is a
+      // rota somebody has to rebuild from memory.
+      await repository.save(familyOfFour());
+      await show(tester, on: anchor);
+
+      await tester.tap(find.byKey(ThisWeekScreen.startAgainButton));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Keep it'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Who takes a week?'), findsNothing);
+      expect((await repository.load())!.members, hasLength(4));
+    });
+
+    testWidgets('it says plainly what it replaces', (
+      WidgetTester tester,
+    ) async {
+      await repository.save(familyOfFour());
+      await show(tester, on: anchor);
+
+      await tester.tap(find.byKey(ThisWeekScreen.startAgainButton));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('day the week turns over'), findsOneWidget);
+      expect(find.textContaining('journal is kept'), findsOneWidget);
+    });
+  });
 }

@@ -49,28 +49,72 @@ if [ -z "$PREVIOUS" ]; then
   PREVIOUS=$(git describe --tags --abbrev=0 2>/dev/null || echo '')
 fi
 
+# The work to ship: everything on develop since the last release, merges
+# excluded. These are what get replayed onto main.
+WORK=$(git log "${PREVIOUS:+$PREVIOUS..}develop" --no-merges --reverse --pretty=%H)
+if [ -z "$WORK" ]; then
+  echo "error: nothing on develop since the last release" >&2
+  exit 1
+fi
+
 echo "  from $CURRENT"
 echo "    to $VERSION+$BUILD"
 echo "  since $(git log -1 --pretty=%s "$PREVIOUS" 2>/dev/null || echo "the first commit")"
+echo "  $(printf '%s\n' "$WORK" | wc -l | tr -d ' ') commits to replay"
 echo
 
-git checkout -q develop
-git pull -q --ff-only
-git checkout -q -b "release/v$VERSION"
+git fetch -q origin main
+
+# **Cut from main, not develop** (ADR-018).
+#
+# A branch cut from develop carries the two back-merge commits made before
+# ADR-015, and GitHub refuses to rebase a branch containing a merge — so
+# every release since v1.0.1 had to be rebuilt by hand on main. Those two
+# commits are in develop's history permanently; no amount of not making new
+# ones removes them.
+#
+# Replaying the work onto main is what the hand-rebuild did twice. This is
+# that, done by the script instead of from memory at eleven at night.
+git checkout -q -b "release/v$VERSION" origin/main
+
+if ! git cherry-pick $WORK >/dev/null 2>&1; then
+  git cherry-pick --abort 2>/dev/null || true
+  git checkout -q develop
+  git branch -q -D "release/v$VERSION"
+  echo "error: could not replay develop's work onto main cleanly." >&2
+  echo "       main has diverged from develop by more than a release." >&2
+  echo "       Resolve by hand, or check whether a hotfix landed on main." >&2
+  exit 1
+fi
+
+# The invariant that makes this safe: the release branch must now hold
+# exactly develop's code. If it does not, a commit was missed and the
+# release would quietly ship something other than what was tested.
+if [ -n "$(git diff develop --stat)" ]; then
+  echo "error: the release branch does not match develop:" >&2
+  git diff develop --stat >&2
+  echo "       Refusing to continue — this would ship untested code." >&2
+  exit 1
+fi
 
 # The build number only ever goes up, across every release. Two builds that
 # share a number are indistinguishable on a phone, which is the one thing a
 # build number exists to prevent.
 sed -i '' -E "s/^version: .*/version: $VERSION+$BUILD/" pubspec.yaml
 
-RANGE="${PREVIOUS:+$PREVIOUS..}HEAD"
+# The replayed commits, not a range. `$PREVIOUS` is a commit on develop and
+# the branch is now cut from main, so it is not an ancestor of HEAD and
+# `$PREVIOUS..HEAD` would list the whole project again — the exact bug #70
+# was filed for, reappearing from the other side.
+#
+# `$WORK` is already the right set: it is what was replayed.
 {
   echo "## [$VERSION] — $(date +%Y-%m-%d)"
   echo
   for section in "feat:Added" "fix:Fixed" "perf:Faster" "refactor:Changed"; do
     type="${section%%:*}"
     heading="${section##*:}"
-    entries=$(git log "$RANGE" --no-merges --pretty=format:'%s' \
+    entries=$(git log --no-walk=unsorted $WORK --pretty=format:'%s' \
       | grep -E "^$type(\([a-z0-9._-]+\))?!?: " \
       | sed -E "s/^$type(\([a-z0-9._-]+\))?!?: /- /" || true)
     if [ -n "$entries" ]; then
@@ -105,8 +149,10 @@ echo "  git add -A && git commit -m 'chore(release): v$VERSION'"
 echo "  git push -u origin release/v$VERSION"
 echo "  gh pr create --base main --title 'chore(release): v$VERSION'"
 echo
-echo "After it merges and the tag is pushed, bring the release commit back"
-echo "to develop as a cherry-pick — never a merge (ADR-015):"
+echo "The branch was cut from main and replays develop's work onto it, so"
+echo "it can be rebase-merged (ADR-018). After it merges and the tag is"
+echo "pushed, bring the release commit back to develop as a cherry-pick —"
+echo "never a merge (ADR-015):"
 echo
 echo "  git checkout develop && git pull"
 echo "  git cherry-pick \$(git log main -1 --pretty=%H --grep='^chore(release): v$VERSION')"

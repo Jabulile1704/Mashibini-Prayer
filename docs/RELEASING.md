@@ -42,14 +42,23 @@ Two features merged in either order would otherwise each claim a version.
 tool/release.sh 1.1.0
 ```
 
-That cuts `release/v1.1.0` from an up-to-date `develop`, bumps
-`pubspec.yaml`, and drafts a `CHANGELOG.md` section from the Conventional
-Commit subjects since the last release.
+That cuts `release/v1.1.0` **from `main`**, replays every non-merge commit
+`develop` has gained since the last release onto it, bumps `pubspec.yaml`,
+and drafts a `CHANGELOG.md` section from those commits' subjects.
 
-"Since the last release" means **since the back-merge commit**, not since the
-tag. Pull requests rebase onto `main`, so a tag on `main` shares no commits
-with the ones on `develop` — they are copies with different hashes, and
-`git log v1.0.0..develop` lists the entire project.
+**From `main`, not `develop`** (ADR-018). A branch cut from `develop`
+carries the two back-merge commits made before ADR-015, and GitHub refuses
+to rebase a branch containing a merge — so v1.1.0 and v1.2.0 both had to be
+rebuilt by hand. Those two commits are in `develop`'s history permanently;
+not making new ones does not remove them.
+
+The script then checks `git diff develop` is empty. The release branch must
+hold exactly `develop`'s code, because a missed commit would ship something
+other than what was tested. It refuses to continue rather than producing a
+branch that looks right.
+
+If the replay conflicts, it aborts, removes the branch, and says to look for
+a hotfix that landed on `main` and never came back.
 
 **Then read the changelog and rewrite it.** A commit subject is written for a
 reviewer; a changelog entry is written for the family. "feat(rota): pass over

@@ -24,3 +24,4 @@ names it.
 | [014](ADR-014-the-android-key-is-for-continuity.md) | The Android key exists for update continuity, not provenance | Accepted |
 | [015](ADR-015-releases-cherry-pick-back-to-develop.md) | The release goes back to `develop` as a cherry-pick, not a merge | Accepted |
 | [016](ADR-016-four-tabs-and-what-goes-in-them.md) | Four tabs, and what goes in each | Accepted |
+| [017](ADR-017-the-identity-is-the-family-totem.md) | The identity is the family's totem: honey, ink and a comb | Accepted |

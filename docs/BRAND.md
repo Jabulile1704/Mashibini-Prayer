@@ -65,6 +65,46 @@ ring would be the wrong trade.
 
 ## Colours
 
+**Superseded on Day 18 — see ADR-017.** The indigo and rust below were
+replaced by the family's totem, the bee. Kept here because the reasoning
+about *why* a palette is chosen rather than seeded still holds, and because
+an ADR that supersedes something should leave the something readable.
+
+### The bee palette
+
+`lib/src/presentation/brand/palette.dart`.
+
+| | | |
+|:--|:--|:--|
+| `honey` | `#E8A317` | The accent at full strength — on dark grounds only |
+| `amber` | `#A86B0A` | Honey deepened until it can be seen on wax |
+| `amberDeep` | `#8A5606` | Deeper still, for accent **words** on wax |
+| `ink` | `#1A1410` | The dark of a bee, and the inside of a hive. Brown, not black |
+| `wax` | `#FFF9ED` | The pale ground |
+
+**The rule that shaped it, measured rather than guessed:** honey on wax is
+**2.07:1**, below even the 3:1 bar for a graphic. On ink it is **8.41:1**.
+
+That is how a bee reads — the yellow is only ever seen against black. So
+honey keeps full strength on dark and deepens to amber on wax. The totem's
+colours are never dropped; they change register. Which is also how the app
+offers light, dark and system without losing them.
+
+### The mark
+
+A cluster of comb cells, one filled. **One cell per person; the filled one is
+whose week it is**, so the logo carries the app's state rather than sitting
+beside it.
+
+Cells orbit a ring rather than packing into a true lattice: a real honeycomb
+is beautiful at poster size and mud at twenty pixels, and surviving small is
+the only thing this mark must do.
+
+---
+
+## Colours (superseded, Day 8)
+
+
 `lib/src/presentation/brand/palette.dart`.
 
 | | | |

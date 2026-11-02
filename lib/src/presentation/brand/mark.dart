@@ -2,16 +2,20 @@ import 'dart:math' as math;
 
 import 'package:flutter/widgets.dart';
 
-/// The Mashibini Prayer mark: a ring of equal arcs, one of them filled.
+/// The Mashibini Prayer mark: a cluster of comb cells, one of them filled.
 ///
-/// The app answers one question — whose week is it — and the answer is always
-/// "one of us, and then the next one". A ring divided into equal parts with
-/// one part heavier is that idea and nothing else: a cycle, a current turn,
-/// and the certainty that it comes round again.
+/// The family's totem is the bee, and a comb cell is the one bee shape that
+/// is not a cartoon — no face, no wings, no antennae, none of which survive
+/// at icon size. A hexagon does.
 ///
-/// Geometry rather than illustration, on purpose. It can be reasoned about,
-/// regenerated at any size from one command, and it still reads at twenty
-/// pixels, where anything with detail turns to mud.
+/// It is also the only mark considered that **does work**. One cell per
+/// person, the filled one is whose week it is, so the logo is the app's
+/// actual state rather than a picture beside it. A family of four reads as
+/// four cells; a family of six reads as six.
+///
+/// Supersedes the ring of arcs from Day 8 (ADR-017). The idea is unchanged —
+/// equal parts, one of them current, a cycle that comes round — and only the
+/// geometry is different.
 class RotaMark extends StatelessWidget {
   const RotaMark({
     required this.size,
@@ -23,15 +27,18 @@ class RotaMark extends StatelessWidget {
   });
 
   final double size;
+
+  /// The outline of a cell that is not this week's.
   final Color ringColour;
 
-  /// The arc for whoever's week it is.
+  /// The fill for whoever's week it is.
   final Color currentColour;
 
-  /// How many people are in the ring. Four, because that is this family, and
-  /// because four reads cleanly at icon sizes where six does not.
+  /// How many people are in the rota.
   final int parts;
 
+  /// Which one leads this week, or a negative number for none — the empty
+  /// comb of a family that has not set up a rota yet.
   final int current;
 
   @override
@@ -39,7 +46,7 @@ class RotaMark extends StatelessWidget {
     width: size,
     height: size,
     child: CustomPaint(
-      painter: RotaMarkPainter(
+      painter: CombMarkPainter(
         ringColour: ringColour,
         currentColour: currentColour,
         parts: parts,
@@ -49,8 +56,13 @@ class RotaMark extends StatelessWidget {
   );
 }
 
-class RotaMarkPainter extends CustomPainter {
-  const RotaMarkPainter({
+/// Draws the comb.
+///
+/// Cells are laid out on a ring rather than in a honeycomb lattice. A true
+/// lattice packs tightly and is lovely at poster size; at 20 pixels it turns
+/// to mud, and the one thing this mark has to survive is being small.
+class CombMarkPainter extends CustomPainter {
+  const CombMarkPainter({
     required this.ringColour,
     required this.currentColour,
     this.parts = 4,
@@ -62,57 +74,75 @@ class RotaMarkPainter extends CustomPainter {
   final int parts;
   final int current;
 
-  /// The gap you actually see between arcs, as a fraction of each arc's
-  /// share of the circle.
+  /// A flat-topped hexagon's path, centred on [centre].
   ///
-  /// Small enough that the ring still reads as a ring, large enough that the
-  /// parts are countable at a glance.
-  static const double _gapFraction = 0.17;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final double stroke = size.width * 0.13;
-    final double radius = (size.width - stroke * 1.5) / 2;
-    final Rect ring = Rect.fromCircle(
-      center: Offset(size.width / 2, size.height / 2),
-      radius: radius,
-    );
-
-    final double share = (math.pi * 2) / parts;
-    final double gap = share * _gapFraction;
-
-    for (int i = 0; i < parts; i++) {
-      final bool isCurrent = i == current;
-      final double width = isCurrent ? stroke * 1.45 : stroke;
-
-      // A round cap extends half the stroke width past each end of the arc.
-      // Subtracting it keeps every visible gap the same size — without this
-      // the heavier current arc swells into its neighbours and the ring
-      // looks approximate rather than drawn.
-      final double capSpill = (width / 2) / radius;
-      final double sweep = math.max(0.0, share - gap - capSpill * 2);
-
-      // Each arc is centred in its own share, so thickening one does not
-      // shift it off the quarter it belongs to.
-      final double shareStart = -math.pi / 2 + share * i;
-      final double begin = shareStart + (share - sweep) / 2;
-
-      canvas.drawArc(
-        ring,
-        begin,
-        sweep,
-        false,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeCap = StrokeCap.round
-          ..strokeWidth = width
-          ..color = isCurrent ? currentColour : ringColour,
+  /// Flat-topped rather than pointy-topped because a row of flat-tops sits
+  /// level with the type beside it; pointy-tops look like they are falling
+  /// over.
+  static Path cell(Offset centre, double radius) {
+    final Path path = Path();
+    for (int corner = 0; corner < 6; corner++) {
+      final double angle = math.pi / 180 * (60 * corner);
+      final Offset point = Offset(
+        centre.dx + radius * math.cos(angle),
+        centre.dy + radius * math.sin(angle),
       );
+      if (corner == 0) {
+        path.moveTo(point.dx, point.dy);
+      } else {
+        path.lineTo(point.dx, point.dy);
+      }
     }
+    return path..close();
   }
 
   @override
-  bool shouldRepaint(RotaMarkPainter old) =>
+  void paint(Canvas canvas, Size size) {
+    final Offset centre = Offset(size.width / 2, size.height / 2);
+
+    // One cell: draw it in the middle rather than orbiting nothing.
+    if (parts <= 1) {
+      _draw(canvas, centre, size.width * 0.42, current == 0);
+      return;
+    }
+
+    // Big enough that the cells read as a group, small enough that they do
+    // not touch — a comb whose cells overlap stops being countable, which is
+    // the whole job.
+    final double cellRadius = size.width * (parts <= 4 ? 0.24 : 0.19);
+    final double orbit = size.width / 2 - cellRadius - size.width * 0.03;
+
+    for (int i = 0; i < parts; i++) {
+      // Starting at the top, so the first person sits where a reader looks.
+      final double angle = -math.pi / 2 + (math.pi * 2 / parts) * i;
+      final Offset at = Offset(
+        centre.dx + orbit * math.cos(angle),
+        centre.dy + orbit * math.sin(angle),
+      );
+      _draw(canvas, at, cellRadius, i == current);
+    }
+  }
+
+  void _draw(Canvas canvas, Offset at, double radius, bool isCurrent) {
+    final Path path = cell(at, radius);
+
+    if (isCurrent) {
+      canvas.drawPath(path, Paint()..color = currentColour);
+      return;
+    }
+
+    canvas.drawPath(
+      path,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = radius * 0.22
+        ..strokeJoin = StrokeJoin.round
+        ..color = ringColour,
+    );
+  }
+
+  @override
+  bool shouldRepaint(CombMarkPainter old) =>
       old.ringColour != ringColour ||
       old.currentColour != currentColour ||
       old.parts != parts ||

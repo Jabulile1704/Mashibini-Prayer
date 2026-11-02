@@ -19,6 +19,23 @@ abstract final class Palette {
   /// of the screen needing to be brighter.
   static const Color ember = Color(0xFFC2703D);
 
+  /// A deeper ember, for when the accent has to carry text.
+  ///
+  /// [ember] itself is 3.46:1 on parchment — fine for an icon or an arc of
+  /// the mark, where the bar is 3:1, and **not** fine for a word. Rather
+  /// than darkening the brand colour to solve a problem the app does not yet
+  /// have, there are two: one for graphics, one for text.
+  static const Color emberDeep = Color(0xFF8F4A20);
+
+  /// A pale wash of the accent, for a chip or a badge.
+  static const Color emberWash = Color(0xFFF4EAE0);
+
+  /// The same wash against a dark surface.
+  static const Color emberWashNight = Color(0xFF382F30);
+
+  /// The accent lightened for dark surfaces, where ember is too heavy.
+  static const Color emberLight = Color(0xFFE9B78F);
+
   static const Color parchment = Color(0xFFFAF7F2);
   static const Color parchmentDim = Color(0xFFF1ECE4);
   static const Color slate = Color(0xFF5A6478);
@@ -38,6 +55,8 @@ abstract final class Palette {
     surfaceContainerHighest: parchmentDim,
     onSurfaceVariant: slate,
     outlineVariant: Color(0xFFDFD8CC),
+    secondaryContainer: emberWash,
+    onSecondaryContainer: emberDeep,
   );
 
   static const ColorScheme dark = ColorScheme.dark(
@@ -50,5 +69,7 @@ abstract final class Palette {
     surfaceContainerHighest: nightCard,
     onSurfaceVariant: nightMuted,
     outlineVariant: Color(0xFF2C3545),
+    secondaryContainer: emberWashNight,
+    onSecondaryContainer: emberLight,
   );
 }

@@ -385,9 +385,11 @@ class _Version extends StatelessWidget {
         }
         return Text(
           'Version $version',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-          ),
+          // No alpha. Fading an already-muted colour put this at 3.00:1
+          // against a 4.5 requirement — readable to me, not to somebody
+          // with low vision, and invisible to every test until Day 17
+          // measured it. `bodySmall` is quiet enough on its own.
+          style: theme.textTheme.bodySmall,
           textAlign: TextAlign.center,
         );
       },

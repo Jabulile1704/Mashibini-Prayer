@@ -4,6 +4,38 @@ What changed, written for the family rather than for whoever wrote it.
 Versions follow [Semantic Versioning](https://semver.org); the process is in
 [docs/RELEASING.md](docs/RELEASING.md).
 
+## [1.1.0] — 2026-11-02
+
+**The app now looks like the family it belongs to.** The Mashibini totem is
+the bee, so the colours are a bee's — honey against a dark the colour of the
+inside of a hive, on a ground the colour of wax.
+
+### New
+
+- **A new look, built on the totem.** Honey, ink and wax replace the old
+  indigo and rust.
+- **A new mark: a cluster of comb cells, one of them filled.** There is one
+  cell per person in the rota, and the filled one is whose week it is — so
+  the icon tells you something rather than just sitting there.
+- **The bee colours survive light, dark and system.** Honey is brightest in
+  dark mode, where it belongs; on the pale ground it deepens to amber so it
+  stays readable. It is the same colour either way, never washed out.
+- A new app icon and launch screen, drawn from the same mark.
+
+### Behind the glass
+
+- Every colour pair in the app is now checked for readability by a test, in
+  both light and dark. It caught two things nobody could see: a version line
+  that had been too faint to read since 1.0.0, and a divider in the new dark
+  theme that was invisible the day it was written.
+- Releases can be built again — the process broke itself after 1.0.1 and is
+  fixed.
+
+### Not yet
+
+The screens have not been rearranged. Bottom navigation, a settings page and
+a way to change who is in the rota are next.
+
 ## [1.0.1] — 2026-10-30
 
 Nothing visible changed. **Install this one rather than 1.0.0** — it is the

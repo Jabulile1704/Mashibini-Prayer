@@ -22,6 +22,7 @@ names it.
 | [012](ADR-012-a-skip-is-withdrawn-not-deleted.md) | A skip is withdrawn, never deleted | Accepted |
 | [013](ADR-013-releases-are-tags-and-are-not-signed.md) | A release is a tag, and it is not signed for distribution | Partly superseded by 014 |
 | [014](ADR-014-the-android-key-is-for-continuity.md) | The Android key exists for update continuity, not provenance | Accepted |
-| [015](ADR-015-releases-cherry-pick-back-to-develop.md) | The release goes back to `develop` as a cherry-pick, not a merge | Accepted |
+| [015](ADR-015-releases-cherry-pick-back-to-develop.md) | The release goes back to `develop` as a cherry-pick, not a merge | Partly superseded by 018 |
 | [016](ADR-016-four-tabs-and-what-goes-in-them.md) | Four tabs, and what goes in each | Accepted |
 | [017](ADR-017-the-identity-is-the-family-totem.md) | The identity is the family's totem: honey, ink and a comb | Accepted |
+| [018](ADR-018-release-branches-are-cut-from-main.md) | Release branches are cut from `main` | Accepted |

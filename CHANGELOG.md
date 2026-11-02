@@ -4,6 +4,29 @@ What changed, written for the family rather than for whoever wrote it.
 Versions follow [Semantic Versioning](https://semver.org); the process is in
 [docs/RELEASING.md](docs/RELEASING.md).
 
+## [1.2.0] — 2026-11-02
+
+### Changed
+
+- **The week now runs Monday to Sunday.** Sunday is the last day you lead,
+  and the next person starts on Monday morning. You can still choose any
+  other day when you set the rota up — this is just what it offers first.
+
+### New
+
+- **You can set the rota up again.** Before this, once a rota existed there
+  was no way back in to change who is in it, the order, or the day it turns
+  over. The new control is in the top bar; it asks before replacing
+  anything, and your journal is kept either way.
+
+### Better
+
+- The boxes you type names into look like something you can type into,
+  rather than an outline drawn around nothing. The one you are using is now
+  obvious at a glance.
+- The keyboard's return key moves you to the next name instead of closing
+  the keyboard, so entering four names takes four taps rather than eight.
+
 ## [1.1.0] — 2026-11-02
 
 **The app now looks like the family it belongs to.** The Mashibini totem is

@@ -1,77 +1,111 @@
 import 'package:flutter/material.dart';
 
 import 'palette.dart';
+import 'tokens.dart';
+import 'type_scale.dart';
 
-/// The app's theme.
+/// The app's theme, assembled from tokens.
 ///
-/// Shaped rather than seeded. The type scale is tightened where it matters —
-/// a name set large needs less letter spacing than Material's default, and a
-/// label above it needs more — because the whole screen is one name and the
-/// words around it.
+/// Nothing here invents a number. Sizes come from [Space] and [Radii],
+/// text from [TypeScale], colour from [Palette] — so a change to any of
+/// them reaches every screen, and a screen that wants something the tokens
+/// do not offer has to justify itself rather than quietly adding a
+/// fourteenth spacing value.
 abstract final class AppTheme {
   static ThemeData light() => _build(Palette.light);
 
   static ThemeData dark() => _build(Palette.dark);
 
   static ThemeData _build(ColorScheme colours) {
-    final ThemeData base = ThemeData(colorScheme: colours, useMaterial3: true);
+    final TextTheme text = TypeScale.themed(colours);
 
-    return base.copyWith(
+    return ThemeData(
+      colorScheme: colours,
+      useMaterial3: true,
+      textTheme: text,
       scaffoldBackgroundColor: colours.surface,
+
       appBarTheme: AppBarTheme(
         backgroundColor: colours.surface,
         foregroundColor: colours.onSurfaceVariant,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
-        titleTextStyle: base.textTheme.labelLarge?.copyWith(
-          color: colours.onSurfaceVariant,
-          letterSpacing: 1.4,
-          fontWeight: FontWeight.w500,
-        ),
+        titleTextStyle: text.labelLarge,
       ),
+
       cardTheme: CardThemeData(
         color: colours.surfaceContainerHighest,
         elevation: 0,
         margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(Radii.lg),
+        ),
       ),
+
       dividerTheme: DividerThemeData(
         color: colours.outlineVariant,
         thickness: 1,
         space: 1,
       ),
+
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           minimumSize: const Size.fromHeight(52),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(Radii.md),
           ),
-          textStyle: base.textTheme.titleMedium,
+          textStyle: TypeScale.title,
         ),
       ),
+
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          // Day 22 measures touch targets. Setting the floor here means
+          // every TextButton in the app clears it without each one
+          // remembering to.
+          minimumSize: const Size(Touch.minimum, Touch.minimum),
+          textStyle: TypeScale.title,
+        ),
+      ),
+
+      listTileTheme: ListTileThemeData(
+        contentPadding: const EdgeInsets.symmetric(horizontal: Space.lg),
+        minVerticalPadding: Space.md,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(Radii.md),
+        ),
+      ),
+
       inputDecorationTheme: InputDecorationTheme(
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(Radii.sm),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: Space.lg,
+          vertical: Space.md,
+        ),
       ),
-      textTheme: base.textTheme.copyWith(
-        // The leader's name. Large, tight, and the only thing set in the
-        // surface's full-strength colour.
-        displaySmall: base.textTheme.displaySmall?.copyWith(
-          fontWeight: FontWeight.w700,
-          letterSpacing: -1.0,
-          height: 1.05,
-          color: colours.onSurface,
+
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith(
+          (Set<WidgetState> states) => states.contains(WidgetState.selected)
+              ? colours.onPrimary
+              : colours.onSurfaceVariant,
         ),
-        // "This week" — small, spaced, quiet. It labels the name; it does not
-        // compete with it.
-        labelLarge: base.textTheme.labelLarge?.copyWith(
-          letterSpacing: 1.6,
-          fontWeight: FontWeight.w600,
-          color: colours.onSurfaceVariant,
+        trackColor: WidgetStateProperty.resolveWith(
+          (Set<WidgetState> states) => states.contains(WidgetState.selected)
+              ? colours.primary
+              : colours.surfaceContainerHighest,
         ),
-        bodyMedium: base.textTheme.bodyMedium?.copyWith(
-          color: colours.onSurfaceVariant,
-          height: 1.4,
+      ),
+
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: colours.primary,
+        contentTextStyle: TypeScale.body.copyWith(color: colours.onPrimary),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(Radii.sm),
         ),
       ),
     );

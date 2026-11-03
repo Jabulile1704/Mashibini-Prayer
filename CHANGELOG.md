@@ -4,6 +4,28 @@ What changed, written for the family rather than for whoever wrote it.
 Versions follow [Semantic Versioning](https://semver.org); the process is in
 [docs/RELEASING.md](docs/RELEASING.md).
 
+## [1.3.0] — 2026-11-03
+
+**The app has a bottom bar now.** Everything used to be behind three small
+icons in the top corner; there are now four tabs, with their names written
+on them.
+
+### New
+
+- **This week · Weeks ahead · Journal · Settings**, along the bottom. Each
+  one remembers where you were — come back to the journal and you are
+  where you left it, not at the top.
+- **A Settings tab**, which gathers up the things that had no proper place:
+  reminders, starting the rota again, and which version you are running.
+- **The opening is one moment instead of three.** The honeycomb holds while
+  the app reads your rota, then settles into it, rather than flashing
+  through a loading spinner on the way.
+
+### Better
+
+- The honeycomb's cells were overlapping each other. They are now four
+  separate cells, which is the point of them — one per person.
+
 ## [1.2.1] — 2026-11-02
 
 Nothing in the app changed. This release exists to prove that releasing

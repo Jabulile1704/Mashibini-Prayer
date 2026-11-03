@@ -293,7 +293,7 @@ void main() {
       await tester.tap(find.text('Set up the rota'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Who takes a week?'), findsOneWidget);
+      expect(find.text('Whose week is it?'), findsOneWidget);
     });
 
     testWidgets('coming back from setup shows the rota that was made', (

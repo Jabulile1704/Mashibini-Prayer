@@ -176,7 +176,7 @@ void main() {
       await tester.tap(find.byKey(SettingsScreen.confirmStartAgain));
       await tester.pumpAndSettle();
 
-      expect(find.text('Who takes a week?'), findsOneWidget);
+      expect(find.text('Whose week is it?'), findsOneWidget);
     });
 
     testWidgets('declining leaves the rota alone', (WidgetTester tester) async {
@@ -189,7 +189,7 @@ void main() {
       await tester.tap(find.text('Keep it'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Who takes a week?'), findsNothing);
+      expect(find.text('Whose week is it?'), findsNothing);
       expect((await family.load())!.members, hasLength(4));
     });
 

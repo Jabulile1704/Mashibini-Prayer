@@ -7,6 +7,9 @@ import '../../domain/entities/family.dart';
 import '../../domain/entities/member.dart';
 import '../../domain/ids.dart';
 import '../../domain/rota/rota_setup.dart';
+import '../../domain/rota/week.dart';
+import '../brand/tokens.dart';
+import '../widgets/date_text.dart';
 import '../widgets/weekday_names.dart';
 
 /// Setting up the rota: who takes a week, which day it turns over, and whose
@@ -24,7 +27,6 @@ class SetupScreen extends StatefulWidget {
   });
 
   static const Key turnoverDayField = Key('setup.turnoverDay');
-  static const Key currentLeaderField = Key('setup.currentLeader');
   static const Key youAreField = Key('setup.youAre');
   static const Key startButton = Key('setup.start');
 
@@ -60,7 +62,6 @@ class _SetupScreenState extends State<SetupScreen> {
   /// chosen below — the engine has never cared (ADR-002) — but this is the
   /// one a family means when they say "next week".
   int _turnoverWeekday = DateTime.monday;
-  int? _currentLeader;
   int? _youAre;
   bool _saving = false;
   String? _formError;
@@ -96,8 +97,46 @@ class _SetupScreenState extends State<SetupScreen> {
     setState(() {
       _names.removeAt(index).dispose();
       _focus.removeAt(index).dispose();
-      // The dropdowns point at row indices, which have just shifted.
-      _currentLeader = null;
+      // The remaining dropdown points at row indices, which have shifted.
+      _youAre = null;
+    });
+  }
+
+  /// Which week a position in the list covers.
+  ///
+  /// This is the whole point of the change. The order used to be implied by
+  /// the order somebody happened to type names in, and then they were asked
+  /// *again*, in a dropdown, whose week it was. Two answers to one question,
+  /// and the second one silently rotated the first.
+  ///
+  /// Now the list is the rota: position one is this week, and every position
+  /// below it shows the Monday — or whichever day — it begins on.
+  String _weekLabel(BuildContext context, int index) {
+    if (index == 0) {
+      return 'This week';
+    }
+    final CalendarDate starts = Week.startOf(
+      _today,
+      _turnoverWeekday,
+    ).addDays(7 * index);
+    return 'from ${DateLabels.dayAndDate(context, starts)}';
+  }
+
+  /// Moves a person to a different position in the rota.
+  ///
+  /// The controller and its focus node travel together — they are two halves
+  /// of one row, and separating them hands somebody else's name the keyboard.
+  void _reorder(int from, int to) {
+    setState(() {
+      // `onReorderItem` already accounts for the removed row, unlike the
+      // deprecated `onReorder`, which reports the destination as it would
+      // be *before* removal and needs the caller to subtract one when
+      // moving down. Using the newer callback removes that trap rather than
+      // compensating for it.
+      _names.insert(to, _names.removeAt(from));
+      _focus.insert(to, _focus.removeAt(from));
+      // The "which one are you" dropdown points at a row index that has
+      // just moved under it.
       _youAre = null;
     });
   }
@@ -125,18 +164,10 @@ class _SetupScreenState extends State<SetupScreen> {
       setState(() => _formError = 'A rota needs at least two people.');
       return;
     }
-    if (_currentLeader == null) {
-      setState(() => _formError = 'Say whose week it is at the moment.');
-      return;
-    }
-
     final List<Member> members = <Member>[
       for (final (int, String) entry in filled)
         Member(id: widget.ids.newId('m'), displayName: entry.$2),
     ];
-    final int leaderPosition = filled.indexWhere(
-      ((int, String) entry) => entry.$1 == _currentLeader,
-    );
     final int? youPosition = _youAre == null
         ? null
         : filled.indexWhere(((int, String) entry) => entry.$1 == _youAre);
@@ -148,7 +179,11 @@ class _SetupScreenState extends State<SetupScreen> {
         familyName: 'Mashibini',
         members: members,
         turnoverWeekday: _turnoverWeekday,
-        currentLeaderId: members[leaderPosition].id,
+        // The first person in the list is leading this week — that is what
+        // the list *says*, in as many words, rather than being a separate
+        // answer somebody has to give twice. RotaSetup rotates the order so
+        // the leader sits first, which is now a no-op.
+        currentLeaderId: members.first.id,
         today: _today,
         ids: widget.ids,
       );
@@ -188,57 +223,67 @@ class _SetupScreenState extends State<SetupScreen> {
             padding: const EdgeInsets.all(16),
             children: <Widget>[
               _Heading(
-                title: 'Who takes a week?',
+                title: 'Whose week is it?',
                 subtitle:
-                    'In the order the rota goes round. You can change this '
-                    'later.',
+                    'The first person is leading this week. Drag to change '
+                    'the order — after the last one it comes back round to '
+                    'the first.',
               ),
-              for (int i = 0; i < _names.length; i++)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: TextFormField(
-                          controller: _names[i],
-                          focusNode: _focus[i],
-                          // These four lines are what shape the keyboard
-                          // somebody actually sees. Flutter uses each
-                          // platform's own keyboard — iOS's on an iPhone,
-                          // Samsung's on a Samsung — and what the app
-                          // controls is which variant of it opens.
-                          keyboardType: TextInputType.name,
-                          textCapitalization: TextCapitalization.words,
-                          textInputAction: i == _names.length - 1
-                              ? TextInputAction.done
-                              : TextInputAction.next,
-                          autofillHints: const <String>[AutofillHints.name],
-                          onFieldSubmitted: (_) => _moveOn(i),
-                          decoration: InputDecoration(
-                            labelText: 'Person ${i + 1}',
-                            hintText: 'Their name',
-                          ),
-                          onChanged: (_) => setState(() {}),
-                          validator: (String? value) {
-                            // Empty rows are ignored, not rejected: someone
-                            // may add a row and change their mind.
-                            if (value == null || value.trim().isEmpty) {
-                              return null;
-                            }
-                            if (value.trim().length > 40) {
-                              return 'That name is very long';
-                            }
-                            return null;
-                          },
-                        ),
+              ReorderableListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                buildDefaultDragHandles: false,
+                itemCount: _names.length,
+                onReorderItem: _reorder,
+                itemBuilder: (BuildContext context, int i) => Padding(
+                  key: ValueKey<TextEditingController>(_names[i]),
+                  padding: const EdgeInsets.only(bottom: Space.md),
+                  child: _Position(
+                    index: i,
+                    when: _weekLabel(context, i),
+                    canRemove: _names.length > 2,
+                    onRemove: () => _removePerson(i),
+                    field: TextFormField(
+                      controller: _names[i],
+                      focusNode: _focus[i],
+                      // These four lines are what shape the keyboard
+                      // somebody actually sees. Flutter uses each platform's
+                      // own keyboard — iOS's on an iPhone, Samsung's on a
+                      // Samsung — and what the app controls is which variant
+                      // of it opens.
+                      keyboardType: TextInputType.name,
+                      textCapitalization: TextCapitalization.words,
+                      textInputAction: i == _names.length - 1
+                          ? TextInputAction.done
+                          : TextInputAction.next,
+                      autofillHints: const <String>[AutofillHints.name],
+                      onFieldSubmitted: (_) => _moveOn(i),
+                      decoration: const InputDecoration(
+                        hintText: 'Their name',
+                        isDense: true,
                       ),
-                      if (_names.length > 2)
-                        IconButton(
-                          onPressed: () => _removePerson(i),
-                          icon: const Icon(Icons.remove_circle_outline),
-                          tooltip: 'Remove person ${i + 1}',
-                        ),
-                    ],
+                      onChanged: (_) => setState(() {}),
+                      validator: (String? value) {
+                        // Empty rows are ignored, not rejected: someone may
+                        // add a row and change their mind.
+                        if (value == null || value.trim().isEmpty) {
+                          return null;
+                        }
+                        if (value.trim().length > 40) {
+                          return 'That name is very long';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                ),
+              ),
+              if (_filledNames.length >= 2)
+                Padding(
+                  padding: const EdgeInsets.only(left: Space.xs),
+                  child: Text(
+                    '…and then back to ${_filledNames.first.$2}.',
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ),
               Align(
@@ -271,27 +316,6 @@ class _SetupScreenState extends State<SetupScreen> {
                     setState(() => _turnoverWeekday = value);
                   }
                 },
-              ),
-              const SizedBox(height: 24),
-              _Heading(
-                title: 'Whose week is it at the moment?',
-                subtitle:
-                    'So the app can carry on from where your family already '
-                    'is.',
-              ),
-              DropdownButtonFormField<int>(
-                key: SetupScreen.currentLeaderField,
-                initialValue: _currentLeader,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  hintText: 'Choose a person',
-                ),
-                items: <DropdownMenuItem<int>>[
-                  for (final (int index, String name) in filled)
-                    DropdownMenuItem<int>(value: index, child: Text(name)),
-                ],
-                onChanged: (int? value) =>
-                    setState(() => _currentLeader = value),
               ),
               const SizedBox(height: 24),
               _Heading(
@@ -355,6 +379,90 @@ class _Heading extends StatelessWidget {
             subtitle,
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One position in the rota: which week it is, who has it, and a handle.
+///
+/// The drag handle is explicit rather than the whole row being draggable.
+/// A row that contains a text field cannot also be a drag target — a long
+/// press would be fighting over whether somebody meant to move the person or
+/// select their name.
+class _Position extends StatelessWidget {
+  const _Position({
+    required this.index,
+    required this.when,
+    required this.field,
+    required this.canRemove,
+    required this.onRemove,
+  });
+
+  final int index;
+  final String when;
+  final Widget field;
+  final bool canRemove;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final bool isNow = index == 0;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(
+        Space.lg,
+        Space.md,
+        Space.sm,
+        Space.md,
+      ),
+      decoration: BoxDecoration(
+        // This week's row is the accent one. It is the answer to the
+        // question the screen is asking, so it should be the thing the eye
+        // lands on.
+        color: isNow
+            ? theme.colorScheme.secondaryContainer
+            : theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(Radii.md),
+      ),
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  when.toUpperCase(),
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: isNow
+                        ? theme.colorScheme.onSecondaryContainer
+                        : theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: Space.xs),
+                field,
+              ],
+            ),
+          ),
+          if (canRemove)
+            IconButton(
+              onPressed: onRemove,
+              icon: const Icon(Icons.remove_circle_outline),
+              tooltip: 'Remove this person',
+            ),
+          ReorderableDragStartListener(
+            index: index,
+            child: Padding(
+              padding: const EdgeInsets.all(Space.sm),
+              child: Icon(
+                Icons.drag_handle,
+                semanticLabel: 'Drag to reorder',
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
         ],

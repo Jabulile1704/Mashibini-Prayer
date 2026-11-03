@@ -18,9 +18,6 @@ import '../widgets/date_text.dart';
 import '../widgets/leading_card.dart';
 import '../widgets/next_turn_tile.dart';
 import '../widgets/verse_card.dart';
-import 'journal_screen.dart';
-import 'reminders_screen.dart';
-import 'schedule_screen.dart';
 import 'setup_screen.dart';
 
 /// The home screen: whose week it is, who is next, and when it changes hands.
@@ -73,10 +70,6 @@ class ThisWeekScreen extends StatefulWidget {
   /// screen is testable on any week of the next decade.
   final CalendarDate Function()? today;
 
-  static const Key scheduleButton = Key('home.schedule');
-  static const Key startAgainButton = Key('home.startAgain');
-  static const Key confirmStartAgain = Key('home.startAgain.confirm');
-
   @override
   State<ThisWeekScreen> createState() => _ThisWeekScreenState();
 }
@@ -88,81 +81,6 @@ class _ThisWeekScreenState extends State<ThisWeekScreen> {
 
   CalendarDate get _today =>
       widget.today?.call() ?? CalendarDate.from(DateTime.now());
-
-  Future<void> _openReminders() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (BuildContext context) => RemindersScreen(
-          familyRepository: widget.repository,
-          settings: widget.settings,
-          reminders: widget.reminders,
-          today: widget.today,
-        ),
-      ),
-    );
-  }
-
-  Future<void> _openSchedule() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (BuildContext context) => ScheduleScreen(
-          familyRepository: widget.repository,
-          settings: widget.settings,
-          ids: widget.ids,
-          today: widget.today,
-        ),
-      ),
-    );
-  }
-
-  Future<void> _openJournal() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (BuildContext context) =>
-            JournalScreen(journal: widget.journal, today: widget.today),
-      ),
-    );
-  }
-
-  /// Starts the rota over, after asking.
-  ///
-  /// Setup was reachable only from the "No rota yet" state, so a family
-  /// that had started could not change its turnover day, its order, or who
-  /// is in it — R2.3 is built in the domain and has never had a way in
-  /// (#74). This is not that screen; it is the one-line version of it,
-  /// here because somebody needs to change their turnover day today and
-  /// Settings is Day 19.
-  ///
-  /// It asks first, because it replaces the rota. The journal is kept: it
-  /// is stored separately and has nothing to do with the cycle.
-  Future<void> _startAgain() async {
-    final bool? confirmed = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: const Text('Start the rota again?'),
-        content: const Text(
-          'This replaces who takes a week, the order, and the day the week '
-          'turns over. Your journal is kept.',
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Keep it'),
-          ),
-          TextButton(
-            key: ThisWeekScreen.confirmStartAgain,
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Start again'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed ?? false) {
-      await _openSetup();
-    }
-  }
-
   Future<void> _openSetup() async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -179,49 +97,7 @@ class _ThisWeekScreenState extends State<ThisWeekScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mashibini Prayer'),
-        actions: <Widget>[
-          // Label *and* tooltip on each. A tooltip alone reaches the
-          // semantics tree as a tooltip, not a label, which leaves an
-          // icon-only button announcing as "button" with the name as an
-          // afterthought. The label is what a screen reader leads with.
-          IconButton(
-            key: ThisWeekScreen.scheduleButton,
-            onPressed: _openSchedule,
-            icon: const Icon(
-              Icons.event_outlined,
-              semanticLabel: 'The weeks ahead',
-            ),
-            tooltip: 'The weeks ahead',
-          ),
-          IconButton(
-            onPressed: _openJournal,
-            icon: const Icon(
-              Icons.menu_book_outlined,
-              semanticLabel: 'Journal',
-            ),
-            tooltip: 'Journal',
-          ),
-          IconButton(
-            onPressed: _openReminders,
-            icon: const Icon(
-              Icons.notifications_none,
-              semanticLabel: 'Reminders',
-            ),
-            tooltip: 'Reminders',
-          ),
-          IconButton(
-            key: ThisWeekScreen.startAgainButton,
-            onPressed: _startAgain,
-            icon: const Icon(
-              Icons.tune_outlined,
-              semanticLabel: 'Start the rota again',
-            ),
-            tooltip: 'Start the rota again',
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Mashibini Prayer')),
       body: SafeArea(
         child: StreamBuilder<Family?>(
           stream: _families,
@@ -241,7 +117,6 @@ class _ThisWeekScreenState extends State<ThisWeekScreen> {
                     today: _today,
                     youAre: who.data,
                     verses: _verses,
-                    appVersion: widget.appVersion,
                   ),
             );
           },
@@ -311,7 +186,6 @@ class _Rota extends StatelessWidget {
     required this.family,
     required this.today,
     required this.verses,
-    required this.appVersion,
     this.youAre,
   });
 
@@ -319,7 +193,6 @@ class _Rota extends StatelessWidget {
   final CalendarDate today;
   final String? youAre;
   final Future<VerseForTheDay> verses;
-  final AppVersion appVersion;
 
   @override
   Widget build(BuildContext context) {
@@ -361,9 +234,7 @@ class _Rota extends StatelessWidget {
                     ],
                     const SizedBox(height: 44),
                     _TodaysVerse(verses: verses, today: today),
-                    const SizedBox(height: 36),
-                    _Version(appVersion: appVersion),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 40),
                   ],
                 ),
               ),
@@ -402,45 +273,6 @@ class _TodaysVerse extends StatelessWidget {
             verse: loaded.on(today),
             translation: loaded.translation.abbreviation,
           ),
-        );
-      },
-    );
-  }
-}
-
-/// Which build this is, at the foot of the home screen.
-///
-/// This screen is meant to answer one question, and a version string is not
-/// it — so it sits below the verse, at the bottom of the scroll, in the
-/// quietest type the theme has. It is there because the owner ships often
-/// and needs to tell which build is on a phone without plugging it in, and
-/// "which version am I running" is unanswerable from the outside otherwise.
-class _Version extends StatelessWidget {
-  const _Version({required this.appVersion});
-
-  final AppVersion appVersion;
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-
-    return FutureBuilder<String>(
-      future: appVersion.describe(),
-      builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
-        final String? version = snapshot.data;
-        if (version == null) {
-          // Nothing, rather than a placeholder that shifts the layout when
-          // the real answer arrives.
-          return const SizedBox.shrink();
-        }
-        return Text(
-          'Version $version',
-          // No alpha. Fading an already-muted colour put this at 3.00:1
-          // against a 4.5 requirement — readable to me, not to somebody
-          // with low vision, and invisible to every test until Day 17
-          // measured it. `bodySmall` is quiet enough on its own.
-          style: theme.textTheme.bodySmall,
-          textAlign: TextAlign.center,
         );
       },
     );

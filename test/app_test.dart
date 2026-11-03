@@ -40,6 +40,10 @@ void main() {
           ids: FakeIdGenerator(),
         ),
       );
+      // Past the splash. `pumpAndSettle` alone does not advance it: it
+      // pumps only while frames are scheduled, and a static splash
+      // schedules none (Day 18).
+      await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle();
 
       expect(find.text('Mashibini Prayer'), findsOneWidget);
@@ -57,6 +61,11 @@ void main() {
           ids: FakeIdGenerator(),
         ),
       );
+
+      // Drained, or the splash's hold is still pending at teardown — which
+      // flutter_test treats as a failure, rightly.
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
 
       final MaterialApp app = tester.widget<MaterialApp>(
         find.byType(MaterialApp),
@@ -77,6 +86,10 @@ void main() {
           ids: FakeIdGenerator(),
         ),
       );
+      // Past the splash. `pumpAndSettle` alone does not advance it: it
+      // pumps only while frames are scheduled, and a static splash
+      // schedules none (Day 18).
+      await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle();
 
       // Nothing is set up yet, so the first thing a new install shows is the

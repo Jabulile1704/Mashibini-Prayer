@@ -191,19 +191,17 @@ void main() {
         size: const Size(390, 844),
       );
 
-      // Icon-only buttons are the risk: without a tooltip they announce as
-      // "button" and nothing else.
-      for (final String label in <String>[
-        'Journal',
-        'Reminders',
-        'The weeks ahead',
-      ]) {
-        expect(
-          find.bySemanticsLabel(label),
-          findsWidgets,
-          reason: 'an icon button with no label is a button nobody can use',
-        );
-      }
+      // There are none left to check. Day 18 moved every destination into
+      // the bottom navigation bar, whose labels are *visible* rather than
+      // only announced — which is the better fix for the problem this test
+      // was written about, so the test now asserts their absence.
+      //
+      // The tabs themselves are covered in home_shell_test.dart.
+      expect(
+        find.byType(IconButton),
+        findsNothing,
+        reason: 'destinations belong in the tab bar, not the top-right',
+      );
 
       handle.dispose();
     });

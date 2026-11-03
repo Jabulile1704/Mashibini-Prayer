@@ -9,7 +9,8 @@ import '../src/data/sources/platform/app_version.dart';
 import '../src/domain/ids.dart';
 import 'presentation/brand/gallery.dart';
 import 'presentation/brand/theme.dart';
-import 'presentation/screens/this_week_screen.dart';
+import 'presentation/screens/home_shell.dart';
+import 'presentation/screens/splash_gate.dart';
 
 /// Which locales the app speaks, and in what order it falls back.
 ///
@@ -75,13 +76,16 @@ class MashibiniPrayerApp extends StatelessWidget {
       // nothing in a normal build.
       home: BrandGallery.requested
           ? const BrandGallery()
-          : ThisWeekScreen(
+          : SplashGate(
               repository: repository,
-              settings: settings,
-              journal: journal,
-              reminders: reminders,
-              appVersion: appVersion,
-              ids: ids,
+              child: HomeShell(
+                repository: repository,
+                settings: settings,
+                journal: journal,
+                reminders: reminders,
+                appVersion: appVersion,
+                ids: ids,
+              ),
             ),
     );
   }

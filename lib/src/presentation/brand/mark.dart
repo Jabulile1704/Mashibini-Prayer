@@ -106,11 +106,24 @@ class CombMarkPainter extends CustomPainter {
       return;
     }
 
-    // Big enough that the cells read as a group, small enough that they do
-    // not touch — a comb whose cells overlap stops being countable, which is
-    // the whole job.
-    final double cellRadius = size.width * (parts <= 4 ? 0.24 : 0.19);
-    final double orbit = size.width / 2 - cellRadius - size.width * 0.03;
+    // Solved rather than guessed, because guessing was wrong.
+    //
+    // Adjacent centres on the ring are `2 · orbit · sin(π/n)` apart, and two
+    // cells clear each other when that is at least `2 · radius`. With
+    // `orbit + radius` fixed at half the width, the largest radius that
+    // still clears is:
+    //
+    //   radius = (size / 2) / (1 + 1 / sin(π / n))
+    //
+    // The first version used a flat 0.24 of the width with a comment saying
+    // the cells did not touch. At four cells they overlapped by a third —
+    // visible the moment the mark was drawn at 112px on a splash screen and
+    // invisible in every test, because nothing measures whether a picture
+    // is a tangle.
+    final double share = math.sin(math.pi / parts);
+    // The 0.94 is the visible gap. Touching exactly is still unreadable.
+    final double cellRadius = (size.width / 2) / (1 + 1 / share) * 0.94;
+    final double orbit = size.width / 2 - cellRadius;
 
     for (int i = 0; i < parts; i++) {
       // Starting at the top, so the first person sits where a reader looks.

@@ -390,44 +390,6 @@ void main() {
     });
   });
 
-  group('reaching the journal', () {
-    testWidgets('there is a way in from the rota', (WidgetTester tester) async {
-      await repository.save(familyOfFour());
-      await show(tester, on: anchor);
-
-      await tester.tap(find.byTooltip('Journal'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Nothing written yet'), findsOneWidget);
-    });
-
-    testWidgets('coming back shows the rota again', (
-      WidgetTester tester,
-    ) async {
-      await repository.save(familyOfFour());
-      await show(tester, on: anchor);
-      await tester.tap(find.byTooltip('Journal'));
-      await tester.pumpAndSettle();
-
-      await tester.pageBack();
-      await tester.pumpAndSettle();
-
-      expect(find.text('Jabulile'), findsOneWidget);
-    });
-  });
-
-  group('reaching reminders', () {
-    testWidgets('there is a way in from the rota', (WidgetTester tester) async {
-      await repository.save(familyOfFour());
-      await show(tester, on: anchor);
-
-      await tester.tap(find.byTooltip('Reminders'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Remind me before my week'), findsOneWidget);
-    });
-  });
-
   group('a rota whose data has drifted', () {
     testWidgets('a cycle naming nobody who exists does not crash the screen', (
       WidgetTester tester,
@@ -455,84 +417,18 @@ void main() {
     });
   });
   group('which build this is', () {
-    testWidgets('the version is shown at the foot of the screen', (
+    testWidgets('the version is not here any more — it moved to Settings', (
       WidgetTester tester,
     ) async {
-      // The owner ships often. Without this, "which version is on my phone"
-      // is unanswerable without plugging the phone into a Mac.
+      // It sat at the foot of this screen from Day 14 only because there
+      // was nowhere else to put it. ADR-016 gave it a home, and Day 8's
+      // "this screen answers one question" gets a little of its meaning
+      // back. Covered in home_shell_test.dart from the Settings side.
       await repository.save(familyOfFour());
 
-      await show(tester, on: anchor, appVersion: FakeAppVersion('2.3.1 (47)'));
-
-      expect(find.text('Version 2.3.1 (47)'), findsOneWidget);
-    });
-
-    testWidgets('nothing is shown until the real answer arrives', (
-      WidgetTester tester,
-    ) async {
-      // A placeholder would shift the layout when it is replaced, on the one
-      // screen whose whole job is to be read at a glance.
-      await repository.save(familyOfFour());
-
-      await show(tester, on: anchor, settle: false);
-
-      expect(find.textContaining('Version'), findsNothing);
-    });
-
-    testWidgets('it is not shown before there is a rota', (
-      WidgetTester tester,
-    ) async {
-      // Nothing saved: the first-run screen asks one thing, and a version
-      // string is not it.
       await show(tester, on: anchor);
 
       expect(find.textContaining('Version'), findsNothing);
-      expect(find.text('No rota yet'), findsOneWidget);
-    });
-  });
-  group('changing a rota that has already started', () {
-    testWidgets('setup can be reached again, after confirming', (
-      WidgetTester tester,
-    ) async {
-      // Before this, setup was reachable only from "No rota yet" — a family
-      // that had started could not change its turnover day at all.
-      await repository.save(familyOfFour());
-      await show(tester, on: anchor);
-
-      await tester.tap(find.byKey(ThisWeekScreen.startAgainButton));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(ThisWeekScreen.confirmStartAgain));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Who takes a week?'), findsOneWidget);
-    });
-
-    testWidgets('declining leaves the rota alone', (WidgetTester tester) async {
-      // It replaces the family, so it asks. A rota lost to a mis-tap is a
-      // rota somebody has to rebuild from memory.
-      await repository.save(familyOfFour());
-      await show(tester, on: anchor);
-
-      await tester.tap(find.byKey(ThisWeekScreen.startAgainButton));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Keep it'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Who takes a week?'), findsNothing);
-      expect((await repository.load())!.members, hasLength(4));
-    });
-
-    testWidgets('it says plainly what it replaces', (
-      WidgetTester tester,
-    ) async {
-      await repository.save(familyOfFour());
-      await show(tester, on: anchor);
-
-      await tester.tap(find.byKey(ThisWeekScreen.startAgainButton));
-      await tester.pumpAndSettle();
-
-      expect(find.textContaining('day the week turns over'), findsOneWidget);
-      expect(find.textContaining('journal is kept'), findsOneWidget);
     });
   });
 }

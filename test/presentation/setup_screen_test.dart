@@ -90,16 +90,42 @@ void main() {
   }
 
   group('what it asks for', () {
-    testWidgets('three questions, and never the word anchor', (
+    testWidgets('two questions now, and never the word anchor', (
+      WidgetTester tester,
+    ) async {
+      // It used to be three. "Who takes a week" and "whose week is it at the
+      // moment" were one question asked twice, and the second silently
+      // rotated the answer to the first.
+      await open(tester);
+
+      expect(find.text('Whose week is it?'), findsOneWidget);
+      expect(find.text('Your week turns over on'), findsOneWidget);
+      expect(find.text('Whose week is it at the moment?'), findsNothing);
+      expect(find.textContaining('anchor'), findsNothing);
+      expect(find.textContaining('Anchor'), findsNothing);
+    });
+
+    testWidgets('the list says which week each position covers', (
+      WidgetTester tester,
+    ) async {
+      // The fix for "the app has to assume": every row states the week it
+      // is, so nothing is inferred from the order somebody typed in.
+      await open(tester);
+
+      expect(find.text('THIS WEEK'), findsOneWidget);
+      // The second row carries the date its turn begins on, so the sequence
+      // is readable rather than implied.
+      expect(find.textContaining('FROM '), findsOneWidget);
+    });
+
+    testWidgets('it says the cycle comes back round', (
       WidgetTester tester,
     ) async {
       await open(tester);
+      await typeName(tester, 0, 'Jabulile');
+      await typeName(tester, 1, 'Sisi');
 
-      expect(find.text('Who takes a week?'), findsOneWidget);
-      expect(find.text('Your week turns over on'), findsOneWidget);
-      expect(find.text('Whose week is it at the moment?'), findsOneWidget);
-      expect(find.textContaining('anchor'), findsNothing);
-      expect(find.textContaining('Anchor'), findsNothing);
+      expect(find.textContaining('back to Jabulile'), findsOneWidget);
     });
 
     testWidgets('starts with two rows, since a rota needs two people', (
@@ -133,17 +159,24 @@ void main() {
       expect(await repository.load(), isNull);
     });
 
-    testWidgets('not saying whose week it is is explained', (
+    testWidgets('whose week it is cannot be left unanswered any more', (
       WidgetTester tester,
     ) async {
+      // It used to be a second question, in a dropdown, that somebody could
+      // skip — and the screen then refused with "Say whose week it is at the
+      // moment." The list is now the rota: position one *is* this week, so
+      // there is nothing left to forget.
       await open(tester);
       await typeName(tester, 0, 'Jabulile');
       await typeName(tester, 1, 'Sisi');
 
       await tapStart(tester);
 
-      expect(find.text('Say whose week it is at the moment.'), findsOneWidget);
-      expect(await repository.load(), isNull);
+      final Family saved = (await repository.load())!;
+      expect(
+        RotaEngine.forFamily(saved).turnOn(anchor)!.leader.displayName,
+        'Jabulile',
+      );
     });
 
     testWidgets('nothing is saved until the answers are complete', (
@@ -170,7 +203,7 @@ void main() {
 
       expect(find.byType(TextFormField), findsNWidgets(3));
 
-      await tester.tap(find.byTooltip('Remove person 3'));
+      await tester.tap(find.byTooltip('Remove this person').last);
       await tester.pumpAndSettle();
 
       expect(find.byType(TextFormField), findsNWidgets(2));
@@ -185,35 +218,28 @@ void main() {
       expect(find.byTooltip('Remove person 2'), findsNothing);
     });
 
-    testWidgets('removing someone clears a choice that pointed at them', (
+    testWidgets('removing someone does not strand the rota', (
       WidgetTester tester,
     ) async {
+      // This used to clear a dropdown that pointed at a row index which had
+      // just shifted under it. There is no such dropdown now — the order is
+      // the answer — so removing the last person simply leaves two.
       await open(tester);
       await typeName(tester, 0, 'Jabulile');
       await typeName(tester, 1, 'Sisi');
       await tester.tap(find.text('Add someone'));
       await tester.pumpAndSettle();
       await typeName(tester, 2, 'Mama');
-      await choose(
-        tester,
-        field: SetupScreen.currentLeaderField,
-        value: 'Mama',
-      );
 
-      // Choosing scrolled the form down; the remove buttons are back up.
-      await tester.scrollUntilVisible(
-        find.byTooltip('Remove person 3'),
-        -200,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.tap(find.byTooltip('Remove person 3'));
+      await tester.tap(find.byTooltip('Remove this person').last);
       await tester.pumpAndSettle();
-
-      // The choice is forgotten rather than left pointing at a shifted row,
-      // so saving now asks for it again instead of saving the wrong person.
       await tapStart(tester);
-      expect(find.text('Say whose week it is at the moment.'), findsOneWidget);
-      expect(await repository.load(), isNull);
+
+      final Family saved = (await repository.load())!;
+      expect(saved.members.map((Member m) => m.displayName), <String>[
+        'Jabulile',
+        'Sisi',
+      ]);
     });
   });
 
@@ -234,11 +260,6 @@ void main() {
     ) async {
       await open(tester);
       await fillInTheMashibinis(tester);
-      await choose(
-        tester,
-        field: SetupScreen.currentLeaderField,
-        value: 'Mama',
-      );
 
       await tapStart(tester);
 
@@ -255,9 +276,19 @@ void main() {
       // the following morning, which is what a family means by "next week".
       expect(saved.turnoverWeekday, DateTime.monday);
 
+      // The list is the rota: whoever is first is leading this week, and
+      // the sequence follows from there. No second question, no silent
+      // rotation of the order somebody typed.
       final RotaEngine engine = RotaEngine.forFamily(saved);
-      expect(engine.turnOn(anchor)!.leader.displayName, 'Mama');
-      expect(engine.turnOn(anchor.addDays(7))!.leader.displayName, 'Tata');
+      expect(engine.turnOn(anchor)!.leader.displayName, 'Jabulile');
+      expect(engine.turnOn(anchor.addDays(7))!.leader.displayName, 'Sisi');
+      expect(engine.turnOn(anchor.addDays(14))!.leader.displayName, 'Mama');
+      expect(engine.turnOn(anchor.addDays(21))!.leader.displayName, 'Tata');
+      expect(
+        engine.turnOn(anchor.addDays(28))!.leader.displayName,
+        'Jabulile',
+        reason: 'and then it comes back round',
+      );
     });
 
     testWidgets('the turnover day is what was chosen', (
@@ -270,11 +301,6 @@ void main() {
         tester,
         field: SetupScreen.turnoverDayField,
         value: 'Wednesday',
-      );
-      await choose(
-        tester,
-        field: SetupScreen.currentLeaderField,
-        value: 'Jabulile',
       );
 
       await tapStart(tester);
@@ -289,11 +315,6 @@ void main() {
     ) async {
       await open(tester);
       await fillInTheMashibinis(tester);
-      await choose(
-        tester,
-        field: SetupScreen.currentLeaderField,
-        value: 'Jabulile',
-      );
       await choose(tester, field: SetupScreen.youAreField, value: 'Sisi');
 
       await tapStart(tester);
@@ -311,11 +332,6 @@ void main() {
     ) async {
       await open(tester);
       await fillInTheMashibinis(tester);
-      await choose(
-        tester,
-        field: SetupScreen.currentLeaderField,
-        value: 'Jabulile',
-      );
 
       await tapStart(tester);
 
@@ -331,11 +347,6 @@ void main() {
       // the rota starts the day after.
       await open(tester, on: anchor.addDays(3));
       await fillInTheMashibinis(tester);
-      await choose(
-        tester,
-        field: SetupScreen.currentLeaderField,
-        value: 'Tata',
-      );
 
       await tapStart(tester);
 
@@ -346,8 +357,44 @@ void main() {
             .turnOn(anchor.addDays(3))!
             .leader
             .displayName,
-        'Tata',
+        'Jabulile',
+        reason: 'the first in the list is leading the week in progress',
       );
+    });
+
+    testWidgets('dragging somebody to the top makes it their week', (
+      WidgetTester tester,
+    ) async {
+      // The whole point of the change. Changing who is leading is now the
+      // same gesture as changing the order, because they were never two
+      // different facts.
+      await open(tester);
+      await fillInTheMashibinis(tester);
+
+      // Move the third row (Mama) to the top.
+      // An explicit gesture with pumps between the moves. A single
+      // `tester.drag` does not drive a reorder: the list needs frames in
+      // between to run its own animation and work out where the row has
+      // landed.
+      final Offset handle = tester.getCenter(
+        find.byIcon(Icons.drag_handle).at(2),
+      );
+      final TestGesture drag = await tester.startGesture(handle);
+      await tester.pump(const Duration(milliseconds: 200));
+      for (int step = 0; step < 6; step++) {
+        await drag.moveBy(const Offset(0, -40));
+        await tester.pump(const Duration(milliseconds: 40));
+      }
+      await drag.up();
+      await tester.pumpAndSettle();
+
+      await tapStart(tester);
+
+      final RotaEngine engine = RotaEngine.forFamily(
+        (await repository.load())!,
+      );
+      expect(engine.turnOn(anchor)!.leader.displayName, 'Mama');
+      expect(engine.turnOn(anchor.addDays(7))!.leader.displayName, 'Jabulile');
     });
   });
 }

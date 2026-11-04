@@ -4,6 +4,41 @@ What changed, written for the family rather than for whoever wrote it.
 Versions follow [Semantic Versioning](https://semver.org); the process is in
 [docs/RELEASING.md](docs/RELEASING.md).
 
+## [1.4.0] — 2026-11-04
+
+**You can change your mind now.** Two things the app would only ask you
+once — the order of the rota, and which person you are — can both be
+changed whenever you like.
+
+### New
+
+- **Say which one you are, at any time.** The app asked this when you first
+  set up the rota, and if you picked the wrong name there was no way back:
+  the only fix was to start the whole rota again. It is a row in Settings
+  now, and changing it moves your reminders with it.
+- **Light, dark, or follow your phone.** The honey and the dark of the hive
+  are the same colours in all three — honey is brightest against the dark
+  and deepens against the cream, so it reads either way.
+- **Setting up the rota is one list.** Before, you typed the names and then
+  answered a second question about whose week it was, and that second answer
+  quietly rearranged the first. Now each row says the week it covers — *this
+  week*, *from Mon, 9 Nov* — and you drag people into the order you want.
+- **An About page**, which says what the app does, that your journal never
+  leaves your phone, and — plainly — the two things it still cannot do.
+
+### Better
+
+- **Reminders are one switch instead of a screen.** Turning them on used to
+  mean opening a page to find a single control. The switch is in Settings,
+  and it tells you the next reminder it is holding for you.
+- **The day your week turns over is shown** in Settings. It could be set
+  when you first made the rota and then never seen again.
+
+### Not yet
+
+You still cannot add or remove somebody, or change the turnover day, without
+starting the rota again. Both are next.
+
 ## [1.3.0] — 2026-11-03
 
 **The app has a bottom bar now.** Everything used to be behind three small

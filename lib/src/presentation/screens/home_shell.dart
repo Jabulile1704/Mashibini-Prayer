@@ -65,9 +65,6 @@ class _HomeShellState extends State<HomeShell> {
           ThisWeekScreen(
             repository: widget.repository,
             settings: widget.settings,
-            journal: widget.journal,
-            reminders: widget.reminders,
-            appVersion: widget.appVersion,
             ids: widget.ids,
             today: widget.today,
           ),

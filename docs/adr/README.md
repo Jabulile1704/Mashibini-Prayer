@@ -26,3 +26,4 @@ names it.
 | [016](ADR-016-four-tabs-and-what-goes-in-them.md) | Four tabs, and what goes in each | Accepted |
 | [017](ADR-017-the-identity-is-the-family-totem.md) | The identity is the family's totem: honey, ink and a comb | Accepted |
 | [018](ADR-018-release-branches-are-cut-from-main.md) | Release branches are cut from `main` | Accepted |
+| [019](ADR-019-the-turnover-day-is-an-epoch-not-a-setting.md) | The turnover day is an epoch, not a setting | Accepted |

@@ -134,7 +134,16 @@ reminders, turnover day, light/dark/system, about and version.
 Removes the duplicated "which one are you?" from the Reminders screen, and
 folds that screen into a settings row.
 
-### Day 20 — Change the family (#74)
+> **Done, minus one.** The turnover day is **not a settings row** — changing
+> `Family.turnoverWeekday` moves every week boundary the rota has ever had,
+> and `RotaEngine` refuses a family whose cycles no longer begin on it, so
+> the row would have thrown on the next frame of This Week. It is a new
+> cycle epoch, like adding a person. [ADR-019](adr/ADR-019-the-turnover-day-is-an-epoch-not-a-setting.md)
+> decides the design; **#100** implements it, with Day 20's family editor,
+> which needs the same machinery. The row ships showing the day, not
+> changing it.
+
+### Day 20 — Change the family (#74), and the turnover day (#100)
 
 Add and remove members, from Settings, calling the `FamilyEditor` that has
 been built and unreachable since Day 7. The domain rules already refuse to
@@ -143,6 +152,12 @@ the screen must not re-implement any of that.
 
 This is the day that closes the biggest real gap, and it needs Settings to
 exist first, which is why it is here and not earlier.
+
+**#100 joins it.** Changing the turnover day writes a new epoch by the same
+rules — effective from the next turnover, past weeks untouched — so the two
+share the machinery and the screen. It also brings the app's first schema
+migration, which is worth doing once carefully rather than four times
+badly.
 
 ### Day 21 — Restyle the screens
 

@@ -9,7 +9,7 @@ import 'src/data/sources/local/preferences_key_value_store.dart';
 import 'src/data/sources/notifications/local_reminders.dart';
 import 'src/data/sources/platform/app_version.dart';
 
-void main() {
+Future<void> main() async {
   // shared_preferences talks over a platform channel, so the binding has to
   // exist before anything reads storage.
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,10 +33,21 @@ void main() {
 
   final RandomIdGenerator ids = RandomIdGenerator();
 
+  final LocalDeviceSettingsRepository settings = LocalDeviceSettingsRepository(
+    store: store,
+  );
+
+  // Read before the first frame rather than streamed into it. The splash is
+  // the first thing on screen, so a stream's asynchronous first value would
+  // paint it in the wrong theme and then correct itself — a flash on every
+  // cold start, for the sake of not awaiting one read.
+  final Appearance appearance = await settings.loadAppearance();
+
   runApp(
     MashibiniPrayerApp(
       repository: repository,
-      settings: LocalDeviceSettingsRepository(store: store),
+      settings: settings,
+      initialAppearance: appearance,
       journal: LocalJournalRepository(store: store, ids: ids),
       reminders: LocalReminders(),
       appVersion: const PlatformAppVersion(),

@@ -2,6 +2,22 @@ import 'dart:async';
 
 import '../sources/local/key_value_store.dart';
 
+/// Which of the three the person asked for.
+///
+/// Stored as a word rather than an index: an index is only meaningful
+/// against the order these happen to be declared in, and reordering an enum
+/// would then silently change what every phone had chosen.
+///
+/// This is not `ThemeMode`. The data layer does not import Flutter — the
+/// mapping to Flutter's type happens in `app.dart`, which is the only place
+/// that needs it.
+enum Appearance {
+  /// Follow the phone. The default, and what every build before this did.
+  system,
+  light,
+  dark,
+}
+
 /// Settings that belong to *this phone*, not to the family.
 ///
 /// Which member is holding the device is the only one so far, and it is
@@ -32,6 +48,17 @@ abstract interface class DeviceSettingsRepository {
 
   Stream<bool> watchRemindersEnabled();
 
+  /// Light, dark, or whatever the phone is set to.
+  ///
+  /// A phone preference rather than a family one for the obvious reason:
+  /// four people reading the same rota do not have to read it the same
+  /// colour. Absent means [Appearance.system].
+  Future<Appearance> loadAppearance();
+
+  Future<void> saveAppearance(Appearance appearance);
+
+  Stream<Appearance> watchAppearance();
+
   Future<void> dispose();
 }
 
@@ -40,6 +67,7 @@ class LocalDeviceSettingsRepository implements DeviceSettingsRepository {
 
   static const String youAreKey = 'device.youAre.v1';
   static const String remindersKey = 'device.reminders.v1';
+  static const String appearanceKey = 'device.appearance.v1';
 
   final KeyValueStore store;
 
@@ -47,6 +75,8 @@ class LocalDeviceSettingsRepository implements DeviceSettingsRepository {
       StreamController<String?>.broadcast();
   final StreamController<bool> _reminderChanges =
       StreamController<bool>.broadcast();
+  final StreamController<Appearance> _appearanceChanges =
+      StreamController<Appearance>.broadcast();
 
   bool _disposed = false;
 
@@ -89,6 +119,37 @@ class LocalDeviceSettingsRepository implements DeviceSettingsRepository {
     yield* _reminderChanges.stream;
   }
 
+  /// Reads the stored word, falling back to following the phone.
+  ///
+  /// An unrecognised value falls back too. That is not defensive padding: a
+  /// build that adds a fourth option writes a word this build has never
+  /// heard of, and an older install reading it should follow the phone
+  /// rather than throw on the first frame.
+  @override
+  Future<Appearance> loadAppearance() async {
+    final String? stored = await store.read(appearanceKey);
+    for (final Appearance appearance in Appearance.values) {
+      if (appearance.name == stored) {
+        return appearance;
+      }
+    }
+    return Appearance.system;
+  }
+
+  @override
+  Future<void> saveAppearance(Appearance appearance) async {
+    _assertUsable();
+    await store.write(appearanceKey, appearance.name);
+    _appearanceChanges.add(appearance);
+  }
+
+  @override
+  Stream<Appearance> watchAppearance() async* {
+    _assertUsable();
+    yield await loadAppearance();
+    yield* _appearanceChanges.stream;
+  }
+
   @override
   Future<void> dispose() async {
     if (_disposed) {
@@ -97,6 +158,7 @@ class LocalDeviceSettingsRepository implements DeviceSettingsRepository {
     _disposed = true;
     await _changes.close();
     await _reminderChanges.close();
+    await _appearanceChanges.close();
   }
 
   void _assertUsable() {

@@ -38,11 +38,22 @@ abstract final class AppLocales {
       ];
 }
 
+/// Flutter's name for each of the three choices.
+///
+/// The only place the stored [Appearance] meets a Flutter type. Keeping the
+/// map here rather than on the enum is what lets `data/` stay free of
+/// Flutter imports (ARCHITECTURE.md).
+ThemeMode _themeModeFor(Appearance appearance) => switch (appearance) {
+  Appearance.system => ThemeMode.system,
+  Appearance.light => ThemeMode.light,
+  Appearance.dark => ThemeMode.dark,
+};
+
 /// The application shell.
 ///
 /// Takes its repository rather than building one, so a test can hand it a
 /// fake and the whole app runs without a device, a plugin or a disk.
-class MashibiniPrayerApp extends StatelessWidget {
+class MashibiniPrayerApp extends StatefulWidget {
   const MashibiniPrayerApp({
     required this.repository,
     required this.settings,
@@ -50,6 +61,7 @@ class MashibiniPrayerApp extends StatelessWidget {
     required this.reminders,
     required this.appVersion,
     required this.ids,
+    this.initialAppearance = Appearance.system,
     super.key,
   });
 
@@ -60,31 +72,60 @@ class MashibiniPrayerApp extends StatelessWidget {
   final AppVersion appVersion;
   final IdGenerator ids;
 
+  /// The stored appearance, read before the first frame.
+  ///
+  /// `watchAppearance()` yields its first value asynchronously, so a stream
+  /// alone would paint one frame of the wrong theme — and because the splash
+  /// is the first thing on screen, a phone set to light with the app set to
+  /// dark would flash white and then go dark on every cold start. `main()`
+  /// reads it before `runApp`, which costs one await and removes the flash
+  /// entirely. Tests that do not care may leave it.
+  final Appearance initialAppearance;
+
   static const String title = 'Mashibini Prayer';
 
   @override
+  State<MashibiniPrayerApp> createState() => _MashibiniPrayerAppState();
+}
+
+class _MashibiniPrayerAppState extends State<MashibiniPrayerApp> {
+  // Subscribed once. A stream expression inside build() would hand the
+  // builder a fresh subscription on every frame.
+  late final Stream<Appearance> _appearance = widget.settings.watchAppearance();
+
+  @override
   Widget build(BuildContext context) {
+    return StreamBuilder<Appearance>(
+      stream: _appearance,
+      initialData: widget.initialAppearance,
+      builder: (BuildContext context, AsyncSnapshot<Appearance> chosen) =>
+          _app(chosen.data ?? Appearance.system),
+    );
+  }
+
+  Widget _app(Appearance appearance) {
     return MaterialApp(
-      title: title,
+      title: MashibiniPrayerApp.title,
       debugShowCheckedModeBanner: false,
       localizationsDelegates: AppLocales.delegates,
       supportedLocales: AppLocales.supported,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
+      themeMode: _themeModeFor(appearance),
       // Reviewing the design system should not mean editing this file and
       // remembering to put it back. `--dart-define=GALLERY=true` costs
       // nothing in a normal build.
       home: BrandGallery.requested
           ? const BrandGallery()
           : SplashGate(
-              repository: repository,
+              repository: widget.repository,
               child: HomeShell(
-                repository: repository,
-                settings: settings,
-                journal: journal,
-                reminders: reminders,
-                appVersion: appVersion,
-                ids: ids,
+                repository: widget.repository,
+                settings: widget.settings,
+                journal: widget.journal,
+                reminders: widget.reminders,
+                appVersion: widget.appVersion,
+                ids: widget.ids,
               ),
             ),
     );

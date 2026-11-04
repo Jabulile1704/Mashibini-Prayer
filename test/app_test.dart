@@ -9,6 +9,7 @@ import 'support/fake_id_generator.dart';
 import 'support/fake_key_value_store.dart';
 import 'support/fake_app_version.dart';
 import 'support/fake_reminders.dart';
+import 'support/fake_sharing.dart';
 
 void main() {
   late LocalFamilyRepository repository;
@@ -39,6 +40,7 @@ void main() {
           repository: repository,
           settings: settings,
           journal: journal,
+          sharing: FakeSharing(),
           reminders: FakeReminders(),
           appVersion: FakeAppVersion(),
           ids: FakeIdGenerator(),
@@ -60,6 +62,7 @@ void main() {
           repository: repository,
           settings: settings,
           journal: journal,
+          sharing: FakeSharing(),
           reminders: FakeReminders(),
           appVersion: FakeAppVersion(),
           ids: FakeIdGenerator(),
@@ -85,6 +88,7 @@ void main() {
           repository: repository,
           settings: settings,
           journal: journal,
+          sharing: FakeSharing(),
           reminders: FakeReminders(),
           appVersion: FakeAppVersion(),
           ids: FakeIdGenerator(),
@@ -110,6 +114,7 @@ void main() {
           repository: repository,
           settings: settings,
           journal: journal,
+          sharing: FakeSharing(),
           reminders: FakeReminders(),
           appVersion: FakeAppVersion(),
           ids: FakeIdGenerator(),
@@ -134,6 +139,7 @@ void main() {
           repository: repository,
           settings: settings,
           journal: journal,
+          sharing: FakeSharing(),
           reminders: FakeReminders(),
           appVersion: FakeAppVersion(),
           ids: FakeIdGenerator(),
@@ -156,6 +162,7 @@ void main() {
           repository: repository,
           settings: settings,
           journal: journal,
+          sharing: FakeSharing(),
           reminders: FakeReminders(),
           appVersion: FakeAppVersion(),
           ids: FakeIdGenerator(),

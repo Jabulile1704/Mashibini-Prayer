@@ -5,6 +5,7 @@ import '../../data/repositories/family_repository.dart';
 import '../../data/repositories/journal_repository.dart';
 import '../../data/sources/notifications/reminders.dart';
 import '../../data/sources/platform/app_version.dart';
+import '../../data/sources/platform/sharing.dart';
 import '../../domain/entities/calendar_date.dart';
 import '../../domain/ids.dart';
 import 'journal_screen.dart';
@@ -27,6 +28,7 @@ class HomeShell extends StatefulWidget {
     required this.repository,
     required this.settings,
     required this.journal,
+    required this.sharing,
     required this.reminders,
     required this.appVersion,
     required this.ids,
@@ -37,6 +39,7 @@ class HomeShell extends StatefulWidget {
   final FamilyRepository repository;
   final DeviceSettingsRepository settings;
   final JournalRepository journal;
+  final Sharing sharing;
   final Reminders reminders;
   final AppVersion appVersion;
   final IdGenerator ids;
@@ -78,6 +81,8 @@ class _HomeShellState extends State<HomeShell> {
           SettingsScreen(
             familyRepository: widget.repository,
             settings: widget.settings,
+            journal: widget.journal,
+            sharing: widget.sharing,
             reminders: widget.reminders,
             appVersion: widget.appVersion,
             ids: widget.ids,

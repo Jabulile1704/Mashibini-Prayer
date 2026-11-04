@@ -6,6 +6,7 @@ import '../src/data/repositories/family_repository.dart';
 import '../src/data/repositories/journal_repository.dart';
 import '../src/data/sources/notifications/reminders.dart';
 import '../src/data/sources/platform/app_version.dart';
+import '../src/data/sources/platform/sharing.dart';
 import '../src/domain/ids.dart';
 import 'presentation/brand/gallery.dart';
 import 'presentation/brand/theme.dart';
@@ -58,6 +59,7 @@ class MashibiniPrayerApp extends StatefulWidget {
     required this.repository,
     required this.settings,
     required this.journal,
+    required this.sharing,
     required this.reminders,
     required this.appVersion,
     required this.ids,
@@ -68,6 +70,7 @@ class MashibiniPrayerApp extends StatefulWidget {
   final FamilyRepository repository;
   final DeviceSettingsRepository settings;
   final JournalRepository journal;
+  final Sharing sharing;
   final Reminders reminders;
   final AppVersion appVersion;
   final IdGenerator ids;
@@ -123,6 +126,7 @@ class _MashibiniPrayerAppState extends State<MashibiniPrayerApp> {
                 repository: widget.repository,
                 settings: widget.settings,
                 journal: widget.journal,
+                sharing: widget.sharing,
                 reminders: widget.reminders,
                 appVersion: widget.appVersion,
                 ids: widget.ids,

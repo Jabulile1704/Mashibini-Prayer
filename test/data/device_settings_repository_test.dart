@@ -65,6 +65,69 @@ void main() {
     expect(() => settings.watchYouAre().first, throwsStateError);
   });
 
+  group('appearance', () {
+    test('follows the phone until somebody says otherwise', () async {
+      expect(await settings.loadAppearance(), Appearance.system);
+    });
+
+    test('remembers a choice', () async {
+      await settings.saveAppearance(Appearance.dark);
+
+      expect(await settings.loadAppearance(), Appearance.dark);
+    });
+
+    test('is stored as a word, not a position', () async {
+      // An index would be read against whatever order the enum happens to
+      // be declared in, so inserting a value would silently change what
+      // every phone had chosen.
+      await settings.saveAppearance(Appearance.light);
+
+      expect(
+        store.values[LocalDeviceSettingsRepository.appearanceKey],
+        'light',
+      );
+    });
+
+    test('a word this build does not know falls back to the phone', () async {
+      // What an older install reads after a newer build has written a
+      // fourth option. Following the phone is the only safe answer, and it
+      // has to be an answer rather than a throw: this is read before the
+      // first frame.
+      await store.write(LocalDeviceSettingsRepository.appearanceKey, 'sepia');
+
+      expect(await settings.loadAppearance(), Appearance.system);
+    });
+
+    test('survives a new repository over the same store', () async {
+      await settings.saveAppearance(Appearance.dark);
+
+      final LocalDeviceSettingsRepository reopened =
+          LocalDeviceSettingsRepository(store: store);
+      addTearDown(reopened.dispose);
+
+      expect(await reopened.loadAppearance(), Appearance.dark);
+    });
+
+    test('watching gets the current value first, then changes', () async {
+      await settings.saveAppearance(Appearance.light);
+      final List<Appearance> seen = <Appearance>[];
+      final subscription = settings.watchAppearance().listen(seen.add);
+      addTearDown(subscription.cancel);
+
+      await pumpEventQueue();
+      await settings.saveAppearance(Appearance.dark);
+      await pumpEventQueue();
+
+      expect(seen, <Appearance>[Appearance.light, Appearance.dark]);
+    });
+
+    test('using it after dispose is a programming error', () async {
+      await settings.dispose();
+
+      expect(() => settings.saveAppearance(Appearance.dark), throwsStateError);
+    });
+  });
+
   test('disposing twice is harmless', () async {
     await settings.dispose();
     await expectLater(settings.dispose(), completes);

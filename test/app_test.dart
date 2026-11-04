@@ -28,6 +28,10 @@ void main() {
     await journal.dispose();
   });
 
+  /// What `MaterialApp` was given, which is what decides the theme.
+  ThemeMode? themeMode(WidgetTester tester) =>
+      tester.widget<MaterialApp>(find.byType(MaterialApp)).themeMode;
+
   group('MashibiniPrayerApp', () {
     testWidgets('builds and names itself', (WidgetTester tester) async {
       await tester.pumpWidget(
@@ -71,6 +75,77 @@ void main() {
         find.byType(MaterialApp),
       );
       expect(app.debugShowCheckedModeBanner, isFalse);
+    });
+
+    testWidgets('follows the phone until somebody chooses otherwise', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        MashibiniPrayerApp(
+          repository: repository,
+          settings: settings,
+          journal: journal,
+          reminders: FakeReminders(),
+          appVersion: FakeAppVersion(),
+          ids: FakeIdGenerator(),
+        ),
+      );
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
+
+      expect(themeMode(tester), ThemeMode.system);
+    });
+
+    testWidgets('opens in the theme that was stored, without a flash', (
+      WidgetTester tester,
+    ) async {
+      // `initialAppearance` is the whole point of this: the stream's first
+      // value arrives asynchronously, so a stream alone would paint one
+      // frame of the wrong theme — and because the splash is the first thing
+      // on screen, every cold start would flash.
+      await settings.saveAppearance(Appearance.dark);
+
+      await tester.pumpWidget(
+        MashibiniPrayerApp(
+          repository: repository,
+          settings: settings,
+          journal: journal,
+          reminders: FakeReminders(),
+          appVersion: FakeAppVersion(),
+          ids: FakeIdGenerator(),
+          initialAppearance: await settings.loadAppearance(),
+        ),
+      );
+
+      // The *first* frame, before anything has settled.
+      await tester.pump();
+      expect(themeMode(tester), ThemeMode.dark);
+
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
+      expect(themeMode(tester), ThemeMode.dark);
+    });
+
+    testWidgets('a change reaches the whole app, not just the row', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        MashibiniPrayerApp(
+          repository: repository,
+          settings: settings,
+          journal: journal,
+          reminders: FakeReminders(),
+          appVersion: FakeAppVersion(),
+          ids: FakeIdGenerator(),
+        ),
+      );
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
+
+      await settings.saveAppearance(Appearance.light);
+      await tester.pumpAndSettle();
+
+      expect(themeMode(tester), ThemeMode.light);
     });
 
     testWidgets('opens on the rota, not a placeholder', (

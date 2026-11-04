@@ -95,13 +95,22 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
         run: flutter build apk --release
 
-      # Printed so the fingerprint can be compared across releases without
-      # downloading anything. It is a public value; the key is not.
-      - name: Say which key signed it
+      # The guard on #67, which for four releases guarded nothing (#103).
+      #
+      # It used `keytool -printcert -jarfile`, which reads only the v1 JAR
+      # signature. Flutter's release APKs are v2/v3 and carry no v1 block, so
+      # keytool found nothing, grep matched nothing, and `|| true` turned the
+      # failure into a pass. It reported success without reading a key.
+      #
+      # This reads the v2/v3 signing block and **fails** on anything other
+      # than the fingerprint in android/release-key.sha256 — including
+      # finding no certificate at all, which was the case that used to pass.
+      # The fingerprint is a public value; the key is not.
+      - name: It is signed with the key every previous release used
         run: |
-          KEYTOOL="$JAVA_HOME/bin/keytool"
-          "$KEYTOOL" -printcert -jarfile build/app/outputs/flutter-apk/app-release.apk \
-            | grep -E 'Owner:|SHA256:' || true
+          dart run tool/apk_signing_key.dart \
+            build/app/outputs/flutter-apk/app-release.apk \
+            --expect "$(cat android/release-key.sha256)"
 
       - name: Name it after the release
         run: |

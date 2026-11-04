@@ -76,9 +76,17 @@ filed and fixed this fortnight, and each one is now findable by somebody who
 asks "has this gone wrong before?" — which is the only question an issue
 tracker answers well.
 
-The PR hygiene check caught me three times, including on Day 14 when I
-labelled a PR `type:defect` without filing the issue. That is the rule
-working on its author.
+The PR hygiene check caught me **four** times, and never twice on the same
+rule: a branch prefix it does not allow, a `type:defect` label with no
+`Closes #n` (Day 14), the same again, and on Day 19 a PR body that dropped
+the template's "How it was verified" section — written by somebody who had
+just spent the day verifying things on a simulator and did not think to say
+so in the one place a reviewer looks.
+
+That last one is the most useful of the four. The check is not asking
+whether the work was verified; it is asking whether the *next person* can
+tell. A gate that only ever caught other people's mistakes would be worth
+less than one that keeps catching its own author.
 
 ### Conventional Commits earned their place late
 

@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 
 import '../../data/repositories/device_settings_repository.dart';
 import '../../data/repositories/family_repository.dart';
+import '../../data/repositories/journal_repository.dart';
 import '../../data/sources/notifications/reminders.dart';
 import '../../data/sources/platform/app_version.dart';
+import '../../data/sources/platform/sharing.dart';
 import '../../domain/entities/calendar_date.dart';
 import '../../domain/entities/family.dart';
 import '../../domain/entities/member.dart';
 import '../../domain/ids.dart';
+import '../../domain/entities/journal_entry.dart';
+import '../../domain/journal/journal_export.dart';
 import '../../domain/reminders/reminder_plan.dart';
 import '../../domain/rota/family_editor.dart';
 import '../brand/tokens.dart';
@@ -36,6 +40,8 @@ class SettingsScreen extends StatefulWidget {
   const SettingsScreen({
     required this.familyRepository,
     required this.settings,
+    required this.journal,
+    required this.sharing,
     required this.reminders,
     required this.appVersion,
     required this.ids,
@@ -46,6 +52,8 @@ class SettingsScreen extends StatefulWidget {
 
   final FamilyRepository familyRepository;
   final DeviceSettingsRepository settings;
+  final JournalRepository journal;
+  final Sharing sharing;
   final Reminders reminders;
   final AppVersion appVersion;
   final IdGenerator ids;
@@ -57,6 +65,7 @@ class SettingsScreen extends StatefulWidget {
   static const Key appearanceRow = Key('settings.appearance');
   static const Key turnoverRow = Key('settings.turnover');
   static const Key startAgainRow = Key('settings.startAgain');
+  static const Key exportRow = Key('settings.export');
   static const Key aboutRow = Key('settings.about');
   static const Key confirmStartAgain = Key('settings.startAgain.confirm');
 
@@ -242,6 +251,53 @@ class _SettingsScreenState extends State<SettingsScreen> {
       return;
     }
     await widget.settings.saveAppearance(chosen);
+  }
+
+  // ─────────────────────────────── the journal ─────────────────────────────
+
+  /// Hands the whole journal to the phone's share sheet, as plain text.
+  ///
+  /// This exists because a reinstall takes the journal with it (#104), and
+  /// on iOS a reinstall happens roughly weekly whether anybody wants one or
+  /// not. Sync would not help: journal entries are deliberately outside the
+  /// family tree (ADR-004), so they are not what #75 would be syncing.
+  ///
+  /// Everything about *what the document says* lives in `JournalExport` and
+  /// is tested without a share sheet. This is the part that cannot be.
+  Future<void> _exportJournal() async {
+    setState(() {
+      _busy = true;
+      _message = null;
+    });
+
+    final List<JournalEntry> entries = await widget.journal.all();
+    if (!mounted) {
+      return;
+    }
+
+    final String document = JournalExport.asText(
+      entries,
+      formatDate: (CalendarDate date) => DateLabels.full(context, date),
+      savedOn: _today,
+    );
+
+    try {
+      await widget.sharing.shareText(
+        text: document,
+        subject: JournalExport.subject(DateLabels.full(context, _today)),
+      );
+    } on Object catch (error) {
+      // A share sheet that will not open is not a reason to lose the
+      // screen. Said out loud rather than swallowed, because somebody
+      // exporting a journal is doing it for a reason.
+      if (mounted) {
+        setState(() => _message = 'Your phone could not share it: $error');
+      }
+    }
+
+    if (mounted) {
+      setState(() => _busy = false);
+    }
   }
 
   // ─────────────────────────────── the rota ────────────────────────────────
@@ -458,6 +514,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
         ),
+
+      const _Heading('Your journal'),
+      ListTile(
+        key: SettingsScreen.exportRow,
+        title: const Text('Keep a copy of my journal'),
+        subtitle: const Text(
+          'Sends it to yourself as plain text. Nothing else leaves this '
+          'phone, and reinstalling the app loses what is not kept.',
+        ),
+        isThreeLine: true,
+        trailing: const Icon(Icons.ios_share),
+        onTap: _busy ? null : _exportJournal,
+      ),
 
       const _Heading('The rota'),
       ListTile(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mashibini_prayer/src/app.dart';
 import 'package:mashibini_prayer/src/data/repositories/device_settings_repository.dart';
+import 'package:mashibini_prayer/src/data/repositories/journal_repository.dart';
 import 'package:mashibini_prayer/src/data/repositories/local_family_repository.dart';
 import 'package:mashibini_prayer/src/presentation/screens/about_screen.dart';
 import 'package:mashibini_prayer/src/presentation/screens/settings_screen.dart';
@@ -10,6 +11,7 @@ import '../support/fake_app_version.dart';
 import '../support/fake_id_generator.dart';
 import '../support/fake_key_value_store.dart';
 import '../support/fake_reminders.dart';
+import '../support/fake_sharing.dart';
 import '../support/family_fixtures.dart';
 
 /// Day 19's screen, and the defect it exists to fix.
@@ -23,17 +25,22 @@ void main() {
   late LocalFamilyRepository family;
   late LocalDeviceSettingsRepository settings;
   late FakeReminders reminders;
+  late FakeSharing sharing;
+  late LocalJournalRepository journal;
 
   setUp(() {
     final FakeKeyValueStore store = FakeKeyValueStore();
     family = LocalFamilyRepository(store: store);
     settings = LocalDeviceSettingsRepository(store: store);
     reminders = FakeReminders();
+    sharing = FakeSharing();
+    journal = LocalJournalRepository(store: store, ids: FakeIdGenerator());
   });
 
   tearDown(() async {
     await family.dispose();
     await settings.dispose();
+    await journal.dispose();
   });
 
   Future<void> open(WidgetTester tester) async {
@@ -45,6 +52,8 @@ void main() {
         home: SettingsScreen(
           familyRepository: family,
           settings: settings,
+          journal: journal,
+          sharing: sharing,
           reminders: reminders,
           appVersion: FakeAppVersion(),
           ids: FakeIdGenerator(),
@@ -313,6 +322,85 @@ void main() {
     });
   });
 
+  group('keeping a copy of the journal', () {
+    testWidgets('hands the whole journal to the share sheet', (
+      WidgetTester tester,
+    ) async {
+      // #104: a reinstall takes the journal with it, and on iOS a reinstall
+      // happens about weekly whether anybody wants one or not.
+      await family.save(familyOfFour());
+      await journal.write(
+        date: anchor,
+        text: 'Thanked God for the rain.',
+        now: DateTime(2026, 10, 18, 21),
+      );
+      await journal.write(
+        date: anchor.addDays(1),
+        text: 'Prayed for Gogo.',
+        now: DateTime(2026, 10, 19, 21),
+      );
+      await open(tester);
+
+      await tapRow(tester, SettingsScreen.exportRow);
+
+      expect(sharing.shares, 1);
+      expect(sharing.sharedText, contains('Thanked God for the rain.'));
+      expect(sharing.sharedText, contains('Prayed for Gogo.'));
+      expect(sharing.sharedSubject, contains('My prayer journal'));
+      expect(
+        sharing.sharedSubject,
+        contains('Sunday, 18 October 2026'),
+        reason: 'the subject reads the way the document does',
+      );
+    });
+
+    testWidgets('dates it the way the rest of the app does', (
+      WidgetTester tester,
+    ) async {
+      // The domain cannot reach a locale, so the screen passes the
+      // formatter. Worth asserting: the file should read the way the app
+      // reads, not in ISO.
+      await family.save(familyOfFour());
+      await journal.write(
+        date: anchor,
+        text: 'A line.',
+        now: DateTime(2026, 10, 18, 21),
+      );
+      await open(tester);
+
+      await tapRow(tester, SettingsScreen.exportRow);
+
+      expect(sharing.sharedText, contains('Sunday, 18 October 2026'));
+    });
+
+    testWidgets('an empty journal still produces something', (
+      WidgetTester tester,
+    ) async {
+      await family.save(familyOfFour());
+      await open(tester);
+
+      await tapRow(tester, SettingsScreen.exportRow);
+
+      expect(sharing.shares, 1);
+      expect(sharing.sharedText, contains('Nothing written yet.'));
+    });
+
+    testWidgets('a share sheet that will not open is said out loud', (
+      WidgetTester tester,
+    ) async {
+      await family.save(familyOfFour());
+      sharing.throws = Exception('no share sheet here');
+      await open(tester);
+
+      await tapRow(tester, SettingsScreen.exportRow);
+
+      // Not swallowed. Somebody exporting a journal is doing it for a
+      // reason, and silence would read as success.
+      expect(find.textContaining('could not share it'), findsOneWidget);
+      expect(find.byType(SettingsScreen), findsOneWidget);
+    });
+  });
+
   group('about', () {
     testWidgets('carries the version, which used to sit on This Week', (
       WidgetTester tester,
@@ -345,6 +433,16 @@ void main() {
         findsOneWidget,
         reason: 'the family should not have to read a repository to find out',
       );
+
+      // #104. The journal is the only thing here that cannot be retyped,
+      // and "stays on your phone" reads as a safety guarantee unless this
+      // is said next to it.
+      await tester.scrollUntilVisible(
+        find.text('Reinstalling loses your journal'),
+        160,
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Reinstalling loses your journal'), findsOneWidget);
     });
   });
 }

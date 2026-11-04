@@ -104,6 +104,16 @@ class AboutScreen extends StatelessWidget {
                   'which it does if you ask it to. Reaching everybody else '
                   'needs a server, and this app does not have one.',
             ),
+            _Section(
+              heading: 'Reinstalling loses your journal',
+              body:
+                  'On an iPhone this app has to be installed again every '
+                  'week or so, and installing it removes the old copy along '
+                  'with everything on it. The rota takes a minute to enter '
+                  'again. What you wrote does not come back.\n\n'
+                  'Keep a copy from Settings before you reinstall. That is '
+                  'the only thing that saves it.',
+            ),
           ],
         ),
       ),

@@ -181,9 +181,9 @@ void main() {
 
       expect(find.byKey(SettingsScreen.remindersRow), findsOneWidget);
       expect(
-        tester.widget<SwitchListTile>(
-          find.byKey(SettingsScreen.remindersRow),
-        ).value,
+        tester
+            .widget<SwitchListTile>(find.byKey(SettingsScreen.remindersRow))
+            .value,
         isFalse,
         reason: 'a phone that has not been asked sends nothing (R5.1)',
       );

@@ -18,6 +18,9 @@ dependencies:
   timezone: ^0.11.2
 
 dev_dependencies:
+  # Used by tool/apk_signing_key.dart to fingerprint the certificate an APK
+  # was signed with. A dev dependency because it never ships in the app.
+  crypto: ^3.0.6
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0

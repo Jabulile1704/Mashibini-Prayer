@@ -123,6 +123,38 @@ person. The first pass of anything is the pass where the bug is invisible.
 What worked instead: opening the app on a simulator at a setting I do not
 use, and running the release script twice.
 
+### A ninth, of a different kind: a check that could not fail
+
+The fix for "every release was signed with a different key" was a stable key
+**and a step in the release workflow that printed the certificate's
+fingerprint**, so a change would be visible.
+
+That step printed nothing, on every release, for four releases, and passed:
+
+```yaml
+keytool -printcert -jarfile app-release.apk | grep -E 'Owner:|SHA256:' || true
+```
+
+`-jarfile` reads the v1 JAR signature. Flutter's release APKs are signed
+v2/v3 and carry no v1 block, so keytool found nothing, grep matched nothing,
+and `|| true` turned the failure into a pass (#103).
+
+This one is worse than the eight above, and it belongs in a different row of
+the table. Those were bugs in the app, found by using it. This was a bug in
+**the thing that was supposed to find bugs** — and it was found only because
+somebody went looking for a fingerprint in a log, did not find one, and
+refused to assume it was fine.
+
+Two rules fall out of it, and both are now applied:
+
+- **A step whose job is to prove something must fail when it proves
+  nothing.** `|| true` on a verification step is a contradiction in terms.
+- **A check should be runnable by a person, on the artefact, by hand.** The
+  replacement is a Dart tool that reads the v2/v3 signing block and runs on
+  a laptop with no Android SDK against a downloaded APK — which is precisely
+  what had to be done to discover the problem. Nine tests cover it, five of
+  them the refusal cases.
+
 ### The git workflow is wrong, and it took two releases to show
 
 Rebase-merging into `main` and then merging `main` back into `develop` is a

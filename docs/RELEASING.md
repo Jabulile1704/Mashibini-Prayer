@@ -148,9 +148,28 @@ It lives in three repository secrets:
 `release.yml` **fails** when any of them is missing rather than falling back
 to a debug key, because a silent fallback is exactly the bug this replaced.
 
-Each release prints the certificate's owner and SHA-256 fingerprint in the
-build log. If that fingerprint ever changes between releases, stop: every
-phone with the app installed is about to be unable to update.
+### The fingerprint is checked, not printed
+
+`android/release-key.sha256` holds the SHA-256 of the certificate every
+release so far has been signed with. `release.yml` reads the APK's actual
+signing certificate and **fails the release** if it differs.
+
+```bash
+dart run tool/apk_signing_key.dart <apk> --expect "$(cat android/release-key.sha256)"
+```
+
+The same command works on a downloaded APK, on any machine, with no Android
+SDK — which is how #103 was found.
+
+Until v1.4.0 this was a `keytool -printcert -jarfile … || true` that printed
+the owner and fingerprint to the log. It printed **nothing**, on every
+release, and passed: `-jarfile` reads only the v1 JAR signature, and Flutter's
+release APKs are signed v2/v3 with no v1 block at all. A guard that cannot
+fail is worse than no guard, because it is believed.
+
+If the check ever fails, stop. Every phone with the app installed is about to
+be unable to update, and the only way through is uninstalling — which takes
+that phone's rota and journal with it.
 
 ### Building one locally
 

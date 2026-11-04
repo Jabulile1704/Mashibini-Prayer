@@ -11,6 +11,7 @@ import '../support/fake_app_version.dart';
 import '../support/fake_id_generator.dart';
 import '../support/fake_key_value_store.dart';
 import '../support/fake_reminders.dart';
+import '../support/fake_sharing.dart';
 import '../support/family_fixtures.dart';
 
 /// The four tabs of ADR-016.
@@ -47,6 +48,7 @@ void main() {
           repository: family,
           settings: settings,
           journal: journal,
+          sharing: FakeSharing(),
           reminders: FakeReminders(),
           appVersion: FakeAppVersion(),
           ids: FakeIdGenerator(),

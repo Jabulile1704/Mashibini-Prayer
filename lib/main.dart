@@ -8,6 +8,7 @@ import 'src/data/repositories/local_family_repository.dart';
 import 'src/data/sources/local/preferences_key_value_store.dart';
 import 'src/data/sources/notifications/local_reminders.dart';
 import 'src/data/sources/platform/app_version.dart';
+import 'src/data/sources/platform/sharing.dart';
 
 Future<void> main() async {
   // shared_preferences talks over a platform channel, so the binding has to
@@ -49,6 +50,7 @@ Future<void> main() async {
       settings: settings,
       initialAppearance: appearance,
       journal: LocalJournalRepository(store: store, ids: ids),
+      sharing: const PlatformSharing(),
       reminders: LocalReminders(),
       appVersion: const PlatformAppVersion(),
       ids: ids,

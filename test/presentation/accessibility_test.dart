@@ -15,6 +15,7 @@ import '../support/fake_id_generator.dart';
 import '../support/fake_key_value_store.dart';
 import '../support/fake_app_version.dart';
 import '../support/fake_reminders.dart';
+import '../support/fake_sharing.dart';
 import '../support/family_fixtures.dart';
 
 /// N5: text scales with the OS setting without clipping, and every control
@@ -65,6 +66,8 @@ void main() {
     'Settings': SettingsScreen(
       familyRepository: family,
       settings: settings,
+      journal: journal,
+      sharing: FakeSharing(),
       reminders: reminders,
       appVersion: FakeAppVersion(),
       ids: FakeIdGenerator(),

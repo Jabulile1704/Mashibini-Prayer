@@ -62,6 +62,25 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  /// Brings a Settings row into view before touching it.
+  ///
+  /// Day 19 gave Settings enough rows to scroll, and a `ListView` does not
+  /// build what is below the fold — so a finder for an off-screen row reports
+  /// it missing rather than off-screen. Scrolling the right `Scrollable`
+  /// matters too: `IndexedStack` builds all four tabs, so there are four of
+  /// them in the tree at once.
+  Future<void> reveal(WidgetTester tester, Key row) async {
+    await tester.scrollUntilVisible(
+      find.byKey(row),
+      120,
+      scrollable: find.descendant(
+        of: find.byType(SettingsScreen),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    await tester.pumpAndSettle();
+  }
+
   group('the four destinations', () {
     testWidgets('every one is reachable, and labelled in words', (
       WidgetTester tester,
@@ -95,7 +114,7 @@ void main() {
       expect(find.textContaining('Nothing written yet'), findsOneWidget);
 
       await tapTab(tester, 'Settings');
-      expect(find.text('Start the rota again'), findsOneWidget);
+      expect(find.text('Which one are you?'), findsOneWidget);
     });
 
     testWidgets('there are exactly four, which ADR-016 calls the ceiling', (
@@ -151,17 +170,23 @@ void main() {
   });
 
   group('what Settings absorbed', () {
-    testWidgets('reminders are reachable from Settings, not from a bell', (
+    testWidgets('reminders are a switch here, not a screen behind a bell', (
       WidgetTester tester,
     ) async {
+      // Day 18 put a chevron here that opened a screen holding one switch.
+      // Day 19 folded that screen in: the switch is the row.
       await family.save(familyOfFour());
       await open(tester);
       await tapTab(tester, 'Settings');
 
-      await tester.tap(find.byKey(SettingsScreen.remindersRow));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Reminders'), findsWidgets);
+      expect(find.byKey(SettingsScreen.remindersRow), findsOneWidget);
+      expect(
+        tester.widget<SwitchListTile>(
+          find.byKey(SettingsScreen.remindersRow),
+        ).value,
+        isFalse,
+        reason: 'a phone that has not been asked sends nothing (R5.1)',
+      );
     });
 
     testWidgets('setup is reachable again, after confirming', (
@@ -170,6 +195,7 @@ void main() {
       await family.save(familyOfFour());
       await open(tester);
       await tapTab(tester, 'Settings');
+      await reveal(tester, SettingsScreen.startAgainRow);
 
       await tester.tap(find.byKey(SettingsScreen.startAgainRow));
       await tester.pumpAndSettle();
@@ -183,6 +209,7 @@ void main() {
       await family.save(familyOfFour());
       await open(tester);
       await tapTab(tester, 'Settings');
+      await reveal(tester, SettingsScreen.startAgainRow);
 
       await tester.tap(find.byKey(SettingsScreen.startAgainRow));
       await tester.pumpAndSettle();
@@ -199,6 +226,7 @@ void main() {
       await family.save(familyOfFour());
       await open(tester);
       await tapTab(tester, 'Settings');
+      await reveal(tester, SettingsScreen.aboutRow);
 
       // Exactly one. The first version of this test asserted the version
       // was *absent* while This Week was showing, and it failed — because

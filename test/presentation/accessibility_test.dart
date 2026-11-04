@@ -5,8 +5,9 @@ import 'package:mashibini_prayer/src/data/repositories/device_settings_repositor
 import 'package:mashibini_prayer/src/data/repositories/journal_repository.dart';
 import 'package:mashibini_prayer/src/data/repositories/local_family_repository.dart';
 import 'package:mashibini_prayer/src/presentation/screens/journal_screen.dart';
-import 'package:mashibini_prayer/src/presentation/screens/reminders_screen.dart';
+import 'package:mashibini_prayer/src/presentation/screens/about_screen.dart';
 import 'package:mashibini_prayer/src/presentation/screens/schedule_screen.dart';
+import 'package:mashibini_prayer/src/presentation/screens/settings_screen.dart';
 import 'package:mashibini_prayer/src/presentation/screens/setup_screen.dart';
 import 'package:mashibini_prayer/src/presentation/screens/this_week_screen.dart';
 
@@ -52,9 +53,6 @@ void main() {
     'This week': ThisWeekScreen(
       repository: family,
       settings: settings,
-      journal: journal,
-      reminders: reminders,
-      appVersion: FakeAppVersion(),
       ids: FakeIdGenerator(),
       today: () => anchor,
     ),
@@ -64,12 +62,15 @@ void main() {
       ids: FakeIdGenerator(),
       today: () => anchor,
     ),
-    'Reminders': RemindersScreen(
+    'Settings': SettingsScreen(
       familyRepository: family,
       settings: settings,
       reminders: reminders,
+      appVersion: FakeAppVersion(),
+      ids: FakeIdGenerator(),
       today: () => anchor,
     ),
+    'About': AboutScreen(appVersion: FakeAppVersion()),
     'Journal': JournalScreen(journal: journal, today: () => anchor),
     'Set up the rota': SetupScreen(
       familyRepository: family,
@@ -113,8 +114,9 @@ void main() {
     const List<String> everyScreen = <String>[
       'This week',
       'The weeks ahead',
-      'Reminders',
       'Journal',
+      'Settings',
+      'About',
       'Set up the rota',
     ];
 
@@ -163,9 +165,6 @@ void main() {
         ThisWeekScreen(
           repository: family,
           settings: settings,
-          journal: journal,
-          reminders: reminders,
-          appVersion: FakeAppVersion(),
           ids: FakeIdGenerator(),
           today: () => anchor.subtractDays(28),
         ),

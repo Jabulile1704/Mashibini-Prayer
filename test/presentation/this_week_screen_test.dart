@@ -12,8 +12,6 @@ import 'package:mashibini_prayer/src/presentation/screens/this_week_screen.dart'
 
 import '../support/fake_id_generator.dart';
 import '../support/fake_key_value_store.dart';
-import '../support/fake_app_version.dart';
-import '../support/fake_reminders.dart';
 import '../support/family_fixtures.dart';
 
 void main() {
@@ -38,7 +36,6 @@ void main() {
     WidgetTester tester, {
     required CalendarDate on,
     String? youAre,
-    FakeAppVersion? appVersion,
     bool settle = true,
   }) async {
     if (youAre != null) {
@@ -54,9 +51,6 @@ void main() {
         home: ThisWeekScreen(
           repository: repository,
           settings: settings,
-          journal: journal,
-          reminders: FakeReminders(),
-          appVersion: appVersion ?? FakeAppVersion(),
           ids: FakeIdGenerator(),
           today: () => on,
         ),

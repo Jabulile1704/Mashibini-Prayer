@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../data/repositories/device_settings_repository.dart';
 import '../../data/repositories/family_repository.dart';
-import '../../data/repositories/journal_repository.dart';
-import '../../data/sources/notifications/reminders.dart';
-import '../../data/sources/platform/app_version.dart';
 import '../../domain/entities/calendar_date.dart';
 import '../../domain/entities/family.dart';
 import '../../domain/entities/turn.dart';
@@ -36,9 +33,6 @@ class ThisWeekScreen extends StatefulWidget {
   const ThisWeekScreen({
     required this.repository,
     required this.settings,
-    required this.journal,
-    required this.reminders,
-    required this.appVersion,
     required this.ids,
     this.today,
     super.key,
@@ -52,13 +46,6 @@ class ThisWeekScreen extends StatefulWidget {
   /// When it is absent the screen uses names. It never guesses, because being
   /// told someone else's turn is yours is worse than being told a name.
   final DeviceSettingsRepository settings;
-
-  final JournalRepository journal;
-
-  final Reminders reminders;
-
-  /// Which build this is, shown quietly at the foot of the screen.
-  final AppVersion appVersion;
 
   /// Passed through to setup, which mints ids for new members and cycles.
   final IdGenerator ids;

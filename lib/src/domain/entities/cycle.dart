@@ -1,7 +1,17 @@
 import 'calendar_date.dart';
 
 /// Why a new cycle epoch was written.
-enum CycleReason { initial, memberAdded, memberRemoved, reordered }
+///
+/// A label on a past decision, never something the rota computes with, which
+/// is why a value this build does not know is read as [reordered] rather than
+/// failing a load (`FamilyJson`).
+enum CycleReason {
+  initial,
+  memberAdded,
+  memberRemoved,
+  reordered,
+  turnoverDayChanged,
+}
 
 /// One epoch of the rota: an order of members, in force from a date.
 ///
@@ -22,14 +32,30 @@ class Cycle {
 
   /// The first day of the first week this cycle governs.
   ///
-  /// Always a turnover day. [RotaEngine] enforces that, because the check
-  /// needs the family's turnover weekday and a cycle does not carry one.
+  /// Always a turnover day — see [turnoverWeekday], which is the same fact
+  /// read the other way round.
   final CalendarDate effectiveFrom;
 
   /// Member ids, in the order they take their turns.
   final List<String> order;
 
   final CycleReason reason;
+
+  /// The day of the week this epoch hands the rota over on: 1 is Monday,
+  /// 7 is Sunday.
+  ///
+  /// Derived, not stored. A cycle's [effectiveFrom] is by definition the
+  /// first day of one of its weeks, so its weekday *is* this epoch's
+  /// turnover day; storing the two separately would only create a pair that
+  /// can disagree. Which is what the engine used to guard against:
+  ///
+  /// ```dart
+  /// if (cycle.effectiveFrom.weekday != turnoverWeekday) throw …
+  /// ```
+  ///
+  /// That check is gone because the thing it checked cannot now be false
+  /// (ADR-019, #100).
+  int get turnoverWeekday => effectiveFrom.weekday;
 
   @override
   String toString() =>

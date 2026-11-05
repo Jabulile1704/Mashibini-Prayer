@@ -18,8 +18,10 @@ So the database stores the **rules of the cycle**, and the leader for any date
 is derived from them:
 
 ```
-weekStart(d)      = the most recent turnoverWeekday on or before d
-cycle             = the latest cycle whose effectiveFrom <= weekStart(d)
+cycle             = the latest cycle whose effectiveFrom <= the start of d's
+                    week *as that cycle counts weeks*
+weekStart(d)      = the most recent of cycle.turnoverWeekday on or before d
+weekEnd(d)        = weekStart(d) + 6, cut short if the next cycle begins first
 weekIndex(d)      = daysBetween(cycle.effectiveFrom, weekStart(d)) / 7
 skipsBefore(d)    = skips in this cycle with weekStart <= weekStart(d)
 position          = (weekIndex(d) + skipsBefore(d)) mod cycle.order.length
@@ -28,6 +30,19 @@ leader            = cycle.order[position]
 
 Pure arithmetic over calendar dates. No clock to advance, nothing to catch up,
 and six months in a drawer costs exactly one modulo (R1.3).
+
+The first two lines look circular, and are, because each epoch keeps its own
+turnover day (ADR-019): a date's week cannot be sliced before the epoch is
+known, and the epoch cannot be found without slicing it. It resolves by asking
+the newest epoch first — *does your own week containing this date start on or
+after you began?* — and taking the first that says yes. For a family that has
+never moved its turnover day every epoch gives the same boundaries, and this is
+the single-weekday rule exactly.
+
+`weekEnd` is cut short in one case only: the week before a change of turnover
+day. The new day falls one to six days after the old week would have ended, so
+that last week is one to six days short. The alternative is a day belonging to
+two people's weeks at once.
 
 ### Why skips add to the index
 
@@ -80,7 +95,7 @@ erDiagram
     FAMILY {
         string id PK
         string name
-        int turnoverWeekday "1=Mon..7=Sun, ISO-8601"
+        int turnoverWeekday "derived from the latest cycle; written, not read"
         int schemaVersion
         timestamp createdAt
     }
@@ -95,9 +110,9 @@ erDiagram
     CYCLE {
         string id PK
         string familyId FK
-        date effectiveFrom "aligned to turnoverWeekday"
+        date effectiveFrom "a turnover day; its weekday IS this epoch's"
         array order "member ids, in turn order"
-        string reason "initial|member-added|member-removed|reordered"
+        string reason "initial|member-added|member-removed|reordered|turnover-day-changed"
         timestamp createdAt
     }
     SKIP {
@@ -205,8 +220,8 @@ rules require every id in `order` to exist at write time.
 
 | Entity / field | Serves | Why it exists |
 |:--|:--|:--|
-| `family.turnoverWeekday` | R1.2, R2.2 | The day the week changes hands |
-| `cycle.effectiveFrom` | R1.3, R2.2 | The anchor the whole computation counts from |
+| `cycle.effectiveFrom` | R1.2, R1.3, R2.2 | The anchor the computation counts from — **and**, through its weekday, the day that epoch hands over on |
+| `family.turnoverWeekday` | R1.2 | The day the family hands over on *now*: the latest cycle's. Written into the document so a person reading it need not work it out from a date; never read back |
 | `cycle.order` | R1.1, R1.2, R2.1 | Who leads, in what order |
 | `cycle` as an epoch | R2.3 | Changing the family must not rewrite history |
 | `skip` | R1.4 | A turn passed over, without owing a double turn |
@@ -258,3 +273,24 @@ Day 3 implements `leaderOn` and these become its unit tests:
 `family.schemaVersion` starts at `1`. A change that cannot be read by an older
 build increments it, and the migration is a documented, tested step in
 `docs/adr/` — not something discovered by a crash report.
+
+Migration happens **on read**, in `FamilyJson.fromMap`, so a phone that opens
+the app and changes nothing is upgraded too. A document carrying no version at
+all is version 1 by definition, not "whatever this build is".
+
+### v1 → v2 — the turnover day belongs to the cycle (#100, ADR-019)
+
+**Nothing in the document changed.** No field was added, none removed, none
+renamed. What changed is that `family.turnoverWeekday` is no longer read:
+each cycle's turnover day is the weekday of its own `effectiveFrom`, which in
+a v1 document is the same value for every cycle, because v1's engine refused
+to run unless it was. So the migration does nothing, and
+`family_json_test.dart` proves it by reading a literal v1.4.0 document and
+checking it answers every day of the following year identically.
+
+The version moved anyway, because the *meaning* changed in one direction. A v2
+family may hold epochs sitting on different weekdays. A v1 build handed one of
+those would pass it to an engine that checks every cycle against a single
+weekday and throws — on every frame of the home screen, with no way back but
+reinstalling. The version marker is what makes that build decline the document
+instead.

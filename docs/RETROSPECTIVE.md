@@ -155,6 +155,37 @@ Two rules fall out of it, and both are now applied:
   what had to be done to discover the problem. Nine tests cover it, five of
   them the refusal cases.
 
+### A tenth, the inverse of the ninth: a check that should be deleted
+
+#103 was a check that could not fail and had to be **repaired**. Day 20 found
+a check that could not fail and had to be **deleted**.
+
+`RotaEngine` had guarded, since Day 2, that every cycle began on the family's
+turnover weekday:
+
+```dart
+if (cycle.effectiveFrom.weekday != turnoverWeekday) throw …
+```
+
+That guard did real work for eighteen days — it is what made ADR-019's probe
+throw, and so what stopped a Settings row from bricking the home screen. Then
+#100 moved the turnover day onto the cycle, where it is derived from the
+cycle's own anchor, and the guard became a comparison between a value and
+itself.
+
+Repairing it was never the question; the question was noticing. A check whose
+two sides have quietly become the same expression still reads like diligence,
+still passes, and will still be there in a year being counted as coverage.
+Two of them went this way on Day 20, along with the engine's "the turnover
+weekday must be an ISO weekday", which had come to ask whether a
+`DateTime.weekday` is between 1 and 7.
+
+The rule: **when a field becomes derived, every check that compared it to its
+source is now a tautology.** Find them in the same change. The tests that
+asserted those throws were deleted too, with a comment in their place saying
+what happened and where the replacement lives — a test file that quietly
+shrinks by two is the other way this gets missed.
+
 ### The git workflow is wrong, and it took two releases to show
 
 Rebase-merging into `main` and then merging `main` back into `develop` is a

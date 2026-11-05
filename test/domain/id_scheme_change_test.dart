@@ -22,7 +22,6 @@ void main() {
   Family legacyFamily() => Family(
     id: 'f1',
     name: 'Mashibini',
-    turnoverWeekday: DateTime.sunday,
     members: const <Member>[
       Member(id: 'm1', displayName: 'Jabulile'),
       Member(id: 'm2', displayName: 'Sisi'),

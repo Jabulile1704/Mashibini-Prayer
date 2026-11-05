@@ -27,7 +27,6 @@ RotaEngine engineOf({
   List<Cycle>? cycles,
   Map<String, Member>? members,
 }) => RotaEngine(
-  turnoverWeekday: DateTime.sunday,
   members: members ?? familyOfFour(),
   skips: skips,
   cycles:
@@ -227,7 +226,6 @@ void main() {
 
     test('a skip in an earlier epoch does not shift a later one', () {
       final RotaEngine engine = RotaEngine(
-        turnoverWeekday: DateTime.sunday,
         members: <String, Member>{...familyOfFour(), cousin.id: cousin},
         skips: <SkippedTurn>[
           SkippedTurn(id: 's1', weekStart: start, memberId: jabulile.id),
@@ -362,44 +360,172 @@ void main() {
     });
   });
 
-  group('invalid construction is refused', () {
-    test('a cycle must start on the turnover weekday', () {
+  // The turnover day belongs to the epoch, not the family (ADR-019, #100).
+  // These are the dates: a Sunday rota from 18 October 2026 that moves to
+  // Wednesday, decided on Tuesday 3 November.
+  //
+  //   c1  Sun 18 Oct →   Sun 18–Sat 24  Jabulile
+  //                      Sun 25–Sat 31  Sisi
+  //                      Sun  1–Sat  7  Mama      ← the week it is decided in
+  //                      Sun  8–Tue 10  Tata      ← three days, not seven
+  //   c2  Wed 11 Nov →   Wed 11–Tue 17  Jabulile
+  //                      Wed 18–Tue 24  Sisi
+  group('a family that moved the day it hands over', () {
+    final CalendarDate shortWeek = CalendarDate(2026, 11, 8); // a Sunday
+    final CalendarDate newEpoch = CalendarDate(2026, 11, 11); // a Wednesday
+
+    final Cycle sundays = Cycle(
+      id: 'c1',
+      effectiveFrom: start,
+      order: <String>[jabulile.id, sisi.id, mama.id, tata.id],
+    );
+    final Cycle wednesdays = Cycle(
+      id: 'c2',
+      effectiveFrom: newEpoch,
+      order: <String>[jabulile.id, sisi.id, mama.id, tata.id],
+      reason: CycleReason.turnoverDayChanged,
+    );
+
+    RotaEngine moved() => engineOf(cycles: <Cycle>[sundays, wednesdays]);
+
+    test('the dates are the ones the comment claims', () {
+      expect(start.weekday, DateTime.sunday);
+      expect(shortWeek.weekday, DateTime.sunday);
+      expect(newEpoch.weekday, DateTime.wednesday);
+    });
+
+    test('every week before the change answers exactly as it did', () {
+      // R2.3, stated as a comparison rather than as a promise. A date in a
+      // week that has already happened must not notice that the family
+      // changed anything.
+      final RotaEngine before = engineOf(cycles: <Cycle>[sundays]);
+      final RotaEngine after = moved();
+      for (
+        CalendarDate date = start;
+        date.isBefore(shortWeek);
+        date = date.addDays(1)
+      ) {
+        expect(
+          after.turnOn(date),
+          before.turnOn(date),
+          reason: 'moving the turnover day re-slices $date',
+        );
+      }
+    });
+
+    test('the last week of the old epoch is short, and says so', () {
+      final Turn turn = moved().turnOn(shortWeek)!;
+      expect(turn.leader, tata);
+      expect(turn.weekStart, shortWeek);
+      expect(turn.weekEnd, CalendarDate(2026, 11, 10));
       expect(
-        () => RotaEngine(
-          turnoverWeekday: DateTime.sunday,
-          members: familyOfFour(),
-          cycles: <Cycle>[
-            Cycle(
-              id: 'c1',
-              effectiveFrom: CalendarDate(2026, 10, 19), // a Monday
-              order: <String>[jabulile.id, sisi.id],
-            ),
-          ],
-        ),
-        throwsArgumentError,
+        turn.weekStart.daysUntil(turn.weekEnd),
+        2,
+        reason: 'three days, because the calendar does not divide evenly',
       );
     });
+
+    test('the new epoch starts on its own day, with the next person', () {
+      final Turn turn = moved().turnOn(newEpoch)!;
+      expect(turn.leader, jabulile);
+      expect(turn.weekStart, newEpoch);
+      expect(turn.weekEnd, CalendarDate(2026, 11, 17));
+    });
+
+    test('no day belongs to two turns, and none to nobody', () {
+      // The property the short week exists to protect. Before the week was
+      // cut short, Tuesday 10 November was both the last day of Tata's
+      // Sunday week and inside Jabulile's Wednesday one.
+      final RotaEngine engine = moved();
+      for (
+        CalendarDate date = start;
+        date.isBefore(CalendarDate(2027, 2, 1));
+        date = date.addDays(1)
+      ) {
+        final Turn? turn = engine.turnOn(date);
+        expect(turn, isNotNull, reason: '$date has no turn');
+        expect(
+          turn!.contains(date),
+          isTrue,
+          reason: '$date resolved to a turn it is not inside: $turn',
+        );
+      }
+    });
+
+    test('walking forwards lands on the short week, not over it', () {
+      // `turnsFrom` used to step seven days at a time, which from Sunday 8
+      // November would have landed on Sunday 15 — inside the new epoch's
+      // first week, skipping the short one and listing Jabulile twice.
+      final List<Turn> turns = moved().turnsFrom(shortWeek, count: 3);
+      expect(turns.map((Turn t) => t.weekStart).toList(), <CalendarDate>[
+        shortWeek,
+        newEpoch,
+        CalendarDate(2026, 11, 18),
+      ]);
+      expect(turns.map((Turn t) => t.leader.displayName).toList(), <String>[
+        'Tata',
+        'Jabulile',
+        'Sisi',
+      ]);
+    });
+
+    test('consecutive turns meet with no gap and no overlap', () {
+      final List<Turn> turns = moved().turnsFrom(start, count: 12);
+      for (int i = 1; i < turns.length; i++) {
+        expect(
+          turns[i].weekStart,
+          turns[i - 1].weekEnd.addDays(1),
+          reason: '${turns[i - 1]} does not hand over to ${turns[i]}',
+        );
+      }
+    });
+
+    test('which day it turns over on is a question about a date', () {
+      final RotaEngine engine = moved();
+      expect(engine.turnoverWeekdayOn(start), DateTime.sunday);
+      expect(engine.turnoverWeekdayOn(shortWeek), DateTime.sunday);
+      expect(
+        engine.turnoverWeekdayOn(CalendarDate(2026, 11, 10)),
+        DateTime.sunday,
+      );
+      expect(engine.turnoverWeekdayOn(newEpoch), DateTime.wednesday);
+      expect(
+        engine.turnoverWeekdayOn(CalendarDate(2027, 1, 1)),
+        DateTime.wednesday,
+      );
+    });
+
+    test('a date before the rota began still has no leader', () {
+      expect(moved().turnOn(start.subtractDays(1)), isNull);
+    });
+
+    test('a skip in the short week moves the new epoch along with it', () {
+      // The skip is recorded against the old epoch, which is where it is
+      // counted; the new epoch's own count starts from its own date and must
+      // not inherit it.
+      final RotaEngine engine = engineOf(
+        cycles: <Cycle>[sundays, wednesdays],
+        skips: <SkippedTurn>[
+          SkippedTurn(id: 's1', weekStart: shortWeek, memberId: tata.id),
+        ],
+      );
+      expect(engine.turnOn(shortWeek)!.leader, jabulile);
+      expect(engine.turnOn(newEpoch)!.leader, jabulile);
+    });
+  });
+
+  group('invalid construction is refused', () {
+    // Two refusals used to live here and no longer can. The engine checked
+    // that every cycle began on the family's turnover weekday, and that the
+    // weekday was an ISO one. A cycle now derives its weekday from the date
+    // it begins on (#100), so neither can be false: the first compares a
+    // value with itself, and the second asks whether a `DateTime.weekday` is
+    // between 1 and 7. Deleted rather than kept as decoration — see
+    // `entities_test.dart` for what replaced the first.
 
     test('there must be at least one cycle', () {
       expect(
-        () => RotaEngine(
-          turnoverWeekday: DateTime.sunday,
-          members: familyOfFour(),
-          cycles: const <Cycle>[],
-        ),
-        throwsArgumentError,
-      );
-    });
-
-    test('the turnover weekday must be an ISO weekday', () {
-      expect(
-        () => RotaEngine(
-          turnoverWeekday: 0,
-          members: familyOfFour(),
-          cycles: <Cycle>[
-            Cycle(id: 'c1', effectiveFrom: start, order: <String>[jabulile.id]),
-          ],
-        ),
+        () => RotaEngine(members: familyOfFour(), cycles: const <Cycle>[]),
         throwsArgumentError,
       );
     });

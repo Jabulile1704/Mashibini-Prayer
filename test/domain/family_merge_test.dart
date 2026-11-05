@@ -207,7 +207,6 @@ void main() {
       final Family newer = Family(
         id: 'f1',
         name: 'Mashibini',
-        turnoverWeekday: DateTime.sunday,
         members: older.members,
         cycles: older.cycles,
         schemaVersion: older.schemaVersion + 1,
@@ -225,12 +224,62 @@ void main() {
     });
   });
 
+  group('the turnover day, now that it is derived (#100)', () {
+    test('it follows the merged cycles, whichever order they merge in', () {
+      final Family onSundays = familyOfFour();
+      final Family onWednesdays = FamilyEditor.changeTurnoverDay(
+        onSundays,
+        weekday: DateTime.wednesday,
+        today: CalendarDate(2026, 11, 3),
+        ids: FakeIdGenerator(),
+      );
+
+      expect(
+        FamilyMerge.merge(onSundays, onWednesdays).turnoverWeekday,
+        DateTime.wednesday,
+      );
+      expect(
+        FamilyMerge.merge(onWednesdays, onSundays).turnoverWeekday,
+        DateTime.wednesday,
+        reason: 'a merged turnover day must not depend on the argument order',
+      );
+    });
+
+    test('two phones that each moved it agree on which move won', () {
+      // Picked from the newer side as a scalar, this could disagree with the
+      // epochs it was meant to describe. Derived, the two phones agree
+      // because they agree about the cycles.
+      final Family base = familyOfFour();
+      final Family toWednesday = FamilyEditor.changeTurnoverDay(
+        base,
+        weekday: DateTime.wednesday,
+        today: CalendarDate(2026, 11, 3),
+        ids: DistinctIdGenerator('a'),
+      );
+      final Family toFriday = FamilyEditor.changeTurnoverDay(
+        base,
+        weekday: DateTime.friday,
+        today: CalendarDate(2026, 11, 3),
+        ids: DistinctIdGenerator('b'),
+      );
+
+      final Family merged = FamilyMerge.merge(toWednesday, toFriday);
+      expect(
+        FamilyMerge.merge(toFriday, toWednesday).turnoverWeekday,
+        merged.turnoverWeekday,
+      );
+      expect(merged.cycles, hasLength(3));
+      // Friday 13 November is later than Wednesday 11th, so it is the day in
+      // force once both have landed — and both phones compute that.
+      expect(merged.turnoverWeekday, DateTime.friday);
+    });
+  });
+
   group('what it refuses', () {
     test('two different families cannot be merged', () {
       final Family other = Family(
         id: 'f2',
         name: 'Someone else',
-        turnoverWeekday: DateTime.sunday,
         members: const <Member>[jabulile, sisi],
         cycles: <Cycle>[
           Cycle(

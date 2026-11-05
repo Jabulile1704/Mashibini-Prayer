@@ -124,3 +124,73 @@ cursor by seven days from one week start to the next. Across an epoch
 boundary where the weekday changed, that lands off the grid. It must step to
 `turn.weekEnd.addDays(1)` and let `turnOn` normalise, which it already does.
 Noted here because it is the one place the change is not local.
+
+## Implementation note — Day 20, 2026-11-05
+
+The decision stands. Two details of it were wrong, and both were found by
+reading the invariant again before writing the field.
+
+### There is no field, and so no real migration
+
+This ADR proposed storing the weekday on the cycle:
+
+```dart
+class Cycle {
+  final CalendarDate effectiveFrom;
+  final int turnoverWeekday;   // new
+}
+```
+
+It is already there. A cycle's `effectiveFrom` must fall on a turnover day —
+that was the invariant the engine enforced, and the reason the probe threw —
+so **the weekday of `effectiveFrom` is that epoch's turnover day**. Storing it
+alongside would have created a pair that can disagree, and a migration to
+populate one from the other. It is a getter:
+
+```dart
+int get turnoverWeekday => effectiveFrom.weekday;
+```
+
+The engine's check went with it. A comparison that cannot be false is not a
+check, which is the lesson from #103 arriving a second time from the other
+direction: there, a step that could not fail; here, one that could not fail
+*and that was right to delete* rather than repair.
+
+`Family.turnoverWeekday` went the same way — a getter reading the latest
+epoch, rather than a stored scalar kept in step with the cycles by hand. That
+removed its argument from four constructors, deleted a line from
+`FamilyMerge` (where picking it from the "newer" side could contradict the
+merged epochs) and made it commutative for free.
+
+So the document is byte-for-byte what v1.4.0 wrote, and the v1 → v2 migration
+does nothing. The version still moved, for the reason given in
+[DATA-MODEL.md](../DATA-MODEL.md#v1--v2--the-turnover-day-belongs-to-the-cycle-100-adr-019):
+the shape did not change but the meaning did, in a direction a v1 build would
+crash on. The marker makes it refuse instead.
+
+### "The first new day after the current week ends" is not enough
+
+That rule is right the first time and wrong the second. A family who change
+the day on Tuesday and change their mind on Wednesday would have the second
+epoch land *before* the first, where the engine resolves the first one anyway
+and nothing appears to happen. Epochs are appended and never replaced — one
+deleted on a phone comes back from the other's copy (ADR-012) — so the rule is
+the first occurrence of the new day after **both** the current week and every
+epoch already written. Two changes in a week cost two short weeks. They do not
+cost correctness.
+
+### What the ADR did not decide: who leads the short week
+
+The calendar does not divide, so moving the turnover day leaves one interval
+of one to six days. It cannot be avoided; the only alternative is a gap with
+nobody leading, which is worse. Two options for it:
+
+- Carry its leader into the new epoch's first full week — "whoever was already
+  going to lead it", the sentence the member edits follow. Up to **13 days**.
+- Treat it as a turn taken and start the new epoch with the next person. A
+  short turn of **one to six days**.
+
+The second. Six days is a week a family absorbs without noticing; a fortnight
+is one they would mention. The short week is reported honestly rather than
+padded: `Turn.weekEnd` is cut at the next epoch, so the screens show three
+days as three days.

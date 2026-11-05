@@ -143,7 +143,22 @@ folds that screen into a settings row.
 > which needs the same machinery. The row ships showing the day, not
 > changing it.
 
-### Day 20 — Change the family (#74), and the turnover day (#100)
+### Day 20 — The turnover day moves onto the cycle (#100) · **Done**
+
+Split off from the screen when it was costed. #100 is not a row with a
+handler behind it: it changes what a week *is*, and the engine, the editor,
+the merge and the stored document all have an opinion about that. Doing it
+behind the UI, with nothing visible shipping, kept the screen day free to be
+a screen day.
+
+Delivered: the turnover day derives from each epoch's own anchor, epochs
+resolve newest-first, the week before a change is honestly short, schema v2
+with a migration that provably does nothing, and `changeTurnoverDay`. 39 new
+tests, nothing on screen. See [DAY-20.md](daily/DAY-20.md) and the
+implementation note on
+[ADR-019](adr/ADR-019-the-turnover-day-is-an-epoch-not-a-setting.md).
+
+### Day 21 — Change the family (#74), and the turnover day's row (#100)
 
 Add and remove members, from Settings, calling the `FamilyEditor` that has
 been built and unreachable since Day 7. The domain rules already refuse to
@@ -153,20 +168,19 @@ the screen must not re-implement any of that.
 This is the day that closes the biggest real gap, and it needs Settings to
 exist first, which is why it is here and not earlier.
 
-**#100 joins it.** Changing the turnover day writes a new epoch by the same
-rules — effective from the next turnover, past weeks untouched — so the two
-share the machinery and the screen. It also brings the app's first schema
-migration, which is worth doing once carefully rather than four times
-badly.
+The turnover day becomes a real row at last, calling
+`FamilyEditor.changeTurnoverDay`. Both changes need the same thing of the
+screen: to say **when** the change takes effect, because neither happens
+today. A turnover-day change also has to own up to the short week.
 
-### Day 21 — Restyle the screens
+### Day 22 — Restyle the screens
 
 Every screen onto the new design system. This Week regains its focus —
 likely the verse moving to its own card and the version moving into Settings.
 Confirmation and undo for destructive-feeling actions. The empty states get a
 next step instead of a full stop.
 
-### Day 22 — Icon, accessibility re-pass, release v1.1.0
+### Day 23 — Icon, accessibility re-pass, release
 
 A refined icon — the same ring mark, drawn better — and the launch screen
 regenerated from it by `tool/generate_icons.dart`, which already produces
@@ -175,15 +189,17 @@ every size from one source.
 **Then the whole Day 13 accessibility pass again.** A theme rework is exactly
 the change that breaks text scaling and contrast, and the existing sweep will
 catch some of it but not contrast or touch-target size. Budget real time for
-this rather than treating it as a formality.
+this rather than treating it as a formality. Day 19 found a row at 2.42:1 by
+looking at a simulator, which the sweep had passed.
 
-Release v1.1.0 — which only works if Day 16 fixed #72.
+Then a release. **Not v1.1.0** — that shipped on Day 17, and the app is at
+v1.4.0. The #72 caveat this line used to carry is spent too: Day 16 fixed it.
 
 ## Risks worth naming now
 
 **The accessibility work is the thing most likely to be quietly undone.**
 Day 13 found four real problems at the largest text size. A new type scale
-and new spacing can reintroduce all of them. Day 22 exists for this, and the
+and new spacing can reintroduce all of them. Day 23 exists for this, and the
 automated sweep runs on every screen in every state from Day 17 onwards.
 
 **The tests are tied to the current structure.** 405 tests, many of which

@@ -3,6 +3,7 @@ import 'package:mashibini_prayer/src/domain/entities/calendar_date.dart';
 import 'package:mashibini_prayer/src/domain/entities/cycle.dart';
 import 'package:mashibini_prayer/src/domain/entities/family.dart';
 import 'package:mashibini_prayer/src/domain/entities/member.dart';
+import 'package:mashibini_prayer/src/domain/entities/turn.dart';
 import 'package:mashibini_prayer/src/domain/rota/family_editor.dart';
 import 'package:mashibini_prayer/src/domain/rota/rota_engine.dart';
 
@@ -173,13 +174,172 @@ void main() {
     });
   });
 
+  // Moving the day the week turns over on (#100, ADR-019). The fixture hands
+  // over on Sunday from 18 October 2026, in the order Jabulile, Sisi, Mama,
+  // Tata. Decided on Tuesday 3 November, which is Mama's week:
+  //
+  //   Sun  1–Sat  7 Nov  Mama      the week it is decided in, untouched
+  //   Sun  8–Tue 10 Nov  Tata      three days, because Wednesday falls there
+  //   Wed 11–Tue 17 Nov  Jabulile  the new epoch, carrying on from Tata
+  group('moving the day the week turns over (#100)', () {
+    final CalendarDate decidedOn = CalendarDate(2026, 11, 3); // a Tuesday
+    final CalendarDate shortWeek = CalendarDate(2026, 11, 8); // a Sunday
+    final CalendarDate newEpoch = CalendarDate(2026, 11, 11); // a Wednesday
+
+    Family moved({int weekday = DateTime.wednesday, CalendarDate? today}) =>
+        FamilyEditor.changeTurnoverDay(
+          familyOfFour(),
+          weekday: weekday,
+          today: today ?? decidedOn,
+          ids: FakeIdGenerator(),
+        );
+
+    test('the week in progress keeps its leader and its dates', () {
+      final Turn turn = RotaEngine.forFamily(moved()).turnOn(decidedOn)!;
+      expect(turn.leader, mama);
+      expect(turn.weekStart, CalendarDate(2026, 11, 1));
+      expect(turn.weekEnd, CalendarDate(2026, 11, 7));
+    });
+
+    test('whatever day of the week it is decided on', () {
+      for (int offset = 0; offset < 7; offset++) {
+        final CalendarDate today = CalendarDate(2026, 11, 1).addDays(offset);
+        final Family after = moved(today: today);
+        expect(
+          RotaEngine.forFamily(after).turnOn(today)!.leader,
+          mama,
+          reason: 'deciding on $today changed the week in progress',
+        );
+      }
+    });
+
+    test('a new epoch is written, on the first new day after this week', () {
+      final Family after = moved();
+      expect(after.cycles.length, 2);
+      expect(after.cycles.last.effectiveFrom, newEpoch);
+      expect(after.cycles.last.reason, CycleReason.turnoverDayChanged);
+      expect(after.cycles.last.turnoverWeekday, DateTime.wednesday);
+    });
+
+    test('nothing is edited; the old epoch is left exactly as it was', () {
+      final Cycle before = familyOfFour().cycles.single;
+      final Cycle after = moved().cycles.first;
+      expect(after.id, before.id);
+      expect(after.effectiveFrom, before.effectiveFrom);
+      expect(after.order, before.order);
+    });
+
+    test('the last Sunday week is short, and keeps the leader it had', () {
+      final Turn turn = RotaEngine.forFamily(moved()).turnOn(shortWeek)!;
+      expect(turn.leader, tata);
+      expect(turn.weekEnd, CalendarDate(2026, 11, 10));
+    });
+
+    test('nobody leads two weeks running across the change', () {
+      final RotaEngine engine = RotaEngine.forFamily(moved());
+      expect(
+        engine
+            .turnsFrom(shortWeek, count: 5)
+            .map((Turn t) => t.leader.displayName)
+            .toList(),
+        <String>['Tata', 'Jabulile', 'Sisi', 'Mama', 'Tata'],
+      );
+    });
+
+    test('the family hands over on the new day from then on', () {
+      expect(moved().turnoverWeekday, DateTime.wednesday);
+    });
+
+    test('the day already chosen is refused rather than written twice', () {
+      expect(() => moved(weekday: DateTime.sunday), throwsArgumentError);
+    });
+
+    test('a number that is not a day of the week is refused', () {
+      for (final int weekday in <int>[0, 8, -1]) {
+        expect(
+          () => moved(weekday: weekday),
+          throwsArgumentError,
+          reason: '$weekday is not an ISO weekday',
+        );
+      }
+    });
+
+    test('changing again before the first change lands takes effect after '
+        'it, not before', () {
+      // The second epoch cannot be written earlier than the first, or the
+      // engine would resolve the first one anyway and the family would see
+      // nothing happen.
+      final Family twice = FamilyEditor.changeTurnoverDay(
+        moved(),
+        weekday: DateTime.friday,
+        today: decidedOn,
+        ids: FakeIdGenerator(),
+      );
+      expect(twice.cycles.length, 3);
+      expect(twice.cycles.last.effectiveFrom, CalendarDate(2026, 11, 13));
+      expect(twice.turnoverWeekday, DateTime.friday);
+
+      // Two changes, two short weeks, and still nobody leading twice.
+      expect(
+        RotaEngine.forFamily(twice)
+            .turnsFrom(shortWeek, count: 4)
+            .map((Turn t) => t.leader.displayName)
+            .toList(),
+        <String>['Tata', 'Jabulile', 'Sisi', 'Mama'],
+      );
+    });
+
+    test('putting it back is a change, not a no-op to be refused', () {
+      // Sunday is still the day in force this week, but it is no longer the
+      // day the family has chosen, so choosing it again is a correction.
+      final Family back = FamilyEditor.changeTurnoverDay(
+        moved(),
+        weekday: DateTime.sunday,
+        today: decidedOn,
+        ids: FakeIdGenerator(),
+      );
+      expect(back.turnoverWeekday, DateTime.sunday);
+      expect(back.cycles.last.effectiveFrom, CalendarDate(2026, 11, 15));
+    });
+
+    test('every week before the change answers as it did', () {
+      final RotaEngine before = RotaEngine.forFamily(familyOfFour());
+      final RotaEngine after = RotaEngine.forFamily(moved());
+      for (
+        CalendarDate date = anchor;
+        date.isBefore(shortWeek);
+        date = date.addDays(1)
+      ) {
+        expect(after.turnOn(date), before.turnOn(date), reason: '$date moved');
+      }
+    });
+
+    test('a skip still ahead is honoured across the change', () {
+      final Family skipped = FamilyEditor.skipTurn(
+        familyOfFour(),
+        weekStart: shortWeek,
+        today: decidedOn,
+        ids: FakeIdGenerator(),
+      );
+      final Family after = FamilyEditor.changeTurnoverDay(
+        skipped,
+        weekday: DateTime.wednesday,
+        today: decidedOn,
+        ids: FakeIdGenerator(),
+      );
+      final RotaEngine engine = RotaEngine.forFamily(after);
+      expect(engine.turnOn(shortWeek)!.leader, jabulile);
+      // Tata was passed over, so the new epoch carries on from Jabulile.
+      expect(engine.turnOn(newEpoch)!.leader, sisi);
+    });
+  });
+
   group('changing a rota that has not started yet', () {
     test('adding somebody keeps the order the setup chose', () {
       // The family set up on a Sunday for a rota beginning the following one.
       final Family notYetRunning = Family(
         id: 'f1',
         name: 'Mashibini',
-        turnoverWeekday: DateTime.sunday,
         members: const <Member>[jabulile, sisi],
         cycles: <Cycle>[
           Cycle(

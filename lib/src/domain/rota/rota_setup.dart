@@ -76,7 +76,6 @@ abstract final class RotaSetup {
     return Family(
       id: familyId,
       name: familyName,
-      turnoverWeekday: turnoverWeekday,
       members: List<Member>.unmodifiable(members),
       cycles: <Cycle>[
         Cycle(

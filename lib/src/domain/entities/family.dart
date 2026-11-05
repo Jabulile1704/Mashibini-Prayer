@@ -15,7 +15,6 @@ class Family {
   Family({
     required this.id,
     required this.name,
-    required this.turnoverWeekday,
     required this.members,
     required this.cycles,
     this.skips = const <SkippedTurn>[],
@@ -26,13 +25,16 @@ class Family {
   ///
   /// A change that an older build could not read increments this, and the
   /// migration becomes a documented, tested step rather than a crash report.
-  static const int currentSchemaVersion = 1;
+  ///
+  /// **2** — the turnover day belongs to the cycle, not the family (#100).
+  /// Nothing was added to the document and nothing was removed from it; what
+  /// changed is that two cycles may now sit on different weekdays. A v1 build
+  /// would read such a family, hand it to `RotaEngine`, and throw on every
+  /// frame of the home screen. The version is what makes it refuse instead.
+  static const int currentSchemaVersion = 2;
 
   final String id;
   final String name;
-
-  /// ISO weekday the rota hands over on: 1 is Monday, 7 is Sunday.
-  final int turnoverWeekday;
 
   final List<Member> members;
   final List<Cycle> cycles;
@@ -43,16 +45,46 @@ class Family {
     for (final Member member in members) member.id: member,
   };
 
+  /// The day the week currently turns over on: 1 is Monday, 7 is Sunday.
+  ///
+  /// Derived from the latest epoch rather than stored, so there is no second
+  /// copy to fall out of step with the cycles (ADR-019). "Latest" is by
+  /// [Cycle.effectiveFrom], which means that between a family changing the
+  /// day and that change taking effect, this is already the *new* day — the
+  /// one a further change would be measured against, and the one Settings
+  /// should name as what it is changing.
+  ///
+  /// A date needs [RotaEngine.turnoverWeekdayOn] instead, which answers for
+  /// the epoch actually governing that date.
+  int get turnoverWeekday => latestCycle.turnoverWeekday;
+
+  /// The newest epoch, by date and then by id.
+  ///
+  /// The id tie-break matches `RotaEngine`'s, so two phones that each wrote
+  /// an epoch effective from the same turnover while offline still agree on
+  /// which one is latest (R6.2).
+  Cycle get latestCycle {
+    if (cycles.isEmpty) {
+      throw StateError('A family has at least one cycle; this one has none');
+    }
+    Cycle latest = cycles.first;
+    for (final Cycle cycle in cycles.skip(1)) {
+      final int byDate = cycle.effectiveFrom.compareTo(latest.effectiveFrom);
+      if (byDate > 0 || (byDate == 0 && cycle.id.compareTo(latest.id) > 0)) {
+        latest = cycle;
+      }
+    }
+    return latest;
+  }
+
   Family copyWith({
     String? name,
-    int? turnoverWeekday,
     List<Member>? members,
     List<Cycle>? cycles,
     List<SkippedTurn>? skips,
   }) => Family(
     id: id,
     name: name ?? this.name,
-    turnoverWeekday: turnoverWeekday ?? this.turnoverWeekday,
     members: members ?? this.members,
     cycles: cycles ?? this.cycles,
     skips: skips ?? this.skips,

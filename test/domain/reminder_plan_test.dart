@@ -3,8 +3,10 @@ import 'package:mashibini_prayer/src/domain/entities/calendar_date.dart';
 import 'package:mashibini_prayer/src/domain/entities/family.dart';
 import 'package:mashibini_prayer/src/domain/entities/member.dart';
 import 'package:mashibini_prayer/src/domain/reminders/reminder_plan.dart';
+import 'package:mashibini_prayer/src/domain/rota/family_editor.dart';
 import 'package:mashibini_prayer/src/domain/rota/rota_engine.dart';
 
+import '../support/fake_id_generator.dart';
 import '../support/family_fixtures.dart';
 
 void main() {
@@ -228,6 +230,62 @@ void main() {
           now: DateTime(2026, 9, 1),
         ),
         isEmpty,
+      );
+    });
+  });
+
+  group('after the family moves the day it hands over (#100)', () {
+    // Decided on Tuesday 3 November: Sunday weeks become Wednesday weeks
+    // from Wednesday 11 November. Jabulile leads Wed 11–Tue 17.
+    final Family moved = FamilyEditor.changeTurnoverDay(
+      familyOfFour(),
+      weekday: DateTime.wednesday,
+      today: CalendarDate(2026, 11, 3),
+      ids: FakeIdGenerator(),
+    );
+
+    test('the reminder moves with it, rather than staying on Saturdays', () {
+      // The planner reads turn boundaries off the engine rather than
+      // stepping by seven days, so it needs no telling. Checked because a
+      // notification that kept arriving on the old evening is exactly the
+      // sort of thing nobody would report as a bug — they would just stop
+      // trusting it.
+      final List<Reminder> mine = ReminderPlan.forDevice(
+        family: moved,
+        youAre: jabulile.id,
+        today: CalendarDate(2026, 11, 3),
+        now: DateTime(2026, 11, 3, 8),
+        horizon: 2,
+      );
+
+      expect(mine.first.turnStarts, CalendarDate(2026, 11, 11));
+      expect(mine.first.at, DateTime(2026, 11, 10, 19));
+      expect(
+        mine.first.at.weekday,
+        DateTime.tuesday,
+        reason: 'the evening before a Wednesday turnover is a Tuesday',
+      );
+    });
+
+    test('the short week is reminded about too, and only once', () {
+      // Tata's last Sunday week is three days long. It is still their turn.
+      final List<Reminder> theirs = ReminderPlan.forDevice(
+        family: moved,
+        youAre: tata.id,
+        today: CalendarDate(2026, 11, 3),
+        now: DateTime(2026, 11, 3, 8),
+        horizon: 3,
+      );
+
+      expect(theirs.map((Reminder r) => r.turnStarts).toList(), <CalendarDate>[
+        CalendarDate(2026, 11, 8), // the short week
+        CalendarDate(2026, 12, 2), // their first Wednesday week
+        CalendarDate(2026, 12, 30),
+      ]);
+      expect(
+        theirs.map((Reminder r) => r.id).toSet(),
+        hasLength(3),
+        reason: 'two reminders sharing an id would replace each other',
       );
     });
   });

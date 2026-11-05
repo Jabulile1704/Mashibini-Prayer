@@ -116,6 +116,22 @@ void main() {
       );
       expect(cycle.toString(), 'Cycle(c1, from 2026-10-18, 2 members)');
     });
+
+    test('hands over on the day it begins on', () {
+      // This used to be a check in `RotaEngine`'s constructor, comparing the
+      // cycle's anchor against a weekday stored on the family. Deriving it
+      // from the anchor is the same fact with nothing left to disagree
+      // (#100).
+      for (int offset = 0; offset < 7; offset++) {
+        final CalendarDate from = CalendarDate(2026, 10, 18).addDays(offset);
+        final Cycle cycle = Cycle(
+          id: 'c1',
+          effectiveFrom: from,
+          order: const <String>['m1'],
+        );
+        expect(cycle.turnoverWeekday, from.weekday);
+      }
+    });
   });
 
   group('SkippedTurn', () {

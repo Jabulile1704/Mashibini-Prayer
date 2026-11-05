@@ -36,6 +36,11 @@ abstract final class FamilyJson {
     'schemaVersion': family.schemaVersion,
     'id': family.id,
     'name': family.name,
+    // Written, never read back. It is derived from the cycles now (#100), so
+    // reading it would be reading a copy of something already in the
+    // document. It stays because `DATA-MODEL.md` presents the document as
+    // legible to a person, and "which day does this family hand over on" is
+    // a tedious thing to work out from a date.
     'turnoverWeekday': family.turnoverWeekday,
     'members': <Map<String, Object?>>[
       for (final Member member in family.members) _memberToMap(member),
@@ -48,12 +53,26 @@ abstract final class FamilyJson {
     ],
   };
 
+  /// Reads a family, migrating it to the current schema on the way through.
+  ///
+  /// There is one migration so far, v1 to v2, and it does nothing — see
+  /// [Family.currentSchemaVersion]. A v1 document's cycles are all anchored
+  /// to the single `turnoverWeekday` it carries, which is exactly what each
+  /// cycle's own [Cycle.turnoverWeekday] now reports, so a v1 family read by
+  /// this build answers every date identically. The version is raised rather
+  /// than kept because what is written next must carry the new marker: a
+  /// family left stamped v1 would be read by an older build, which would
+  /// then be free to crash on it the first time a turnover day moved.
+  ///
+  /// Migrating on read rather than on write is deliberate. A phone that
+  /// opens the app and never changes anything is still upgraded, so there is
+  /// no population of documents quietly stuck at an old version waiting to
+  /// be found by the migration after next.
   static Family fromMap(Map<String, Object?> json) {
-    final int schemaVersion = readIntOr(
-      json,
-      'schemaVersion',
-      Family.currentSchemaVersion,
-    );
+    // Absent means the oldest shape, not this one. A document written before
+    // the field existed is v1 by definition, and defaulting to "current"
+    // would wave every future migration past its own check.
+    final int schemaVersion = readIntOr(json, 'schemaVersion', 1);
     if (schemaVersion > Family.currentSchemaVersion) {
       throw FormatException(
         'This family was written by a newer version of the app '
@@ -62,14 +81,25 @@ abstract final class FamilyJson {
         'silently dropping fields.',
       );
     }
+
+    final List<Cycle> cycles = readObjectList(json, 'cycles', _cycleFromMap);
+    // A family's turnover day is now read off its cycles, so a document with
+    // none of them has no rota to speak of rather than an empty one. Caught
+    // here, as a FormatException like every other unreadable store, instead
+    // of as a StateError from inside the domain.
+    if (cycles.isEmpty) {
+      throw const FormatException(
+        'A family needs at least one cycle; this document has none',
+      );
+    }
+
     return Family(
       id: readString(json, 'id'),
       name: readString(json, 'name'),
-      turnoverWeekday: readInt(json, 'turnoverWeekday'),
       members: readObjectList(json, 'members', _memberFromMap),
-      cycles: readObjectList(json, 'cycles', _cycleFromMap),
+      cycles: cycles,
       skips: readObjectList(json, 'skips', _skipFromMap),
-      schemaVersion: schemaVersion,
+      schemaVersion: Family.currentSchemaVersion,
     );
   }
 

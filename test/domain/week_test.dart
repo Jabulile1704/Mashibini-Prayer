@@ -55,6 +55,37 @@ void main() {
     });
   });
 
+  group('Week.onOrAfter', () {
+    final CalendarDate sunday18 = CalendarDate(2026, 10, 18);
+
+    test('a date already on that day is its own answer', () {
+      expect(Week.onOrAfter(sunday18, DateTime.sunday), sunday18);
+    });
+
+    test('otherwise the next one, between one and six days later', () {
+      expect(Week.onOrAfter(sunday18, DateTime.monday), sunday18.addDays(1));
+      expect(Week.onOrAfter(sunday18, DateTime.wednesday), sunday18.addDays(3));
+      expect(Week.onOrAfter(sunday18, DateTime.saturday), sunday18.addDays(6));
+    });
+
+    test('never looks backwards, from any day of the week', () {
+      for (int offset = 0; offset < 7; offset++) {
+        final CalendarDate from = sunday18.addDays(offset);
+        for (int weekday = 1; weekday <= 7; weekday++) {
+          final CalendarDate found = Week.onOrAfter(from, weekday);
+          expect(found.weekday, weekday);
+          expect(found.isOnOrAfter(from), isTrue);
+          expect(from.daysUntil(found), lessThan(7));
+        }
+      }
+    });
+
+    test('rejects a weekday outside 1..7', () {
+      expect(() => Week.onOrAfter(sunday18, 0), throwsArgumentError);
+      expect(() => Week.onOrAfter(sunday18, 8), throwsArgumentError);
+    });
+  });
+
   group('Week.between', () {
     test('counts whole weeks', () {
       final CalendarDate from = CalendarDate(2026, 10, 18);

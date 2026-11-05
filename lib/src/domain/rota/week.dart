@@ -24,6 +24,17 @@ abstract final class Week {
   static CalendarDate endOf(CalendarDate date, int turnoverWeekday) =>
       startOf(date, turnoverWeekday).addDays(6);
 
+  /// The first day on or after [date] that falls on [weekday].
+  ///
+  /// Returns [date] itself when it already does. Used when the family changes
+  /// the day the week turns over and the new epoch has to start on the first
+  /// one of those days — which is between one and six days after the old
+  /// week would have ended, because the calendar does not divide evenly.
+  static CalendarDate onOrAfter(CalendarDate date, int weekday) {
+    assertValidWeekday(weekday);
+    return date.addDays((weekday - date.weekday) % 7);
+  }
+
   /// Whole weeks from [from] to [to]. Both must be turnover days.
   static int between(CalendarDate from, CalendarDate to) =>
       from.daysUntil(to) ~/ 7;

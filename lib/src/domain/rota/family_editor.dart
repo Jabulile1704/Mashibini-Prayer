@@ -99,6 +99,100 @@ abstract final class FamilyEditor {
     );
   }
 
+  /// Moves the day the week turns over on (R1.2, #100).
+  ///
+  /// Like adding or removing somebody, this writes a **new epoch** rather
+  /// than editing the family, and for the same reason: the turnover day is
+  /// what slices the calendar into weeks, so changing it in place would
+  /// re-slice every week the rota has ever had. A Sunday somebody led would
+  /// move into somebody else's week, and the journal entry they wrote on it
+  /// with them (ADR-019, R2.3).
+  ///
+  /// **The new epoch begins on the first [weekday] that is after both the
+  /// current week and every epoch already written.** The calendar does not
+  /// divide evenly, so that leaves the epoch before it a last week of one to
+  /// six days instead of seven. There is no way to avoid a short interval —
+  /// the only alternative is a gap with no leader at all — and a short week
+  /// is the kind a family absorbs without noticing.
+  ///
+  /// Why "after every epoch already written" and not simply after this week:
+  /// a family that changes the day twice before the first change has taken
+  /// effect would otherwise have the second land *before* the first, where
+  /// the engine would resolve the first one anyway and nothing would appear
+  /// to happen. Epochs are appended, never replaced — a cycle deleted on one
+  /// phone comes back from the other's copy (ADR-012) — so the second change
+  /// takes effect after the first, and the family gets two short weeks.
+  /// Changing twice in a week costs something; it just does not cost
+  /// correctness.
+  ///
+  /// **The short week counts as a turn.** The new epoch's order begins with
+  /// the person *after* whoever led the day before it starts, so nobody
+  /// leads two weeks running. The other choice — carrying the short week's
+  /// leader into the new epoch's first full week — would have given them up
+  /// to thirteen days, which a family would notice.
+  static Family changeTurnoverDay(
+    Family family, {
+    required int weekday,
+    required CalendarDate today,
+    required IdGenerator ids,
+  }) {
+    Week.assertValidWeekday(weekday);
+
+    // Measured against the latest epoch, which is what `Settings` shows and
+    // what a family asked to pick a day is choosing against. Not against
+    // today's week: between a change and the day it takes effect those are
+    // different answers, and rejecting "put it back to Sunday" because
+    // Sunday is still in force this week would refuse a correction.
+    if (family.turnoverWeekday == weekday) {
+      throw ArgumentError.value(
+        weekday,
+        'weekday',
+        'is already the day the week turns over on',
+      );
+    }
+
+    final RotaEngine engine = RotaEngine.forFamily(family);
+    final CalendarDate notBefore = _laterOf(
+      _nextTurnover(engine, today),
+      family.latestCycle.effectiveFrom.addDays(1),
+    );
+    final CalendarDate from = Week.onOrAfter(notBefore, weekday);
+
+    // The rota carries on from whoever had the day before, whatever epoch
+    // that day belonged to and however short its week turned out to be.
+    final CalendarDate dayBefore = from.subtractDays(1);
+    final List<String> order = engine.cycleFor(dayBefore).order;
+
+    return Family(
+      id: family.id,
+      name: family.name,
+      members: family.members,
+      cycles: <Cycle>[
+        ...family.cycles,
+        Cycle(
+          id: ids.newId('c'),
+          effectiveFrom: from,
+          order: _rotatedToStartWith(
+            order,
+            _after(order, engine.turnOn(dayBefore)?.leader.id),
+          ),
+          reason: CycleReason.turnoverDayChanged,
+        ),
+      ],
+      skips: family.skips,
+      schemaVersion: family.schemaVersion,
+    );
+  }
+
+  static CalendarDate _laterOf(CalendarDate a, CalendarDate b) =>
+      a.isAfter(b) ? a : b;
+
+  /// Whoever takes their turn after [id], or null if [id] is not in [order].
+  static String? _after(List<String> order, String? id) {
+    final int at = id == null ? -1 : order.indexOf(id);
+    return at < 0 ? null : order[(at + 1) % order.length];
+  }
+
   /// Passes over the turn starting on [weekStart] (R1.4).
   ///
   /// The week's leader loses it and everybody after moves up one. They are
@@ -119,7 +213,8 @@ abstract final class FamilyEditor {
     required CalendarDate today,
     required IdGenerator ids,
   }) {
-    final CalendarDate thisWeek = Week.startOf(today, family.turnoverWeekday);
+    final RotaEngine engine = RotaEngine.forFamily(family);
+    final CalendarDate thisWeek = engine.weekStartOn(today);
     if (weekStart.isOnOrBefore(thisWeek)) {
       throw ArgumentError.value(
         weekStart,
@@ -127,7 +222,7 @@ abstract final class FamilyEditor {
         'has already started; only a turn still ahead can be skipped',
       );
     }
-    if (weekStart != Week.startOf(weekStart, family.turnoverWeekday)) {
+    if (weekStart != engine.weekStartOn(weekStart)) {
       throw ArgumentError.value(
         weekStart,
         'weekStart',
@@ -135,7 +230,7 @@ abstract final class FamilyEditor {
       );
     }
 
-    final Turn? turn = RotaEngine.forFamily(family).turnOn(weekStart);
+    final Turn? turn = engine.turnOn(weekStart);
     if (turn == null) {
       throw ArgumentError.value(
         weekStart,
@@ -192,7 +287,6 @@ abstract final class FamilyEditor {
       Family(
         id: family.id,
         name: family.name,
-        turnoverWeekday: family.turnoverWeekday,
         members: family.members,
         cycles: family.cycles,
         skips: skips,
@@ -201,10 +295,7 @@ abstract final class FamilyEditor {
 
   /// Who is in the rota right now, as the current cycle has it.
   static List<Member> activeMembers(Family family, CalendarDate today) {
-    final Cycle cycle = _cycleOn(
-      family,
-      Week.startOf(today, family.turnoverWeekday),
-    );
+    final Cycle cycle = RotaEngine.forFamily(family).cycleFor(today);
     final Map<String, Member> byId = family.membersById;
     return <Member>[
       for (final String id in cycle.order)
@@ -218,38 +309,39 @@ abstract final class FamilyEditor {
     Family family,
     CalendarDate today,
   ) {
-    final CalendarDate nextTurnover = Week.startOf(
-      today,
-      family.turnoverWeekday,
-    ).addDays(7);
-
-    final Cycle cycle = _cycleOn(family, nextTurnover);
     final RotaEngine engine = RotaEngine.forFamily(family);
+    final CalendarDate nextTurnover = _nextTurnover(engine, today);
+    final Cycle cycle = engine.cycleFor(nextTurnover);
     final Member? nextLeader = engine.turnOn(nextTurnover)?.leader;
 
-    if (nextLeader == null) {
-      return List<String>.of(cycle.order);
-    }
-    final int at = cycle.order.indexOf(nextLeader.id);
-    if (at <= 0) {
-      return List<String>.of(cycle.order);
-    }
-    return <String>[
-      for (int i = 0; i < cycle.order.length; i++)
-        cycle.order[(at + i) % cycle.order.length],
-    ];
+    return _rotatedToStartWith(cycle.order, nextLeader?.id);
   }
 
-  static Cycle _cycleOn(Family family, CalendarDate weekStart) {
-    final List<Cycle> sorted = <Cycle>[...family.cycles]
-      ..sort((Cycle a, Cycle b) => a.effectiveFrom.compareTo(b.effectiveFrom));
-    Cycle governing = sorted.first;
-    for (final Cycle cycle in sorted) {
-      if (cycle.effectiveFrom.isOnOrBefore(weekStart)) {
-        governing = cycle;
-      }
+  /// The day the week after [today]'s begins.
+  ///
+  /// The day after this week ends, rather than seven days after it started.
+  /// The two differ by up to six days in the one week that follows a change
+  /// of turnover day, and the day after is the one that is right in both
+  /// cases (ADR-019).
+  static CalendarDate _nextTurnover(RotaEngine engine, CalendarDate today) {
+    final Turn? current = engine.turnOn(today);
+    return current != null
+        ? current.weekEnd.addDays(1)
+        : engine.weekStartOn(today).addDays(7);
+  }
+
+  /// [order] rotated so that [first] leads it.
+  ///
+  /// Unchanged when [first] is null or not in the order — there is then
+  /// nobody the next turn was promised to, so there is nothing to preserve.
+  static List<String> _rotatedToStartWith(List<String> order, String? first) {
+    final int at = first == null ? -1 : order.indexOf(first);
+    if (at <= 0) {
+      return List<String>.of(order);
     }
-    return governing;
+    return <String>[
+      for (int i = 0; i < order.length; i++) order[(at + i) % order.length],
+    ];
   }
 
   static Family _withNewCycle(
@@ -260,15 +352,14 @@ abstract final class FamilyEditor {
     required List<Member> members,
     required IdGenerator ids,
   }) {
-    final CalendarDate from = Week.startOf(
+    final CalendarDate from = _nextTurnover(
+      RotaEngine.forFamily(family),
       today,
-      family.turnoverWeekday,
-    ).addDays(7);
+    );
 
     return Family(
       id: family.id,
       name: family.name,
-      turnoverWeekday: family.turnoverWeekday,
       members: members,
       cycles: <Cycle>[
         ...family.cycles,

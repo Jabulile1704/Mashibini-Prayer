@@ -119,9 +119,17 @@ void main() {
       expect(find.text('Which one are you?'), findsOneWidget);
     });
 
-    testWidgets('there are exactly four, which ADR-016 calls the ceiling', (
+    testWidgets('there are exactly five, which is the platform ceiling', (
       WidgetTester tester,
     ) async {
+      // This asserted four, and ADR-016's reason for four was a judgement
+      // about phones rather than a limit. Family was added as the fifth on
+      // the owner's instruction and ADR-020 records the reversal.
+      //
+      // Five is where it stops, and that bound is not ours: Material's
+      // `NavigationBar` is specified for three to five destinations. A sixth
+      // is a different kind of navigation, which is why this number is
+      // asserted rather than left to drift upwards one request at a time.
       await family.save(familyOfFour());
       await open(tester);
 
@@ -130,7 +138,7 @@ void main() {
             .widget<NavigationBar>(find.byKey(HomeShell.bar))
             .destinations
             .length,
-        4,
+        5,
       );
     });
   });

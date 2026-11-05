@@ -270,6 +270,21 @@ abstract final class FamilyEditor {
     ]);
   }
 
+  /// When a change made on [today] would take effect.
+  ///
+  /// The start of next week, by that week's own reckoning. Exposed because a
+  /// screen has to **say** this before it asks somebody to confirm anything:
+  /// every edit here lands at the next turnover rather than now, and a
+  /// confirmation that does not name the date is asking for agreement to
+  /// something it has not described.
+  ///
+  /// A change of turnover day lands later than this — see
+  /// [changeTurnoverDay], which has its own rule — so a screen offering that
+  /// should build the change and read [Family.latestCycle] off it rather than
+  /// asking here.
+  static CalendarDate changesTakeEffect(Family family, CalendarDate today) =>
+      _nextTurnover(RotaEngine.forFamily(family), today);
+
   /// The skip standing against [weekStart], or null if that week is running.
   ///
   /// Withdrawn records are not skips any more, so they do not answer here —

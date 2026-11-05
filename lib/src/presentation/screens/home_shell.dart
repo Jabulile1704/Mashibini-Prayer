@@ -8,12 +8,13 @@ import '../../data/sources/platform/app_version.dart';
 import '../../data/sources/platform/sharing.dart';
 import '../../domain/entities/calendar_date.dart';
 import '../../domain/ids.dart';
+import 'family_tree_screen.dart';
 import 'journal_screen.dart';
 import 'schedule_screen.dart';
 import 'settings_screen.dart';
 import 'this_week_screen.dart';
 
-/// The four tabs, and the bar that moves between them (ADR-016).
+/// The five tabs, and the bar that moves between them (ADR-016, ADR-020).
 ///
 /// Before this, every destination in the app was a `Navigator.push` from
 /// This Week, three of them from icon buttons in the top-right — the hardest
@@ -21,8 +22,15 @@ import 'this_week_screen.dart';
 /// accessibility pass gave those icons screen-reader names; a name does not
 /// make an unlabelled icon discoverable to somebody looking at the screen.
 ///
-/// Four is the ceiling ADR-016 set. A fifth destination means rethinking,
-/// not adding.
+/// ADR-016 set four as the ceiling, and **Family is the fifth** (#109). That
+/// was a deliberate reversal rather than an oversight: ADR-020 records who
+/// asked, what the ADR's reasoning was worth on inspection, and what had to
+/// be checked before it could be added — five labels at the largest text
+/// size being the actual risk, not the count.
+///
+/// Five is the ceiling now, and this time it is the platform's. Material's
+/// `NavigationBar` takes three to five destinations; a sixth needs a
+/// different kind of navigation, not one more icon.
 class HomeShell extends StatefulWidget {
   const HomeShell({
     required this.repository,
@@ -46,6 +54,19 @@ class HomeShell extends StatefulWidget {
   final CalendarDate Function()? today;
 
   static const Key bar = Key('shell.bar');
+
+  /// The five destination labels, in order.
+  ///
+  /// Exposed so the accessibility sweep measures the real list rather than a
+  /// copy of it that can fall behind — which matters more than it sounds,
+  /// because what that sweep measures is whether these words fit (#111).
+  static const List<String> labels = <String>[
+    'This week',
+    'Weeks ahead',
+    'Journal',
+    'Family',
+    'Settings',
+  ];
 
   @override
   State<HomeShell> createState() => _HomeShellState();
@@ -78,6 +99,10 @@ class _HomeShellState extends State<HomeShell> {
             today: widget.today,
           ),
           JournalScreen(journal: widget.journal, today: widget.today),
+          FamilyTreeScreen(
+            familyRepository: widget.repository,
+            today: widget.today,
+          ),
           SettingsScreen(
             familyRepository: widget.repository,
             settings: widget.settings,
@@ -109,6 +134,11 @@ class _HomeShellState extends State<HomeShell> {
             icon: Icon(Icons.menu_book_outlined),
             selectedIcon: Icon(Icons.menu_book),
             label: 'Journal',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.groups_outlined),
+            selectedIcon: Icon(Icons.groups),
+            label: 'Family',
           ),
           NavigationDestination(
             icon: Icon(Icons.tune_outlined),

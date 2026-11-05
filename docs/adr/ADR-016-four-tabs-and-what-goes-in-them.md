@@ -78,6 +78,20 @@ doing their job; Day 18 should budget for it rather than be surprised.
 five tabs on a phone is where a bottom bar starts to be a worse answer than
 a menu.
 
+> **Superseded, 2026-11-05.** There are five. A Family tab was asked for and
+> added, and the rethinking this sentence demanded was done rather than
+> skipped — including discovering that "five is where a bottom bar starts to
+> be a worse answer" was a judgement stated in the voice of a constraint, and
+> that nothing in the test suite had ever built the navigation bar to check
+> it — so this sentence could not have been verified when it was written.
+>
+> Measured afterwards, **the judgement here was right**: five labels do not
+> fit a phone, and neither, quite, do four. See
+> [ADR-020](ADR-020-a-fifth-tab-and-what-four-was-worth.md) and
+> [#111](https://github.com/Jabulile1704/Mashibini-Prayer/issues/111). The
+> table above is out of date by one row; it is left as written, because a
+> record quietly corrected is a record nobody can date.
+
 ## Alternatives considered
 
 **A drawer.** Hides every destination behind a gesture most people never

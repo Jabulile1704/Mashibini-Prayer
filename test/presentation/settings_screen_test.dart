@@ -4,7 +4,11 @@ import 'package:mashibini_prayer/src/app.dart';
 import 'package:mashibini_prayer/src/data/repositories/device_settings_repository.dart';
 import 'package:mashibini_prayer/src/data/repositories/journal_repository.dart';
 import 'package:mashibini_prayer/src/data/repositories/local_family_repository.dart';
+import 'package:mashibini_prayer/src/domain/entities/calendar_date.dart';
+import 'package:mashibini_prayer/src/domain/entities/family.dart';
+import 'package:mashibini_prayer/src/domain/rota/rota_engine.dart';
 import 'package:mashibini_prayer/src/presentation/screens/about_screen.dart';
+import 'package:mashibini_prayer/src/presentation/screens/family_members_screen.dart';
 import 'package:mashibini_prayer/src/presentation/screens/settings_screen.dart';
 
 import '../support/fake_app_version.dart';
@@ -297,13 +301,15 @@ void main() {
       expect(find.textContaining('Sunday'), findsOneWidget);
     });
 
-    testWidgets('it is not a control, and ADR-019 says why', (
+    testWidgets('it is a control now, which took two days to earn', (
       WidgetTester tester,
     ) async {
-      // Changing the turnover weekday moves every week boundary the rota has
-      // ever had, and `RotaEngine` refuses a family whose cycles no longer
-      // begin on it — so a tappable row here would throw on the next frame
-      // of This Week. It is a new epoch, not a setting (#100).
+      // This test asserted `onTap` was **null** for two days, and that was
+      // the right assertion at the time: the turnover day was one field on
+      // the family, `RotaEngine` refused a family whose cycles no longer
+      // began on it, and a tappable row would have thrown on the next frame
+      // of This Week (ADR-019). Day 20 made the day an epoch; this is the
+      // row it was waiting for (#100).
       await family.save(familyOfFour());
       await open(tester);
       await reveal(tester, SettingsScreen.turnoverRow);
@@ -311,14 +317,181 @@ void main() {
       final ListTile row = tester.widget<ListTile>(
         find.byKey(SettingsScreen.turnoverRow),
       );
-      expect(row.onTap, isNull);
-
-      // Not disabled, though. `enabled: false` paints a ListTile at
-      // `disabledColor` — 38% opacity, which composites to 2.42:1 against
-      // the wax ground. This row states a fact; a fact nobody can read is
-      // not a kindness. Found on a simulator, not by the contrast test,
-      // which measures the palette rather than a widget's own treatment.
+      expect(row.onTap, isNotNull);
       expect(row.enabled, isTrue);
+    });
+  });
+
+  // Moving the turnover day (#100). Today is Sunday 18 October 2026 — a
+  // turnover day itself — so:
+  //
+  //   Sun 18–Sat 24 Oct  Jabulile   this week, never touched
+  //   Sun 25–Tue 27 Oct  Sisi       three days, because Wednesday falls there
+  //   Wed 28 Oct–…       Mama       the new epoch, carrying on from Sisi
+  group('moving the day the week turns over', () {
+    Future<void> choose(WidgetTester tester, String day) async {
+      await tapRow(tester, SettingsScreen.turnoverRow);
+      await tester.tap(find.text(day));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('it offers all seven days, with today\'s ticked', (
+      WidgetTester tester,
+    ) async {
+      await family.save(familyOfFour());
+      await open(tester);
+      await tapRow(tester, SettingsScreen.turnoverRow);
+
+      for (final String day in <String>[
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday',
+      ]) {
+        expect(find.text(day), findsOneWidget, reason: '$day is not offered');
+      }
+      expect(find.byIcon(Icons.check), findsOneWidget);
+    });
+
+    testWidgets('it says the date, the short week and who gets it', (
+      WidgetTester tester,
+    ) async {
+      // The three sentences the dialog has, and it needs all three. Moving
+      // the day is the only edit in the app with a consequence nobody would
+      // guess: the week before the change is short, because the calendar
+      // does not divide (ADR-019).
+      await family.save(familyOfFour());
+      await open(tester);
+      await choose(tester, 'Wednesday');
+
+      expect(find.text('Hand over on Wednesday?'), findsOneWidget);
+      expect(find.textContaining('28 October 2026'), findsOneWidget);
+      expect(find.textContaining('Sisi has the week before'), findsOneWidget);
+      expect(find.textContaining('3 days instead of seven'), findsOneWidget);
+      expect(
+        find.textContaining('Mama takes the first full week'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('leaving it changes nothing', (WidgetTester tester) async {
+      await family.save(familyOfFour());
+      final Family before = (await family.load())!;
+      await open(tester);
+      await choose(tester, 'Wednesday');
+      await tester.tap(find.text('Leave it'));
+      await tester.pumpAndSettle();
+
+      final Family after = (await family.load())!;
+      expect(after.cycles, hasLength(before.cycles.length));
+      expect(after.turnoverWeekday, DateTime.sunday);
+    });
+
+    testWidgets('changing it writes the family the dialog described', (
+      WidgetTester tester,
+    ) async {
+      // Not a second one computed after the dialog closed. The ids would
+      // differ, and so could the dates if anything about "now" had moved.
+      await family.save(familyOfFour());
+      await open(tester);
+      await choose(tester, 'Wednesday');
+      await tester.tap(find.byKey(SettingsScreen.confirmTurnover));
+      await tester.pumpAndSettle();
+
+      final Family after = (await family.load())!;
+      expect(after.turnoverWeekday, DateTime.wednesday);
+      expect(after.cycles, hasLength(2));
+      expect(after.cycles.last.effectiveFrom, CalendarDate(2026, 10, 28));
+
+      final RotaEngine engine = RotaEngine.forFamily(after);
+      expect(engine.turnOn(anchor)!.leader, jabulile);
+      expect(engine.turnOn(CalendarDate(2026, 10, 25))!.leader, sisi);
+      expect(
+        engine.turnOn(CalendarDate(2026, 10, 25))!.weekEnd,
+        CalendarDate(2026, 10, 27),
+      );
+      expect(engine.turnOn(CalendarDate(2026, 10, 28))!.leader, mama);
+    });
+
+    testWidgets('choosing the day it already is does nothing', (
+      WidgetTester tester,
+    ) async {
+      await family.save(familyOfFour());
+      await open(tester);
+      await choose(tester, 'Sunday');
+
+      // No confirmation, because there is nothing to confirm.
+      expect(find.byKey(SettingsScreen.confirmTurnover), findsNothing);
+      expect((await family.load())!.cycles, hasLength(1));
+    });
+
+    testWidgets('while a change is pending, the row says both days', (
+      WidgetTester tester,
+    ) async {
+      // For a few days there are two true answers, and
+      // `Family.turnoverWeekday` is the later one. A row showing only that
+      // would tell somebody their week ends on a Wednesday while the app,
+      // correctly, ends it on the Sunday.
+      await family.save(familyOfFour());
+      await open(tester);
+      await choose(tester, 'Wednesday');
+      await tester.tap(find.byKey(SettingsScreen.confirmTurnover));
+      await tester.pumpAndSettle();
+      await reveal(tester, SettingsScreen.turnoverRow);
+
+      expect(find.textContaining('Sunday this week'), findsOneWidget);
+      expect(find.textContaining('Wednesday from'), findsOneWidget);
+    });
+
+    testWidgets('and reminders move with it', (WidgetTester tester) async {
+      await family.save(familyOfFour());
+      await settings.saveYouAre(sisi.id);
+      await settings.saveRemindersEnabled(enabled: true);
+      await open(tester);
+
+      final Set<int> before = await reminders.pending();
+      await choose(tester, 'Wednesday');
+      await tester.tap(find.byKey(SettingsScreen.confirmTurnover));
+      await tester.pumpAndSettle();
+
+      expect(await reminders.pending(), isNot(before));
+    });
+  });
+
+  group('who takes a week', () {
+    testWidgets('the row lists them, so the screen answers before it opens', (
+      WidgetTester tester,
+    ) async {
+      await family.save(familyOfFour());
+      await open(tester);
+      await reveal(tester, SettingsScreen.membersRow);
+
+      expect(find.text('Jabulile, Sisi, Mama, Tata'), findsOneWidget);
+    });
+
+    testWidgets('it opens the screen that #74 was asking for', (
+      WidgetTester tester,
+    ) async {
+      await family.save(familyOfFour());
+      await open(tester);
+      await tapRow(tester, SettingsScreen.membersRow);
+
+      expect(find.text('Who takes a week'), findsWidgets);
+      expect(find.byKey(FamilyMembersScreen.addRow), findsOneWidget);
+    });
+
+    testWidgets('and says to set the rota up first when there is none', (
+      WidgetTester tester,
+    ) async {
+      await open(tester);
+      await reveal(tester, SettingsScreen.membersRow);
+
+      final ListTile row = tester.widget<ListTile>(
+        find.byKey(SettingsScreen.membersRow),
+      );
+      expect(row.onTap, isNull);
     });
   });
 

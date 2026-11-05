@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../application/reschedule_reminders.dart';
 import '../../data/repositories/device_settings_repository.dart';
 import '../../data/repositories/family_repository.dart';
 import '../../data/repositories/journal_repository.dart';
@@ -9,15 +10,19 @@ import '../../data/sources/platform/sharing.dart';
 import '../../domain/entities/calendar_date.dart';
 import '../../domain/entities/family.dart';
 import '../../domain/entities/member.dart';
+import '../../domain/entities/turn.dart';
 import '../../domain/ids.dart';
 import '../../domain/entities/journal_entry.dart';
 import '../../domain/journal/journal_export.dart';
 import '../../domain/reminders/reminder_plan.dart';
 import '../../domain/rota/family_editor.dart';
+import '../../domain/rota/rota_engine.dart';
+import '../../domain/rota/week.dart';
 import '../brand/tokens.dart';
 import '../widgets/date_text.dart';
 import '../widgets/weekday_names.dart';
 import 'about_screen.dart';
+import 'family_members_screen.dart';
 import 'setup_screen.dart';
 
 /// Where everything that has no other home now lives (ADR-016).
@@ -34,8 +39,13 @@ import 'setup_screen.dart';
 ///   behind an unlabelled bell before that. It is two rows now.
 /// - *Appearance* could not be chosen at all; the app followed the phone and
 ///   that was that.
-/// - *The turnover day* is shown but not editable, and the reason is written
-///   down rather than shrugged at: see ADR-019.
+/// - *The turnover day* could not be changed without rebuilding the rota.
+///   Day 19 shipped it as a read-only row with the reason written down
+///   rather than shrugged at (ADR-019); Day 20 built the epoch machinery it
+///   needed; it is a real row now (#100).
+/// - *Who takes a week* had no route at all. `FamilyEditor` could add and
+///   remove people and nothing called it, so the only way to change the
+///   family was to throw the rota away (#74).
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({
     required this.familyRepository,
@@ -64,6 +74,8 @@ class SettingsScreen extends StatefulWidget {
   static const Key remindersRow = Key('settings.reminders');
   static const Key appearanceRow = Key('settings.appearance');
   static const Key turnoverRow = Key('settings.turnover');
+  static const Key membersRow = Key('settings.members');
+  static const Key confirmTurnover = Key('settings.turnover.confirm');
   static const Key startAgainRow = Key('settings.startAgain');
   static const Key exportRow = Key('settings.export');
   static const Key aboutRow = Key('settings.about');
@@ -179,28 +191,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   /// Re-plans this phone's reminders from whatever is stored now.
   ///
-  /// Reads the family rather than closing over one, so it cannot act on a
-  /// stale copy. Does nothing when reminders are off — a phone that has not
-  /// been asked sends nothing (R5.1).
-  Future<void> _reschedule() async {
-    if (!await widget.settings.loadRemindersEnabled()) {
-      return;
-    }
-    final Family? family = await widget.familyRepository.load();
-    final String? youAre = await widget.settings.loadYouAre();
-    if (family == null || youAre == null) {
-      await widget.reminders.cancelAll();
-      return;
-    }
-    await widget.reminders.schedule(
-      ReminderPlan.forDevice(
-        family: family,
-        youAre: youAre,
-        today: _today,
-        now: _now,
-      ),
-    );
-  }
+  /// Moved into `application/` once a second screen needed it (#74). It used
+  /// to be a method here, which was fine while there was one screen that
+  /// could change the rota and is the usual way two copies start to differ.
+  Future<void> _reschedule() => RescheduleReminders(
+    families: widget.familyRepository,
+    settings: widget.settings,
+    reminders: widget.reminders,
+  )(today: _today, now: _now);
 
   /// The next reminder this phone is holding, as a sentence.
   ///
@@ -298,6 +296,118 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (mounted) {
       setState(() => _busy = false);
     }
+  }
+
+  // ───────────────────────────── the turnover day ──────────────────────────
+
+  /// Moves the day the week turns over on (#100).
+  ///
+  /// The confirmation is built from the change itself rather than from a
+  /// description of it. `changeTurnoverDay` returns the family that would be
+  /// saved; this reads the date, the short week and its leader off *that*,
+  /// and saves the same object if the family agrees. So the dialog cannot
+  /// promise one thing and the store do another.
+  ///
+  /// It has three sentences and needs all three. Moving the day is the only
+  /// edit in the app with a consequence nobody would guess: the week before
+  /// the change is one to six days short, because the calendar does not
+  /// divide (ADR-019). Hiding that would be a pleasant dialog and a confusing
+  /// Sunday.
+  Future<void> _chooseTurnoverDay(Family family) async {
+    final int? chosen = await _pick<int>(
+      title: 'The week turns over on',
+      explanation:
+          'The day the rota changes hands. Weeks that have already happened '
+          'are never re-cut, so nobody loses a turn they have led.',
+      options: <_Option<int>>[
+        for (final MapEntry<int, String> day
+            in WeekdayNames.byIsoWeekday.entries)
+          _Option<int>(value: day.key, label: day.value),
+      ],
+      selected: family.turnoverWeekday,
+    );
+    if (chosen == null || chosen == family.turnoverWeekday || !mounted) {
+      return;
+    }
+
+    final Family after;
+    try {
+      after = FamilyEditor.changeTurnoverDay(
+        family,
+        weekday: chosen,
+        today: _today,
+        ids: widget.ids,
+      );
+    } on ArgumentError catch (error) {
+      setState(() => _message = error.message.toString());
+      return;
+    }
+
+    final RotaEngine engine = RotaEngine.forFamily(after);
+    final CalendarDate from = after.latestCycle.effectiveFrom;
+    final Turn? shortened = engine.turnOn(from.subtractDays(1));
+    final Turn? first = engine.turnOn(from);
+    if (!mounted) {
+      return;
+    }
+
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: Text('Hand over on ${WeekdayNames.byIsoWeekday[chosen]}?'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text('From ${DateLabels.full(context, from)}.'),
+            if (shortened != null) ...<Widget>[
+              const SizedBox(height: Space.md),
+              Text(
+                '${shortened.leader.displayName} has the week before that, '
+                'and it will be ${_lengthInDays(shortened)} instead of '
+                'seven — the first ${WeekdayNames.byIsoWeekday[chosen]} '
+                'arrives before their week would have ended.',
+              ),
+            ],
+            if (first != null) ...<Widget>[
+              const SizedBox(height: Space.md),
+              Text('${first.leader.displayName} takes the first full week.'),
+            ],
+          ],
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Leave it'),
+          ),
+          TextButton(
+            key: SettingsScreen.confirmTurnover,
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Change it'),
+          ),
+        ],
+      ),
+    );
+
+    if (!(confirmed ?? false) || !mounted) {
+      return;
+    }
+
+    setState(() {
+      _busy = true;
+      _message = null;
+    });
+    // The family the dialog described, not one computed again afterwards.
+    await widget.familyRepository.save(after);
+    await _reschedule();
+    if (mounted) {
+      setState(() => _busy = false);
+    }
+  }
+
+  static String _lengthInDays(Turn turn) {
+    final int days = turn.weekStart.daysUntil(turn.weekEnd) + 1;
+    return days == 1 ? 'one day' : '$days days';
   }
 
   // ─────────────────────────────── the rota ────────────────────────────────
@@ -530,28 +640,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
       const _Heading('The rota'),
       ListTile(
+        key: SettingsScreen.membersRow,
+        title: const Text('Who takes a week'),
+        subtitle: Text(_membersSummary(family)),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: family == null || _busy ? null : () => _openMembers(),
+      ),
+      ListTile(
         key: SettingsScreen.turnoverRow,
         title: const Text('The week turns over on'),
         subtitle: Text(_turnoverName(family)),
-        // No `onTap`, and deliberately **not** `enabled: false`. Changing
-        // the turnover day moves every week boundary the rota has ever had,
-        // and the engine refuses a family whose cycles no longer start on it
-        // — so this is a new epoch, not a setting (ADR-019, #100). Until
-        // then the row below is the honest route and says what it replaces.
-        //
-        // Disabling it was the first attempt and it was wrong twice. This is
-        // a fact, not a dead control; and `disabledColor` is 38% opacity,
-        // which composites to **2.42:1** against the wax ground — a row
-        // stating something you cannot read.
+        trailing: const Icon(Icons.chevron_right),
+        // Read-only on Day 19, for a reason that was written down rather
+        // than shrugged at: the day was one field on the family, and moving
+        // it re-cut every week the rota had ever had (ADR-019). Day 20 made
+        // it an epoch, so there is a route now.
+        onTap: family == null || _busy
+            ? null
+            : () => _chooseTurnoverDay(family),
       ),
       ListTile(
         key: SettingsScreen.startAgainRow,
         title: const Text('Start the rota again'),
-        subtitle: const Text(
-          'Change who takes a week, the order, or the turnover day',
-        ),
+        subtitle: const Text('Replace everybody and start from scratch'),
         trailing: const Icon(Icons.chevron_right),
         onTap: _busy ? null : _startAgain,
+      ),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(Space.lg, 0, Space.lg, Space.sm),
+        child: Text(
+          'The two rows above change the rota without throwing it away. '
+          'Starting again replaces the whole thing.',
+          style: theme.textTheme.bodySmall,
+        ),
       ),
 
       const _Heading('About'),
@@ -597,10 +718,55 @@ class _SettingsScreenState extends State<SettingsScreen> {
     Appearance.dark => 'Dark',
   };
 
-  String _turnoverName(Family? family) => family == null
-      ? 'Set the rota up first'
-      : '${WeekdayNames.byIsoWeekday[family.turnoverWeekday]} — '
-            'and it runs to the day before';
+  String _membersSummary(Family? family) {
+    if (family == null) {
+      return 'Set the rota up first';
+    }
+    final List<Member> members = FamilyEditor.activeMembers(family, _today);
+    return members.map((Member member) => member.displayName).join(', ');
+  }
+
+  /// What day the week turns over on — and, if that is about to change, both
+  /// answers.
+  ///
+  /// A change takes effect at a future turnover, so for a few days there are
+  /// two true answers and `Family.turnoverWeekday` is the later one. A row
+  /// showing only that would be telling somebody their week ends on a
+  /// Wednesday while the app, correctly, ends it on the Sunday.
+  String _turnoverName(Family? family) {
+    if (family == null) {
+      return 'Set the rota up first';
+    }
+    final int chosen = family.turnoverWeekday;
+    final RotaEngine engine = RotaEngine.forFamily(family);
+    final int inForce = engine.turnoverWeekdayOn(_today);
+    if (inForce == chosen) {
+      return '${WeekdayNames.byIsoWeekday[chosen]} — '
+          'and it runs to the day before';
+    }
+    final CalendarDate from = Week.startOf(
+      family.latestCycle.effectiveFrom,
+      chosen,
+    );
+    return '${WeekdayNames.byIsoWeekday[inForce]} this week · '
+        '${WeekdayNames.byIsoWeekday[chosen]} from '
+        '${DateLabels.dayAndDate(context, from)}';
+  }
+
+  void _openMembers() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (BuildContext context) => FamilyMembersScreen(
+          familyRepository: widget.familyRepository,
+          settings: widget.settings,
+          reminders: widget.reminders,
+          ids: widget.ids,
+          today: widget.today,
+          now: widget.now,
+        ),
+      ),
+    );
+  }
 }
 
 class _Option<T extends Object> {

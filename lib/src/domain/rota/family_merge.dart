@@ -40,7 +40,10 @@ abstract final class FamilyMerge {
       // both are equal this is simply a's value, which is why _newerOf breaks
       // its own tie deterministically.
       name: newer.name,
-      turnoverWeekday: newer.turnoverWeekday,
+      // No turnover day here. It is derived from the merged cycles (#100),
+      // which makes it commutative for free: picking it from the newer side
+      // was a scalar that could disagree with the epochs it was supposed to
+      // describe.
       members: _unionBy<Member>(
         a.members,
         b.members,

@@ -15,38 +15,36 @@ import 'week.dart';
 /// The computation, in full:
 ///
 /// ```text
-/// weekStart   = the most recent turnover day on or before the date
-/// cycle       = the latest cycle whose effectiveFrom <= weekStart
+/// cycle       = the latest cycle whose effectiveFrom <= the start of the
+///               date's week *as that cycle counts weeks*
+/// weekStart   = the most recent of that cycle's turnover days on or before
+///               the date
+/// weekEnd     = weekStart + 6, cut short if the next epoch begins first
 /// weekIndex   = whole weeks from cycle.effectiveFrom to weekStart
 /// skipsBefore = skips in that cycle with weekStart <= this weekStart
 /// position    = (weekIndex + skipsBefore) mod cycle.order.length
 /// ```
 ///
+/// The first two steps are circular-looking on purpose: each epoch keeps its
+/// own turnover day (ADR-019), so a date's week cannot be found before the
+/// epoch is, and the epoch cannot be found without slicing weeks. It is
+/// resolved by asking the newest epoch first — "does your own week
+/// containing this date start on or after you began?" — and taking the first
+/// that says yes. For a family that has never moved its turnover day, every
+/// epoch answers with the same boundaries and this is the old rule exactly.
+///
 /// Nothing is advanced and nothing is stored, so a phone that was switched off
 /// for six months is exactly as correct as one opened every day (R1.3, ADR-002).
 class RotaEngine {
   RotaEngine({
-    required this.turnoverWeekday,
     required List<Cycle> cycles,
     required Map<String, Member> members,
     List<SkippedTurn> skips = const <SkippedTurn>[],
   }) : _members = Map<String, Member>.unmodifiable(members),
        _cycles = List<Cycle>.unmodifiable(<Cycle>[...cycles]..sort(_byDate)),
        _skips = List<SkippedTurn>.unmodifiable(skips) {
-    Week.assertValidWeekday(turnoverWeekday);
     if (_cycles.isEmpty) {
       throw ArgumentError.value(cycles, 'cycles', 'needs at least one cycle');
-    }
-    for (final Cycle cycle in _cycles) {
-      if (cycle.effectiveFrom.weekday != turnoverWeekday) {
-        throw ArgumentError.value(
-          cycle.effectiveFrom.toString(),
-          'cycle.effectiveFrom',
-          'must fall on the turnover weekday ($turnoverWeekday), '
-              'but ${cycle.id} starts on a weekday '
-              '${cycle.effectiveFrom.weekday}',
-        );
-      }
     }
   }
 
@@ -55,7 +53,6 @@ class RotaEngine {
   /// The engine takes data; it never fetches any. This factory is the only
   /// place the aggregate and the computation meet.
   factory RotaEngine.forFamily(Family family) => RotaEngine(
-    turnoverWeekday: family.turnoverWeekday,
     members: family.membersById,
     cycles: family.cycles,
     skips: family.skips,
@@ -72,9 +69,6 @@ class RotaEngine {
     final int byDate = a.effectiveFrom.compareTo(b.effectiveFrom);
     return byDate != 0 ? byDate : a.id.compareTo(b.id);
   }
-
-  /// ISO weekday the rota hands over on: 1 is Monday, 7 is Sunday.
-  final int turnoverWeekday;
 
   final Map<String, Member> _members;
   final List<Cycle> _cycles;
@@ -100,11 +94,12 @@ class RotaEngine {
   /// there is no leader to name. Callers render that state rather than
   /// guessing at one.
   Turn? turnOn(CalendarDate date) {
-    final CalendarDate weekStart = Week.startOf(date, turnoverWeekday);
-    final Cycle? cycle = _cycleGoverning(weekStart);
-    if (cycle == null) {
+    final int governing = _indexGoverning(date);
+    if (governing < 0) {
       return null;
     }
+    final Cycle cycle = _cycles[governing];
+    final CalendarDate weekStart = Week.startOf(date, cycle.turnoverWeekday);
 
     final List<Member> order = _resolvedOrder(cycle);
     if (order.isEmpty) {
@@ -118,10 +113,65 @@ class RotaEngine {
     return Turn(
       leader: order[position],
       weekStart: weekStart,
-      weekEnd: weekStart.addDays(6),
+      weekEnd: _endOfWeekStarting(weekStart, after: governing),
       position: position,
       cycleLength: order.length,
     );
+  }
+
+  /// Which day the week turns over on for whoever leads on [date].
+  ///
+  /// Not a property of the family: a family that moved its turnover day has
+  /// dates either side of the change answering differently, which is the
+  /// point of moving it by epoch (ADR-019). Returns the latest epoch's day
+  /// for a date before the rota started, since there is no epoch to ask and
+  /// the caller is laying out a calendar rather than naming a leader.
+  int turnoverWeekdayOn(CalendarDate date) {
+    final int governing = _indexGoverning(date);
+    return governing < 0
+        ? _cycles.last.turnoverWeekday
+        : _cycles[governing].turnoverWeekday;
+  }
+
+  /// The first day of the week containing [date].
+  CalendarDate weekStartOn(CalendarDate date) =>
+      Week.startOf(date, turnoverWeekdayOn(date));
+
+  /// The epoch governing [date], or the earliest one for a date before the
+  /// rota started.
+  ///
+  /// Never null. A rota has at least one epoch — the constructor refuses
+  /// otherwise — so "which order is in force" always has an answer, even for
+  /// a date on which nobody was leading yet.
+  Cycle cycleFor(CalendarDate date) {
+    final int governing = _indexGoverning(date);
+    return governing < 0 ? _cycles.first : _cycles[governing];
+  }
+
+  /// The last day of the week starting on [weekStart], normally six days
+  /// later.
+  ///
+  /// Cut short when a later epoch begins inside it. That happens exactly when
+  /// the family moved the turnover day: the new day is one to six days after
+  /// the old week would have ended, so the last week of the old epoch is one
+  /// to six days short. The alternative to shortening it is a week whose last
+  /// day belongs to two turns at once — which the screens would show as one
+  /// date appearing in two people's weeks.
+  ///
+  /// Nobody loses a turn to this. `FamilyEditor.changeTurnoverDay` starts the
+  /// new epoch's order at the person *after* whoever leads the short week, so
+  /// the short week is a turn taken, not a turn missed.
+  CalendarDate _endOfWeekStarting(
+    CalendarDate weekStart, {
+    required int after,
+  }) {
+    final CalendarDate end = weekStart.addDays(6);
+    if (after + 1 >= _cycles.length) {
+      return end;
+    }
+    final CalendarDate nextEpochBegins = _cycles[after + 1].effectiveFrom;
+    final CalendarDate lastDayBefore = nextEpochBegins.subtractDays(1);
+    return lastDayBefore.isBefore(end) ? lastDayBefore : end;
   }
 
   /// The turn containing [date] and the [count] - 1 turns after it.
@@ -134,29 +184,41 @@ class RotaEngine {
       return const <Turn>[];
     }
     final List<Turn> turns = <Turn>[];
-    CalendarDate cursor = Week.startOf(date, turnoverWeekday);
+    CalendarDate cursor = date;
     for (int i = 0; i < count; i++) {
       final Turn? turn = turnOn(cursor);
       if (turn == null) {
         break;
       }
       turns.add(turn);
-      cursor = cursor.addDays(7);
+      // Not `+ 7`. Across an epoch that moved the turnover day, seven days
+      // from a week start lands inside the next week rather than on it, and
+      // a short week would be walked past entirely. The day after this turn
+      // ends is the next turn's first day by definition, whatever its
+      // length, and `turnOn` normalises from any date in a week anyway.
+      cursor = turn.weekEnd.addDays(1);
     }
     return turns;
   }
 
-  /// The latest cycle in force on [weekStart], or null if none had started.
-  Cycle? _cycleGoverning(CalendarDate weekStart) {
-    Cycle? governing;
-    for (final Cycle cycle in _cycles) {
+  /// Index into [_cycles] of the epoch governing [date], or -1 if the rota
+  /// had not started.
+  ///
+  /// Asks the newest epoch first. Each candidate slices the week around
+  /// [date] with **its own** turnover day and is accepted if it had begun by
+  /// the start of that week; the newest to accept wins. Walking newest-first
+  /// is what makes the answer well defined when two epochs disagree about
+  /// where the week boundary is — the later decision is the one the family
+  /// made most recently.
+  int _indexGoverning(CalendarDate date) {
+    for (int i = _cycles.length - 1; i >= 0; i--) {
+      final Cycle cycle = _cycles[i];
+      final CalendarDate weekStart = Week.startOf(date, cycle.turnoverWeekday);
       if (cycle.effectiveFrom.isOnOrBefore(weekStart)) {
-        governing = cycle;
-      } else {
-        break; // sorted, so nothing later can apply
+        return i;
       }
     }
-    return governing;
+    return -1;
   }
 
   List<Member> _resolvedOrder(Cycle cycle) => <Member>[

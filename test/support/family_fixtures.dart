@@ -17,7 +17,6 @@ Family familyOfFour({List<SkippedTurn> skips = const <SkippedTurn>[]}) =>
     Family(
       id: 'f1',
       name: 'Mashibini',
-      turnoverWeekday: DateTime.sunday,
       members: const <Member>[jabulile, sisi, mama, tata],
       cycles: <Cycle>[
         Cycle(

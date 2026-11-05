@@ -392,7 +392,6 @@ void main() {
         Family(
           id: 'f1',
           name: 'Mashibini',
-          turnoverWeekday: DateTime.sunday,
           members: const <Member>[jabulile],
           cycles: <Cycle>[
             Cycle(

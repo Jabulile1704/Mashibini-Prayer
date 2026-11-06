@@ -130,10 +130,15 @@ matching reports a clean codebase forever.
 
 ## What this day did not do
 
-**#111 is still open.** The tab labels are still cut off, and the decision
-between shortening them, hiding them and going back to four tabs is the
-owner's. A restyle was the obvious place to fix it and it is not fixed,
-because the fix is a naming decision rather than a spacing one.
+**#111 is withdrawn, not fixed.** It was filed on Day 21 claiming the tab
+labels were cut off on most phones. Running the app to answer "how is it
+now?" produced a screenshot in which all five render in full — and the
+figures behind the issue turned out to be measured in Flutter's fixed-width
+test font, where `iiiiiiii` and `MMMMMMMM` are the same width.
+
+The restyle was the obvious place to fix a label defect. There was no label
+defect. What there was: two ADRs, two day logs, a PR body and a test all
+asserting one, written over two days, from a number nobody questioned.
 
 **Touch targets are not measured.** `Touch.minimum` exists and its doc
 comment says "Day 22's accessibility pass will measure against" it. That pass

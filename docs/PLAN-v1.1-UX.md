@@ -180,12 +180,28 @@ nothing in it had ever built the navigation bar. Open, with a decision owing.
 
 See [DAY-21.md](daily/DAY-21.md).
 
-### Day 22 — Restyle the screens
+### Day 22 — Restyle the screens · **Done**
 
-Every screen onto the new design system. This Week regains its focus —
-likely the verse moving to its own card and the version moving into Settings.
-Confirmation and undo for destructive-feeling actions. The empty states get a
-next step instead of a full stop.
+Two items were already done and this plan did not know it: the verse has had
+its own card since Day 10, and the version moved to Settings on Day 19. So
+the day was the spacing, the undo and the empty states.
+
+Every gap and padding in `lib/src/presentation` is on the scale — it was **28
+raw heights against 19 tokenised** on the morning, the scale having been
+adopted only by the newest quarter of the app. Snapping them fixed two things
+nobody had noticed: each tab used its own horizontal inset, so nothing lined
+up between tabs.
+
+**Undo rather than confirmation.** Skipping was already reversible, so the
+real gap was narrower and odder: the spoken announcement had gone to screen
+readers since Day 13 and a sighted person got nothing. A snack bar now
+carries the same string, with Undo in it. A dialog in front of every skip is
+a toll paid on each correct tap to catch the rare wrong one.
+
+`spacing_test.dart` fails if a bare number comes back, and has its own test
+proving it can fail.
+
+See [DAY-22.md](daily/DAY-22.md).
 
 ### Day 23 — Icon, accessibility re-pass, release
 

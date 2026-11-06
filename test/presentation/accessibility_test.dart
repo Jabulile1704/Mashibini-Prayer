@@ -18,6 +18,7 @@ import 'package:mashibini_prayer/src/presentation/screens/this_week_screen.dart'
 import '../support/fake_id_generator.dart';
 import '../support/fake_key_value_store.dart';
 import '../support/fake_app_version.dart';
+import '../support/fake_photos.dart';
 import '../support/fake_reminders.dart';
 import '../support/fake_sharing.dart';
 import '../support/family_fixtures.dart';
@@ -85,7 +86,12 @@ void main() {
       ids: FakeIdGenerator(),
       today: () => anchor,
     ),
-    'Family': FamilyTreeScreen(familyRepository: family, today: () => anchor),
+    'Family': FamilyTreeScreen(
+      familyRepository: family,
+      photos: FakePhotos(),
+      ids: FakeIdGenerator(),
+      today: () => anchor,
+    ),
     // The shell rather than a screen, because the thing being measured here
     // is the **navigation bar**: five destinations, five visible labels,
     // across 360pt. ADR-016 put the ceiling at four on the judgement that
@@ -99,6 +105,7 @@ void main() {
       sharing: FakeSharing(),
       reminders: reminders,
       appVersion: FakeAppVersion(),
+      photos: FakePhotos(),
       ids: FakeIdGenerator(),
       today: () => anchor,
     ),

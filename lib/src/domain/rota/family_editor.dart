@@ -4,6 +4,7 @@ import '../entities/family.dart';
 import '../entities/member.dart';
 import '../entities/skipped_turn.dart';
 import '../entities/turn.dart';
+import '../family/family_tree.dart';
 import '../ids.dart';
 import 'rota_engine.dart';
 import 'week.dart';
@@ -268,6 +269,81 @@ abstract final class FamilyEditor {
       for (final SkippedTurn existing in family.skips)
         if (existing.id == skip.id) existing.withdraw() else existing,
     ]);
+  }
+
+  /// Adds somebody to the **family** without putting them in the rota (#109).
+  ///
+  /// The distinction the tree exists for. `addMember` writes a new cycle and
+  /// hands the person a week; this writes no cycle at all, so a grandchild,
+  /// a grandparent or anybody else can appear in the tree without being
+  /// handed a turn at leading prayer.
+  ///
+  /// No epoch means nothing to defer — they are in the family the moment it
+  /// is saved, because there is no week boundary for a non-participant to
+  /// wait for.
+  static Family addRelative(
+    Family family, {
+    required String displayName,
+    required IdGenerator ids,
+    String? role,
+    List<String> parentIds = const <String>[],
+  }) {
+    final String name = displayName.trim();
+    if (name.isEmpty) {
+      throw ArgumentError.value(displayName, 'displayName', 'cannot be empty');
+    }
+
+    return family.copyWith(
+      members: <Member>[
+        ...family.members,
+        Member(
+          id: ids.newId('m'),
+          displayName: name,
+          role: role?.trim().isEmpty ?? true ? null : role!.trim(),
+          parentIds: <String>[
+            for (final String id in parentIds)
+              if (family.membersById.containsKey(id)) id,
+          ],
+        ),
+      ],
+    );
+  }
+
+  /// Replaces one member with [updated], leaving the rota untouched.
+  ///
+  /// For a role, a photograph, parents or a corrected spelling — none of
+  /// which is a change to who takes a week, so none of them writes an
+  /// epoch. A rename is a rename: the cycles reference ids, so the person
+  /// who led in March keeps the turn and gains the new spelling, which is
+  /// what somebody fixing a typo means.
+  static Family updateMember(Family family, Member updated) {
+    if (!family.membersById.containsKey(updated.id)) {
+      throw ArgumentError.value(
+        updated.id,
+        'updated.id',
+        'is not in this family',
+      );
+    }
+    for (final String parentId in updated.parentIds) {
+      if (FamilyTree.wouldMakeALoop(
+        family.members,
+        childId: updated.id,
+        parentId: parentId,
+      )) {
+        throw ArgumentError.value(
+          parentId,
+          'parentIds',
+          'would make ${updated.displayName} their own ancestor',
+        );
+      }
+    }
+
+    return family.copyWith(
+      members: <Member>[
+        for (final Member member in family.members)
+          if (member.id == updated.id) updated else member,
+      ],
+    );
   }
 
   /// When a change made on [today] would take effect.

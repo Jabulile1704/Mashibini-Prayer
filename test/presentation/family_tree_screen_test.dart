@@ -4,22 +4,28 @@ import 'package:mashibini_prayer/src/app.dart';
 import 'package:mashibini_prayer/src/data/repositories/local_family_repository.dart';
 import 'package:mashibini_prayer/src/domain/entities/family.dart';
 import 'package:mashibini_prayer/src/domain/entities/member.dart';
+import 'package:mashibini_prayer/src/domain/family/family_tree.dart';
+import 'package:mashibini_prayer/src/presentation/screens/family_member_sheet.dart';
 import 'package:mashibini_prayer/src/presentation/screens/family_tree_screen.dart';
 
+import '../support/fake_id_generator.dart';
 import '../support/fake_key_value_store.dart';
+import '../support/fake_photos.dart';
 import '../support/family_fixtures.dart';
 
-/// The Family tab (#109), which is deliberately not what was asked for yet.
+/// The Family tab (#109).
 ///
-/// The ask was a hierarchy with a photograph and a role for each person. This
-/// is a flat comb of the people in the rota, and the test that matters most
-/// here is the one asserting it **says so**. A screen that quietly omits
-/// three quarters of a feature is a screen somebody will report as broken.
+/// The rule under nearly all of this: **the tree is not the rota.** The
+/// family is the larger set, a grandchild belongs in it without being handed
+/// a week of prayer, and a screen that blurred the two would break the one
+/// thing the app is for.
 void main() {
   late LocalFamilyRepository family;
+  late FakePhotos photos;
 
   setUp(() {
     family = LocalFamilyRepository(store: FakeKeyValueStore());
+    photos = FakePhotos();
   });
 
   tearDown(() => family.dispose());
@@ -30,83 +36,356 @@ void main() {
         localizationsDelegates: AppLocales.delegates,
         supportedLocales: AppLocales.supported,
         locale: const Locale('en', 'ZA'),
-        home: FamilyTreeScreen(familyRepository: family, today: () => anchor),
+        home: FamilyTreeScreen(
+          familyRepository: family,
+          photos: photos,
+          ids: FakeIdGenerator(),
+          today: () => anchor,
+        ),
       ),
     );
     await tester.pumpAndSettle();
   }
 
-  testWidgets('a cell for everybody in the rota', (WidgetTester tester) async {
-    await family.save(familyOfFour());
-    await open(tester);
+  Future<void> openSheetFor(WidgetTester tester, String id) async {
+    await tester.tap(find.byKey(FamilyTreeScreen.cellFor(id)));
+    await tester.pumpAndSettle();
+  }
 
-    for (final Member member in <Member>[jabulile, sisi, mama, tata]) {
-      expect(find.byKey(FamilyTreeScreen.cellFor(member.id)), findsOneWidget);
-      expect(find.text(member.displayName), findsOneWidget);
-    }
+  Future<void> saveWith(List<Member> members) =>
+      family.save(familyOfFour().copyWith(members: members));
+
+  group('who is drawn', () {
+    testWidgets('everybody in the family, not only the rota', (
+      WidgetTester tester,
+    ) async {
+      await saveWith(<Member>[
+        jabulile,
+        sisi,
+        mama,
+        tata,
+        const Member(id: 'm5', displayName: 'Baby', role: 'born 2024'),
+      ]);
+      await open(tester);
+
+      for (final String id in <String>['m1', 'm2', 'm3', 'm4', 'm5']) {
+        expect(find.byKey(FamilyTreeScreen.cellFor(id)), findsOneWidget);
+      }
+    });
+
+    testWidgets('somebody outside the rota is said to be outside it', (
+      WidgetTester tester,
+    ) async {
+      // The fact most likely to be misread on a screen showing more people
+      // than the rota does.
+      await saveWith(<Member>[
+        jabulile,
+        sisi,
+        mama,
+        tata,
+        const Member(id: 'm5', displayName: 'Baby'),
+      ]);
+      await open(tester);
+
+      expect(find.text('Not in the rota'), findsOneWidget);
+    });
+
+    testWidgets('a role replaces the rota line, because they chose it', (
+      WidgetTester tester,
+    ) async {
+      await saveWith(<Member>[
+        jabulile.copyWith(role: 'eldest'),
+        sisi,
+        mama,
+        tata,
+      ]);
+      await open(tester);
+
+      expect(find.text('eldest'), findsOneWidget);
+    });
+
+    testWidgets('generations are drawn as separate rows', (
+      WidgetTester tester,
+    ) async {
+      await saveWith(<Member>[
+        tata,
+        mama,
+        jabulile.copyWith(parentIds: <String>['m4', 'm3']),
+        sisi.copyWith(parentIds: <String>['m4', 'm3']),
+      ]);
+      await open(tester);
+
+      final Family stored = (await family.load())!;
+      expect(FamilyTree.generations(stored.members), hasLength(2));
+      expect(find.byKey(FamilyTreeScreen.comb), findsOneWidget);
+      for (final String id in <String>['m1', 'm2', 'm3', 'm4']) {
+        expect(find.byKey(FamilyTreeScreen.cellFor(id)), findsOneWidget);
+      }
+    });
+
+    testWidgets('it says photographs do not leave the phone', (
+      WidgetTester tester,
+    ) async {
+      // ADR-010's clause is intact because nothing is uploaded, and the
+      // cost of that — no sync, lost on reinstall — is said on the screen
+      // rather than discovered.
+      await family.save(familyOfFour());
+      await open(tester);
+
+      expect(find.byKey(FamilyTreeScreen.onThisPhone), findsOneWidget);
+      expect(find.textContaining('never uploaded'), findsOneWidget);
+    });
+
+    testWidgets('before there is a rota it says so', (
+      WidgetTester tester,
+    ) async {
+      await open(tester);
+
+      expect(find.text('Nobody here yet'), findsOneWidget);
+      expect(find.byKey(FamilyTreeScreen.comb), findsNothing);
+    });
   });
 
-  testWidgets('each cell carries their initial', (WidgetTester tester) async {
-    await family.save(familyOfFour());
-    await open(tester);
+  group('adding somebody to the family', () {
+    testWidgets('they appear, and they are not given a week', (
+      WidgetTester tester,
+    ) async {
+      // The whole distinction. Adding a grandchild must not reorder who
+      // leads prayer.
+      await family.save(familyOfFour());
+      final Family before = (await family.load())!;
+      await open(tester);
 
-    // J, S, M, T — the hexagon is where a photograph goes when there is one.
-    for (final String initial in <String>['J', 'S', 'M', 'T']) {
-      expect(find.text(initial), findsOneWidget);
-    }
+      await tester.tap(find.byKey(FamilyTreeScreen.addRelative));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(FamilyTreeScreen.nameField), 'Baby');
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(FamilyTreeScreen.confirmAdd));
+      await tester.pumpAndSettle();
+
+      final Family after = (await family.load())!;
+      expect(after.members, hasLength(5));
+      expect(
+        after.cycles,
+        hasLength(before.cycles.length),
+        reason: 'no epoch: nobody has been handed a turn',
+      );
+      expect(find.text('Baby'), findsOneWidget);
+    });
+
+    testWidgets('and the screen says adding somebody is not a turn', (
+      WidgetTester tester,
+    ) async {
+      await family.save(familyOfFour());
+      await open(tester);
+
+      expect(
+        find.textContaining('does not give them a week of prayer'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('a name of only spaces is refused', (
+      WidgetTester tester,
+    ) async {
+      await family.save(familyOfFour());
+      await open(tester);
+
+      await tester.tap(find.byKey(FamilyTreeScreen.addRelative));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(FamilyTreeScreen.nameField), '   ');
+      await tester.pumpAndSettle();
+
+      expect(
+        tester
+            .widget<TextButton>(find.byKey(FamilyTreeScreen.confirmAdd))
+            .onPressed,
+        isNull,
+      );
+    });
   });
 
-  testWidgets('and when their turn is', (WidgetTester tester) async {
-    await family.save(familyOfFour());
-    await open(tester);
+  group('editing somebody', () {
+    testWidgets("a role is kept, in the family's own words", (
+      WidgetTester tester,
+    ) async {
+      await family.save(familyOfFour());
+      await open(tester);
+      await openSheetFor(tester, 'm3');
 
-    expect(find.text('This week'), findsOneWidget);
+      await tester.enterText(find.byKey(FamilyMemberSheet.roleField), 'Mama');
+      await tester.tap(find.byKey(FamilyMemberSheet.save));
+      await tester.pumpAndSettle();
+
+      expect((await family.load())!.membersById['m3']!.role, 'Mama');
+    });
+
+    testWidgets('clearing the role removes it rather than storing nothing', (
+      WidgetTester tester,
+    ) async {
+      await saveWith(<Member>[
+        jabulile,
+        sisi,
+        mama.copyWith(role: 'Mama'),
+        tata,
+      ]);
+      await open(tester);
+      await openSheetFor(tester, 'm3');
+
+      await tester.enterText(find.byKey(FamilyMemberSheet.roleField), '  ');
+      await tester.tap(find.byKey(FamilyMemberSheet.save));
+      await tester.pumpAndSettle();
+
+      expect((await family.load())!.membersById['m3']!.role, isNull);
+    });
+
+    testWidgets('a parent can be named, and the tree gains a generation', (
+      WidgetTester tester,
+    ) async {
+      await family.save(familyOfFour());
+      await open(tester);
+      await openSheetFor(tester, 'm1');
+
+      await tester.tap(find.byKey(FamilyMemberSheet.parentToggle('m4')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(FamilyMemberSheet.save));
+      await tester.pumpAndSettle();
+
+      final Family stored = (await family.load())!;
+      expect(stored.membersById['m1']!.parentIds, <String>['m4']);
+      expect(FamilyTree.generations(stored.members), hasLength(2));
+    });
+
+    testWidgets('naming a parent does not touch the rota', (
+      WidgetTester tester,
+    ) async {
+      await family.save(familyOfFour());
+      final Family before = (await family.load())!;
+      await open(tester);
+      await openSheetFor(tester, 'm1');
+
+      await tester.tap(find.byKey(FamilyMemberSheet.parentToggle('m4')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(FamilyMemberSheet.save));
+      await tester.pumpAndSettle();
+
+      final Family after = (await family.load())!;
+      expect(after.cycles.length, before.cycles.length);
+      expect(after.cycles.single.order, before.cycles.single.order);
+    });
+
+    testWidgets('a name that would close a loop is never offered', (
+      WidgetTester tester,
+    ) async {
+      // The refusal is an absence, not an error message afterwards.
+      await saveWith(<Member>[
+        jabulile.copyWith(parentIds: <String>['m4']),
+        sisi,
+        mama,
+        tata,
+      ]);
+      await open(tester);
+      await openSheetFor(tester, 'm4');
+
+      expect(find.byKey(FamilyMemberSheet.parentToggle('m1')), findsNothing);
+      expect(find.byKey(FamilyMemberSheet.parentToggle('m4')), findsNothing);
+      expect(find.byKey(FamilyMemberSheet.parentToggle('m2')), findsOneWidget);
+    });
   });
 
-  testWidgets('it says what is missing rather than implying it is done', (
-    WidgetTester tester,
-  ) async {
-    await family.save(familyOfFour());
-    await open(tester);
+  group('photographs', () {
+    testWidgets('choosing one asks the picker for this member', (
+      WidgetTester tester,
+    ) async {
+      photos.next = '/tmp/mashibini/m3-1.jpg';
+      await family.save(familyOfFour());
+      await open(tester);
+      await openSheetFor(tester, 'm3');
 
-    expect(find.byKey(FamilyTreeScreen.notBuiltYet), findsOneWidget);
-    expect(find.text('NOT BUILT YET'), findsOneWidget);
-    expect(find.textContaining('who is whose parent'), findsOneWidget);
-    expect(find.textContaining('photograph and a role'), findsOneWidget);
-  });
+      await tester.tap(find.byKey(FamilyMemberSheet.choosePhoto));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(FamilyMemberSheet.save));
+      await tester.pumpAndSettle();
 
-  testWidgets('a name with no letters in it falls back to a question mark', (
-    WidgetTester tester,
-  ) async {
-    // `characters.first` throws on an empty string. Not reachable through
-    // the UI — the add dialog trims and refuses empty — but a family can
-    // arrive from a merge with another phone, and a screen is the wrong
-    // place to discover it.
-    //
-    // Written as a real family with a real blank name rather than as
-    // `expect(takeException(), isNull)` on a healthy one, which was the
-    // first version and would have passed with the bug present.
-    await family.save(
-      Family(
-        id: 'f1',
-        name: 'Mashibini',
-        members: const <Member>[
-          Member(id: 'm1', displayName: '   '),
-          Member(id: 'm2', displayName: 'Sisi'),
-        ],
-        cycles: familyOfFour().cycles,
-      ),
-    );
-    await open(tester);
+      expect(photos.askedFor, <String>['m3']);
+      expect(
+        (await family.load())!.membersById['m3']!.photoPath,
+        '/tmp/mashibini/m3-1.jpg',
+      );
+    });
 
-    expect(tester.takeException(), isNull);
-    expect(find.text('?'), findsOneWidget);
-  });
+    testWidgets('declining the picker is an ordinary answer', (
+      WidgetTester tester,
+    ) async {
+      photos.next = null;
+      await family.save(familyOfFour());
+      await open(tester);
+      await openSheetFor(tester, 'm3');
 
-  testWidgets('before there is a rota it says so', (WidgetTester tester) async {
-    await open(tester);
+      await tester.tap(find.byKey(FamilyMemberSheet.choosePhoto));
+      await tester.pumpAndSettle();
 
-    expect(find.text('Nobody here yet'), findsOneWidget);
-    expect(find.byKey(FamilyTreeScreen.comb), findsNothing);
+      expect(tester.takeException(), isNull);
+      expect(find.byKey(FamilyMemberSheet.removePhoto), findsNothing);
+    });
+
+    testWidgets('a picker that will not open is said out loud', (
+      WidgetTester tester,
+    ) async {
+      photos.throws = StateError('no photo library');
+      await family.save(familyOfFour());
+      await open(tester);
+      await openSheetFor(tester, 'm3');
+
+      await tester.tap(find.byKey(FamilyMemberSheet.choosePhoto));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('could not be used'), findsOneWidget);
+    });
+
+    testWidgets('one picked and then replaced is not left behind', (
+      WidgetTester tester,
+    ) async {
+      // Copied into the app's storage the moment it is picked, so changing
+      // your mind twice would otherwise leave files nothing references.
+      await family.save(familyOfFour());
+      await open(tester);
+      await openSheetFor(tester, 'm3');
+
+      photos.next = '/tmp/first.jpg';
+      await tester.tap(find.byKey(FamilyMemberSheet.choosePhoto));
+      await tester.pumpAndSettle();
+
+      photos.next = '/tmp/second.jpg';
+      await tester.tap(find.byKey(FamilyMemberSheet.choosePhoto));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(FamilyMemberSheet.save));
+      await tester.pumpAndSettle();
+
+      expect(photos.removed, <String>['/tmp/first.jpg']);
+      expect(
+        (await family.load())!.membersById['m3']!.photoPath,
+        '/tmp/second.jpg',
+      );
+    });
+
+    testWidgets('removing one clears it', (WidgetTester tester) async {
+      await saveWith(<Member>[
+        jabulile,
+        sisi,
+        mama.copyWith(photoPath: '/tmp/mama.jpg'),
+        tata,
+      ]);
+      await open(tester);
+      await openSheetFor(tester, 'm3');
+
+      await tester.tap(find.byKey(FamilyMemberSheet.removePhoto));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(FamilyMemberSheet.save));
+      await tester.pumpAndSettle();
+
+      expect((await family.load())!.membersById['m3']!.photoPath, isNull);
+    });
   });
 }

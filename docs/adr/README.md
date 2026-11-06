@@ -28,3 +28,4 @@ names it.
 | [018](ADR-018-release-branches-are-cut-from-main.md) | Release branches are cut from `main` | Accepted |
 | [019](ADR-019-the-turnover-day-is-an-epoch-not-a-setting.md) | The turnover day is an epoch, not a setting | Accepted |
 | [020](ADR-020-a-fifth-tab-and-what-four-was-worth.md) | A fifth tab, and what "four is the ceiling" was worth | Accepted |
+| [021](ADR-021-the-tree-is-not-the-rota.md) | The tree is not the rota, and photographs stay on the phone | Accepted |

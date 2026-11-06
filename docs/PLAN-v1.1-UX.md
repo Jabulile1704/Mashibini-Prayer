@@ -203,7 +203,19 @@ proving it can fail.
 
 See [DAY-22.md](daily/DAY-22.md).
 
-### Day 23 — Icon, accessibility re-pass, release
+### Day 23 — The family tree (#109) · **Done**
+
+Unplanned, and asked for by the owner mid-stream. The tab shipped on Day 21
+with a flat comb; this is the feature — generations from parent edges,
+roles, photographs that never leave the phone, and
+[ADR-021](adr/ADR-021-the-tree-is-not-the-rota.md) recording the decision
+that matters: **the tree is not the rota**, so adding a relative gives
+nobody a week of prayer.
+
+It also began with withdrawing #111, which was wrong, and correcting the six
+places the wrong number had reached. See [DAY-23.md](daily/DAY-23.md).
+
+### Day 24 — Icon, accessibility re-pass, release
 
 A refined icon — the same ring mark, drawn better — and the launch screen
 regenerated from it by `tool/generate_icons.dart`, which already produces
@@ -212,7 +224,9 @@ every size from one source.
 **Then the whole Day 13 accessibility pass again.** A theme rework is exactly
 the change that breaks text scaling and contrast, and the existing sweep will
 catch some of it but not contrast or touch-target size. Budget real time for
-this rather than treating it as a formality. Day 19 found a row at 2.42:1 by
+this rather than treating it as a formality, and it now also owes the
+touch-target measurement `Touch.minimum` has promised since Day 17. Day 19
+found a row at 2.42:1 by
 looking at a simulator, which the sweep had passed.
 
 Then a release. **Not v1.1.0** — that shipped on Day 17, and the app is at

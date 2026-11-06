@@ -186,6 +186,39 @@ asserted those throws were deleted too, with a comment in their place saying
 what happened and where the replacement lives — a test file that quietly
 shrinks by two is the other way this gets missed.
 
+### An eleventh, and the only defence that has worked
+
+Day 21 found a third check that could not fail, and the three are different
+species — which is why "write the test" has stopped being an adequate answer:
+
+| | What it was | How it failed |
+|:--|:--|:--|
+| #103 | A release step printing a signing fingerprint | Read the wrong signature block, found nothing, and `\|\| true` turned that into a pass |
+| Day 20 | `cycle.effectiveFrom.weekday != turnoverWeekday` | Became a comparison between a value and itself when the field became derived |
+| #111 | An assertion that tab labels are not cut off | The platform clips silently — no exception, no flag, whole string still in the widget tree |
+
+The first was a broken instrument. The second was a question that had stopped
+having two sides. The third is the worst, because the assertion *looks* like
+it is about the right thing: `findsOneWidget` on a label is a reasonable line
+of test code that passes on "Settin".
+
+**The only defence that has worked is breaking it on purpose and watching it
+pass.** On Day 21 that meant renaming a tab to "Family hierarchy and the whole
+honeycomb of everybody" and re-running the test, which took one edit and
+thirty seconds, and immediately disqualified two of three candidate
+assertions. It would have caught all three of the rows above.
+
+So it is now the rule for any test written to catch a *specific* defect: make
+the defect, confirm the test fails, then fix it. Not for every test — most
+tests are written against behaviour that is obviously present or absent — but
+for every test whose job is to prove a thing cannot happen.
+
+The corollary, from #111: **ask what the suite has never built.** The
+accessibility sweep pumped every screen and had never built the navigation
+bar, so ADR-016's claim about tabs on a phone was unverifiable from the day it
+was written. A sweep named "every screen" is a sweep nobody re-reads the
+definition of.
+
 ### The git workflow is wrong, and it took two releases to show
 
 Rebase-merging into `main` and then merging `main` back into `develop` is a

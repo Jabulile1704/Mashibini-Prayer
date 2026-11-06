@@ -8,6 +8,7 @@ import 'package:mashibini_prayer/src/data/repositories/device_settings_repositor
 import 'package:mashibini_prayer/src/data/repositories/local_family_repository.dart';
 import 'package:mashibini_prayer/src/domain/entities/calendar_date.dart';
 import 'package:mashibini_prayer/src/domain/entities/family.dart';
+import 'package:mashibini_prayer/src/domain/rota/family_editor.dart';
 import 'package:mashibini_prayer/src/presentation/screens/schedule_screen.dart';
 
 import '../support/fake_id_generator.dart';
@@ -76,13 +77,22 @@ void main() {
       expect(find.textContaining('1 November 2026'), findsOneWidget);
     });
 
-    testWidgets('says so plainly when the rota has not started', (
+    testWidgets('says when it does start, not just that it has not', (
       WidgetTester tester,
     ) async {
+      // It used to say only "the rota has not started yet" — true, and it
+      // left out the one fact worth knowing. This Week has named the start
+      // date since Day 14 and this screen knew it without saying it (Day
+      // 22's empty-state pass).
       await family.save(familyOfFour());
       await open(tester, today: anchor.subtractDays(28));
 
-      expect(find.textContaining('has not started yet'), findsOneWidget);
+      expect(find.text('Nothing to plan yet'), findsOneWidget);
+      expect(
+        find.textContaining('18 October 2026'),
+        findsOneWidget,
+        reason: 'the date the rota starts is the next step here',
+      );
     });
   });
 
@@ -116,8 +126,15 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      // Scoped to the list. The same sentence is now also in a snack bar —
+      // transient confirmation beside persistent state, which is what the
+      // snack bar is for — so an unscoped finder sees two and reports the
+      // wrong thing.
       expect(
-        find.textContaining("Sisi's turn was passed over"),
+        find.descendant(
+          of: find.byType(ListView),
+          matching: find.textContaining("Sisi's turn was passed over"),
+        ),
         findsOneWidget,
       );
       expect(
@@ -155,6 +172,119 @@ void main() {
       expect(find.text('Mama'), findsNWidgets(2));
       expect(find.text('Tata'), findsNWidgets(2));
       expect(find.text('Sisi'), findsOneWidget);
+    });
+  });
+
+  group('saying what just happened (Day 22)', () {
+    testWidgets('skipping says so on screen, not only out loud', (
+      WidgetTester tester,
+    ) async {
+      // The announcement under this has gone to screen readers since Day 13.
+      // A sighted person tapped Skip and the list simply rearranged — so the
+      // app told somebody who could not see the list and said nothing to
+      // somebody who could.
+      await family.save(familyOfFour());
+      await open(tester);
+
+      await tester.tap(
+        find.byKey(ScheduleScreen.skipButton(anchor.addDays(7))),
+      );
+      await tester.pumpAndSettle();
+
+      final Finder snack = find.byKey(ScheduleScreen.changeSnack);
+      expect(snack, findsOneWidget);
+      expect(
+        find.descendant(
+          of: snack,
+          matching: find.text("Sisi's turn was passed over"),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('and offers the week back from inside it', (
+      WidgetTester tester,
+    ) async {
+      await family.save(familyOfFour());
+      await open(tester);
+
+      await tester.tap(
+        find.byKey(ScheduleScreen.skipButton(anchor.addDays(7))),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.descendant(
+          of: find.byKey(ScheduleScreen.changeSnack),
+          matching: find.text('Undo'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Withdrawn, not deleted — the record stays so two phones can agree it
+      // was taken back (ADR-012).
+      final Family stored = (await family.load())!;
+      expect(stored.skips.single.withdrawn, isTrue);
+      expect(
+        FamilyEditor.skipOn(stored, anchor.addDays(7)),
+        isNull,
+        reason: 'the week is Sisi\'s again',
+      );
+    });
+
+    testWidgets('the snack bar and the spoken words are one string', (
+      WidgetTester tester,
+    ) async {
+      // Two ways of saying the same thing is how Day 19 shipped a share
+      // sheet whose subject read "2026-11-04" over a body reading
+      // "Wednesday, 4 November". Both correct, disagreeing.
+      await family.save(familyOfFour());
+      await open(tester);
+
+      await tester.tap(
+        find.byKey(ScheduleScreen.skipButton(anchor.addDays(7))),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(
+          of: find.byKey(ScheduleScreen.changeSnack),
+          matching: find.text("Sisi's turn was passed over"),
+        ),
+        findsOneWidget,
+        reason:
+            'the snack bar must carry the same sentence the screen reader '
+            'is given, because there is only one argument for both',
+      );
+    });
+
+    testWidgets('undoing says so too, and offers nothing further', (
+      WidgetTester tester,
+    ) async {
+      await family.save(familyOfFour());
+      await open(tester);
+
+      await tester.tap(
+        find.byKey(ScheduleScreen.skipButton(anchor.addDays(7))),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(ScheduleScreen.undoButton(anchor.addDays(7))),
+      );
+      await tester.pumpAndSettle();
+
+      final Finder snack = find.byKey(ScheduleScreen.changeSnack);
+      expect(
+        find.descendant(
+          of: snack,
+          matching: find.text('Sisi has their turn back'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: snack, matching: find.text('Undo')),
+        findsNothing,
+        reason: 'an undo of an undo is a riddle, not a control',
+      );
     });
   });
 
@@ -204,7 +334,10 @@ void main() {
       final Family stored = (await family.load())!;
       expect(stored.skips, hasLength(2));
       expect(
-        find.textContaining("Sisi's turn was passed over"),
+        find.descendant(
+          of: find.byType(ListView),
+          matching: find.textContaining("Sisi's turn was passed over"),
+        ),
         findsOneWidget,
       );
     });

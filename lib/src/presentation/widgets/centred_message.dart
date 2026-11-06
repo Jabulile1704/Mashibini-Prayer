@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../brand/tokens.dart';
+
 /// A message in the middle of an otherwise empty screen — that scrolls.
 ///
 /// Every empty state in this app is a short column centred in the viewport,
@@ -14,7 +16,7 @@ import 'package:flutter/material.dart';
 class CentredMessage extends StatelessWidget {
   const CentredMessage({
     required this.children,
-    this.padding = const EdgeInsets.all(40),
+    this.padding = const EdgeInsets.all(Space.xxl),
     super.key,
   });
 

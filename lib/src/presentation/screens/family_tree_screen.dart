@@ -75,7 +75,8 @@ class FamilyTreeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: Space.sm),
                   Text(
-                    'Set the rota up and the family appears here.',
+                    'Set the rota up on the This week tab, and everybody in '
+                    'it appears here.',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium,
                   ),

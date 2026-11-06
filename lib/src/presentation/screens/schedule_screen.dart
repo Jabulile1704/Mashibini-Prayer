@@ -14,6 +14,7 @@ import '../../domain/entities/turn.dart';
 import '../../domain/ids.dart';
 import '../../domain/rota/family_editor.dart';
 import '../../domain/rota/rota_engine.dart';
+import '../brand/tokens.dart';
 import '../widgets/centred_message.dart';
 import '../widgets/date_text.dart';
 
@@ -51,6 +52,9 @@ class ScheduleScreen extends StatefulWidget {
   static Key undoButton(CalendarDate weekStart) =>
       Key('schedule.undo.$weekStart');
 
+  /// The snack bar that says what just changed.
+  static const Key changeSnack = Key('schedule.changed');
+
   @override
   State<ScheduleScreen> createState() => _ScheduleScreenState();
 }
@@ -64,22 +68,54 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   CalendarDate get _today =>
       widget.today?.call() ?? CalendarDate.from(DateTime.now());
 
+  /// Applies [change] and says what happened — out loud and on screen.
+  ///
+  /// [announcement] is used for **both**, which is the point of there being
+  /// one argument. Day 19 shipped a share sheet whose subject said
+  /// "2026-11-04" over a body saying "Wednesday, 4 November": two strings,
+  /// each correct, disagreeing with each other. Two ways of telling somebody
+  /// their week changed hands is the same trap, so there is one string.
+  ///
+  /// [onUndo] turns the snack bar into an undo. Offered rather than asked:
+  /// skipping a week is reversible, and a confirmation dialog in front of
+  /// every skip is a toll paid on each correct tap to catch the rare wrong
+  /// one. Undo charges nothing until somebody needs it.
   Future<void> _edit(
     Family Function(Family) change,
-    String announcement,
-  ) async {
+    String announcement, {
+    VoidCallback? onUndo,
+  }) async {
     if (_busy) {
       return;
     }
     // Read before the first await: context must not be touched across one.
     final FlutterView view = View.of(context);
     final TextDirection direction = Directionality.of(context);
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
 
     setState(() => _busy = true);
     try {
       final Family? family = await widget.familyRepository.load();
       if (family != null) {
         await widget.familyRepository.save(change(family));
+
+        // Before this, a sighted person tapped Skip and the list simply
+        // rearranged: no statement of what had happened, and the only route
+        // back was noticing that the row now carried an Undo button. The
+        // announcement below it has been spoken to screen readers since Day
+        // 13, so the app told somebody who could not see the list and said
+        // nothing to somebody who could.
+        messenger.hideCurrentSnackBar();
+        messenger.showSnackBar(
+          SnackBar(
+            key: ScheduleScreen.changeSnack,
+            content: Text(announcement),
+            duration: const Duration(seconds: 6),
+            action: onUndo == null
+                ? null
+                : SnackBarAction(label: 'Undo', onPressed: onUndo),
+          ),
+        );
         // Spoken aloud, because a screen reader would otherwise be told only
         // that one button vanished and another appeared somewhere in a list —
         // which is not the same as being told whose week changed hands.
@@ -100,6 +136,15 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       }
     }
   }
+
+  /// Gives the week back.
+  ///
+  /// One method behind both routes — the snack bar's action and the row's own
+  /// button — so they cannot come to mean different things.
+  Future<void> _undo(CalendarDate weekStart, String name) => _edit(
+    (Family f) => FamilyEditor.unskipTurn(f, weekStart: weekStart),
+    '$name has their turn back',
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -129,12 +174,10 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                         ids: widget.ids,
                       ),
                       "$name's turn was passed over",
+                      onUndo: () => _undo(weekStart, name),
                     ),
-                    onUndo: (CalendarDate weekStart, String name) => _edit(
-                      (Family f) =>
-                          FamilyEditor.unskipTurn(f, weekStart: weekStart),
-                      '$name has their turn back',
-                    ),
+                    onUndo: (CalendarDate weekStart, String name) =>
+                        _undo(weekStart, name),
                   ),
             );
           },
@@ -170,11 +213,23 @@ class _Weeks extends StatelessWidget {
         .turnsFrom(today, count: ScheduleScreen.weeksAhead);
 
     if (turns.isEmpty) {
+      // It used to say only "the rota has not started yet", which is the
+      // kind of empty state Day 22 went looking for: true, and it leaves
+      // the one useful fact out. This Week has named the start date since
+      // Day 14; this screen knew it and did not say it.
+      final CalendarDate startsOn = RotaEngine.forFamily(family).startedOn;
       return CentredMessage(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(Space.xxl),
         children: <Widget>[
           Text(
-            'The rota has not started yet, so there are no weeks to show.',
+            'Nothing to plan yet',
+            style: theme.textTheme.headlineSmall,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: Space.md),
+          Text(
+            'The rota starts on ${DateLabels.full(context, startsOn)}. '
+            'The weeks ahead appear here from then.',
             style: theme.textTheme.bodyMedium,
             textAlign: TextAlign.center,
           ),
@@ -183,7 +238,7 @@ class _Weeks extends StatelessWidget {
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: Space.sm),
       itemCount: turns.length,
       separatorBuilder: (BuildContext context, int index) =>
           const Divider(height: 1, indent: 20, endIndent: 20),
@@ -248,7 +303,10 @@ class _WeekRow extends StatelessWidget {
     ].join(', ');
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Space.lg,
+        vertical: Space.md,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -266,10 +324,10 @@ class _WeekRow extends StatelessWidget {
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: Space.xs),
                     Text(who, style: theme.textTheme.titleMedium),
                     if (passedOver != null) ...<Widget>[
-                      const SizedBox(height: 4),
+                      const SizedBox(height: Space.xs),
                       Text(
                         "${passedOver.displayName}'s turn was passed over",
                         style: theme.textTheme.bodySmall?.copyWith(
@@ -282,7 +340,7 @@ class _WeekRow extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: Space.md),
           // The buttons carry the week in their label. A list of seven
           // buttons all announcing "Skip" is a list nobody can use by ear.
           if (passedOver != null)

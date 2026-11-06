@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../data/repositories/journal_repository.dart';
 import '../../domain/entities/calendar_date.dart';
 import '../../domain/entities/journal_entry.dart';
+import '../brand/tokens.dart';
 import '../widgets/centred_message.dart';
 import '../widgets/date_text.dart';
 import 'write_entry_screen.dart';
@@ -63,7 +64,10 @@ class _JournalScreenState extends State<JournalScreen> {
                   return const SizedBox.shrink();
                 }
                 if (entries.isEmpty) {
-                  return _NothingWritten(theme: theme);
+                  return _NothingWritten(
+                    theme: theme,
+                    onWrite: () => _write(null),
+                  );
                 }
                 return _Entries(entries: entries, onTap: _write);
               },
@@ -73,27 +77,49 @@ class _JournalScreenState extends State<JournalScreen> {
   }
 }
 
+/// Nothing written yet — and a way to change that.
+///
+/// The button is not a duplicate of the floating one. An empty state that
+/// only describes its own emptiness leaves somebody to work out that the
+/// thing which fills it is the button floating over the sentence they are
+/// reading. Day 22's rule for every empty state in the app: say what would
+/// be here, and offer the next step rather than stopping.
 class _NothingWritten extends StatelessWidget {
-  const _NothingWritten({required this.theme});
+  const _NothingWritten({required this.theme, required this.onWrite});
 
   final ThemeData theme;
+  final VoidCallback onWrite;
+
+  static const Key writeFromEmpty = Key('journal.empty.write');
 
   @override
   Widget build(BuildContext context) => CentredMessage(
     // Clears the Write button, which floats over the bottom of this screen.
-    padding: const EdgeInsets.fromLTRB(40, 40, 40, 110),
+    // The empty state, with room under it for the button that fills it.
+    padding: const EdgeInsets.fromLTRB(
+      Space.xxl,
+      Space.xxl,
+      Space.xxl,
+      Space.fabClearance + Space.md,
+    ),
     children: <Widget>[
       Text(
         'Nothing written yet',
         style: theme.textTheme.headlineSmall,
         textAlign: TextAlign.center,
       ),
-      const SizedBox(height: 12),
+      const SizedBox(height: Space.md),
       Text(
         'What you write here stays on this phone. Nobody else can read '
         'it, and it is not sent anywhere.',
         style: theme.textTheme.bodyMedium,
         textAlign: TextAlign.center,
+      ),
+      const SizedBox(height: Space.xl),
+      FilledButton(
+        key: _NothingWritten.writeFromEmpty,
+        onPressed: onWrite,
+        child: const Text("Write today's entry"),
       ),
     ],
   );
@@ -110,7 +136,12 @@ class _Entries extends StatelessWidget {
     final ThemeData theme = Theme.of(context);
 
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 96),
+      padding: const EdgeInsets.fromLTRB(
+        Space.lg,
+        Space.sm,
+        Space.lg,
+        Space.fabClearance,
+      ),
       itemCount: entries.length,
       itemBuilder: (BuildContext context, int index) {
         final JournalEntry entry = entries[index];
@@ -126,7 +157,7 @@ class _Entries extends StatelessWidget {
                 DateLabels.monthAndYear(context, entry.date),
                 style: theme.textTheme.labelLarge,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: Space.md),
             ],
             _EntryTile(entry: entry, onTap: () => onTap(entry)),
           ],
@@ -147,7 +178,7 @@ class _EntryTile extends StatelessWidget {
     final ThemeData theme = Theme.of(context);
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: Space.md),
       child: Material(
         color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(18),
@@ -155,7 +186,7 @@ class _EntryTile extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(18),
           child: Padding(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.all(Space.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
@@ -165,7 +196,7 @@ class _EntryTile extends StatelessWidget {
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: Space.sm),
                 Text(
                   entry.text,
                   style: theme.textTheme.bodyMedium?.copyWith(

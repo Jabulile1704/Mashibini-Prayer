@@ -55,8 +55,10 @@ abstract final class FamilyJson {
 
   /// Reads a family, migrating it to the current schema on the way through.
   ///
-  /// There is one migration so far, v1 to v2, and it does nothing — see
-  /// [Family.currentSchemaVersion]. A v1 document's cycles are all anchored
+  /// Two migrations so far and neither moves a byte. v1 to v2 changed what
+  /// the turnover day *meant*; v2 to v3 added three optional fields to a
+  /// member, so a v2 document is a v3 family with no tree recorded — which
+  /// is what it is. See [Family.currentSchemaVersion]. A v1 document's cycles are all anchored
   /// to the single `turnoverWeekday` it carries, which is exactly what each
   /// cycle's own [Cycle.turnoverWeekday] now reports, so a v1 family read by
   /// this build answers every date identically. The version is raised rather
@@ -106,11 +108,25 @@ abstract final class FamilyJson {
   static Map<String, Object?> _memberToMap(Member member) => <String, Object?>{
     'id': member.id,
     'displayName': member.displayName,
+    // Written only when set, so a family that has recorded no tree carries
+    // no empty fields describing its absence — and a v2 document and a v3
+    // one with nothing filled in are byte-identical.
+    if (member.role != null) 'role': member.role,
+    if (member.photoPath != null) 'photoPath': member.photoPath,
+    if (member.parentIds.isNotEmpty) 'parentIds': member.parentIds,
   };
 
   static Member _memberFromMap(Map<String, Object?> json) => Member(
     id: readString(json, 'id'),
     displayName: readString(json, 'displayName'),
+    role: readStringOrNull(json, 'role'),
+    // A path on **this** phone. Another device's path means nothing here,
+    // and #75 will have to drop it on the way in rather than show a broken
+    // image for somebody else's file.
+    photoPath: readStringOrNull(json, 'photoPath'),
+    parentIds: json.containsKey('parentIds')
+        ? readStringList(json, 'parentIds')
+        : const <String>[],
   );
 
   static Map<String, Object?> _cycleToMap(Cycle cycle) => <String, Object?>{

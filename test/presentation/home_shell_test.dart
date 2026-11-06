@@ -7,6 +7,7 @@ import 'package:mashibini_prayer/src/data/repositories/local_family_repository.d
 import 'package:mashibini_prayer/src/presentation/screens/home_shell.dart';
 import 'package:mashibini_prayer/src/presentation/screens/settings_screen.dart';
 
+import '../support/fake_photos.dart';
 import '../support/fake_app_version.dart';
 import '../support/fake_id_generator.dart';
 import '../support/fake_key_value_store.dart';
@@ -51,6 +52,7 @@ void main() {
           sharing: FakeSharing(),
           reminders: FakeReminders(),
           appVersion: FakeAppVersion(),
+          photos: FakePhotos(),
           ids: FakeIdGenerator(),
           today: () => anchor,
         ),

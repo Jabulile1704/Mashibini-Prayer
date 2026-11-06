@@ -23,9 +23,10 @@ names it.
 | [013](ADR-013-releases-are-tags-and-are-not-signed.md) | A release is a tag, and it is not signed for distribution | Partly superseded by 014 |
 | [014](ADR-014-the-android-key-is-for-continuity.md) | The Android key exists for update continuity, not provenance | Accepted |
 | [015](ADR-015-releases-cherry-pick-back-to-develop.md) | The release goes back to `develop` as a cherry-pick, not a merge | Partly superseded by 018 |
-| [016](ADR-016-four-tabs-and-what-goes-in-them.md) | Four tabs, and what goes in each | Accepted, one clause superseded by 020 |
+| [016](ADR-016-four-tabs-and-what-goes-in-them.md) | Four tabs, and what goes in each | Accepted, amended by 020 and 022 |
 | [017](ADR-017-the-identity-is-the-family-totem.md) | The identity is the family's totem: honey, ink and a comb | Accepted |
 | [018](ADR-018-release-branches-are-cut-from-main.md) | Release branches are cut from `main` | Accepted |
 | [019](ADR-019-the-turnover-day-is-an-epoch-not-a-setting.md) | The turnover day is an epoch, not a setting | Accepted |
 | [020](ADR-020-a-fifth-tab-and-what-four-was-worth.md) | A fifth tab, and what "four is the ceiling" was worth | Accepted |
 | [021](ADR-021-the-tree-is-not-the-rota.md) | The tree is not the rota, and photographs stay on the phone | Accepted |
+| [022](ADR-022-the-centre-of-the-bar-is-a-comb-cell.md) | The centre of the bar is a comb cell | Accepted |

@@ -5,6 +5,7 @@ import 'package:mashibini_prayer/src/data/repositories/device_settings_repositor
 import 'package:mashibini_prayer/src/data/repositories/journal_repository.dart';
 import 'package:mashibini_prayer/src/data/repositories/local_family_repository.dart';
 import 'package:mashibini_prayer/src/presentation/screens/home_shell.dart';
+import 'package:mashibini_prayer/src/presentation/widgets/comb_bar.dart';
 import 'package:mashibini_prayer/src/presentation/screens/settings_screen.dart';
 
 import '../support/fake_photos.dart';
@@ -15,12 +16,16 @@ import '../support/fake_reminders.dart';
 import '../support/fake_sharing.dart';
 import '../support/family_fixtures.dart';
 
-/// The four tabs of ADR-016.
+/// The five destinations of ADR-016, ADR-020 and ADR-022.
 ///
 /// Before Day 18 every destination was a `Navigator.push` from This Week,
 /// three of them from unlabelled icons in the top-right. These tests are
 /// mostly about the thing that replaced them being reachable and staying
 /// put.
+///
+/// The centre destination is a **raised comb cell with no visible label**
+/// (ADR-022), so anything here that finds a tab by its text has to find the
+/// other four that way and This week by its key.
 void main() {
   late LocalFamilyRepository family;
   late LocalDeviceSettingsRepository settings;
@@ -62,7 +67,10 @@ void main() {
   }
 
   Future<void> tapTab(WidgetTester tester, String label) async {
-    await tester.tap(find.text(label));
+    // By semantics rather than by text: the centre cell draws no word, and
+    // a helper that only worked for four of five destinations would quietly
+    // stop testing the most important one.
+    await tester.tap(find.bySemanticsLabel(label).first);
     await tester.pumpAndSettle();
   }
 
@@ -85,62 +93,114 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  group('the four destinations', () {
-    testWidgets('every one is reachable, and labelled in words', (
+  group('the five destinations', () {
+    testWidgets('the four around the edge carry a visible word', (
       WidgetTester tester,
     ) async {
+      // The labels being *visible* is the point. Day 13 gave the old icons
+      // screen-reader names; a name does not make an unlabelled icon
+      // discoverable to somebody looking at the screen.
       await family.save(familyOfFour());
       await open(tester);
 
-      // The labels are *visible*, which is the part that matters. Day 13
-      // gave the old icons screen-reader names; a name does not make an
-      // unlabelled icon discoverable to somebody looking at the screen.
       for (final String tab in <String>[
-        'This week',
-        'Weeks ahead',
+        'Ahead',
         'Journal',
+        'Family',
         'Settings',
       ]) {
         expect(find.text(tab), findsWidgets, reason: '$tab should be a tab');
       }
     });
 
-    testWidgets('each tab shows its own screen', (WidgetTester tester) async {
+    testWidgets('each label is one word, so none of them wraps', (
+      WidgetTester tester,
+    ) async {
+      // "Weeks ahead" wrapped onto two lines, which pushed its icon up and
+      // left the row ragged. That is what produced ADR-022.
+      await family.save(familyOfFour());
+      await open(tester);
+
+      for (final CombDestination destination in HomeShell.destinations) {
+        expect(
+          destination.label.trim().split(RegExp(r'\s+')),
+          anyOf(hasLength(1), hasLength(2)),
+          reason: '"${destination.label}" is too long for a fifth of a bar',
+        );
+      }
+      // The only two-word one is the centre, which draws no text at all.
+      expect(
+        HomeShell.destinations
+            .where((CombDestination d) => d.label.contains(' '))
+            .map((CombDestination d) => d.label),
+        <String>['This week'],
+      );
+      // Scoped to the bar: the screen it opens has "This week" on its own
+      // card, which is the third place that phrase would have appeared.
+      expect(
+        find.descendant(
+          of: find.byKey(HomeShell.bar),
+          matching: find.text('This week'),
+        ),
+        findsNothing,
+      );
+    });
+
+    testWidgets('the centre is This week, raised and unlabelled', (
+      WidgetTester tester,
+    ) async {
+      // The app answers one question, and the bar should look like it does.
+      await family.save(familyOfFour());
+      await open(tester);
+
+      expect(HomeShell.destinations[HomeShell.centre].label, 'This week');
+      // Said to a screen reader even though it is not drawn.
+      expect(find.bySemanticsLabel('This week'), findsWidgets);
+    });
+
+    testWidgets('it opens on This week', (WidgetTester tester) async {
       await family.save(familyOfFour());
       await open(tester);
 
       expect(find.text('Jabulile'), findsWidgets);
+    });
 
-      await tapTab(tester, 'Weeks ahead');
+    testWidgets('each tab shows its own screen', (WidgetTester tester) async {
+      await family.save(familyOfFour());
+      await open(tester);
+
+      await tapTab(tester, 'Ahead');
       expect(find.text('The weeks ahead'), findsWidgets);
 
       await tapTab(tester, 'Journal');
       expect(find.textContaining('Nothing written yet'), findsOneWidget);
 
+      await tapTab(tester, 'Family');
+      expect(find.textContaining('never uploaded'), findsOneWidget);
+
       await tapTab(tester, 'Settings');
       expect(find.text('Which one are you?'), findsOneWidget);
+
+      await tapTab(tester, 'This week');
+      expect(find.text('Jabulile'), findsWidgets);
     });
 
-    testWidgets('there are exactly five, which is the platform ceiling', (
+    testWidgets('there are exactly five, with the middle one raised', (
       WidgetTester tester,
     ) async {
-      // This asserted four, and ADR-016's reason for four was a judgement
-      // about phones rather than a limit. Family was added as the fifth on
-      // the owner's instruction and ADR-020 records the reversal.
-      //
-      // Five is where it stops, and that bound is not ours: Material's
-      // `NavigationBar` is specified for three to five destinations. A sixth
-      // is a different kind of navigation, which is why this number is
-      // asserted rather than left to drift upwards one request at a time.
+      // Five is the ceiling. The number is asserted rather than left to
+      // drift upwards one request at a time, and `centre` must stay the
+      // middle index or the bar is lopsided.
       await family.save(familyOfFour());
       await open(tester);
 
+      final CombBar bar = tester.widget<CombBar>(find.byKey(HomeShell.bar));
+      expect(bar.destinations, hasLength(5));
+      expect(bar.centreIndex, 2);
       expect(
-        tester
-            .widget<NavigationBar>(find.byKey(HomeShell.bar))
-            .destinations
-            .length,
-        5,
+        bar.centreIndex,
+        (bar.destinations.length - 1) ~/ 2,
+        reason: 'the raised cell must be in the middle',
       );
     });
   });

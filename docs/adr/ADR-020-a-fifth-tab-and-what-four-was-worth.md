@@ -22,38 +22,33 @@ worth reading.
 
 ## What the original reasoning turned out to be worth
 
-This section said, in its first draft, that *"five is where a bottom bar
-starts to be a worse answer" was a judgement, not a limit* — Material
-specifies `NavigationBar` for three to five destinations, so four was inside
-the range and so is five.
+Three positions were held here in two days, and the third is the one that
+stands. The first two are left in the history of this file rather than
+smoothed over.
 
-**Then it was measured, and the judgement was right.** The draft is left above
-rather than deleted, because being wrong about one's predecessor's reasoning
-is the thing this file exists to make visible.
+**First draft:** *"five is where a bottom bar starts to be a worse answer"
+was a judgement, not a limit* — Material specifies `NavigationBar` for three
+to five destinations, so four was inside the range and so is five.
 
-`NavigationBar` gives each label a cell of `width ÷ destinations`. At five
-destinations on a 360pt phone that is 72pt, and at ordinary text size
-`Journal` needs 88, `Family` 75 and `Settings` 100. Three of the five are cut
-off. Material's three-to-five range is about the control, not about whether
-English words fit inside it, and ADR-016's sentence was about the words.
+**Second draft:** measured, and the judgement was right — a table of widths
+showed three of five labels cut off on a 360pt phone.
 
-It is worse than that, in a direction neither ADR saw: **`Settings` has been
-cut off on every phone narrower than about 430pt since Day 18**, with four
-tabs, at the default text size, through four releases. So the fifth tab did
-not introduce this. It made a shipped defect three times larger, and is what
-finally found it ([#111](https://github.com/Jabulile1704/Mashibini-Prayer/issues/111)).
+**What is actually true:** those widths were measured in a widget test, and
+**Flutter's widget tests render with a fixed-width placeholder font.** Every
+glyph is a 1em square; `iiiiiiii` and `MMMMMMMM` both measure 98.0. The
+figures described the test harness. A walk up the render tree also found no
+clipper above the label, so even a genuinely over-wide one would overdraw
+into the gap rather than be cut off. #111 is withdrawn.
 
-**The reach argument does not apply.** ADR-016's real complaint was
-discoverability: three destinations were icon buttons in the top-right of an
-app bar, the hardest place to reach one-handed and the easiest to miss. A
-fifth *labelled* destination in a bottom bar is not that problem again. It is
-the same fix, applied once more.
+The app was then run on a 402pt simulator and photographed. **All five
+labels render in full**, and `Weeks ahead` wraps to two lines as it should.
 
-**The thing actually at risk was never the count.** It was width. Five visible
-labels across a 360pt phone at the largest text setting either platform
-offers is 72pt each, and this app's last four accessibility defects were all
-found at the largest text size — one of them a row at 2.42:1 contrast that the
-automated sweep had passed (Day 19).
+So ADR-016's sentence is neither vindicated nor refuted. It was unverifiable
+when written, it is still unverified, and the evidence that exists — one
+screenshot at one width and one text size — says five tabs are fine there.
+What would settle it is a golden test with real fonts, or a look at the app
+at the largest accessibility text size. Neither has been done, and that is
+the honest state of it.
 
 ## Decision
 
@@ -64,49 +59,52 @@ with: `NavigationBar` is specified for three to five. A sixth destination is a
 different kind of navigation, not one more icon. That bound is asserted in
 `home_shell_test.dart` so it cannot drift upward one request at a time.
 
-### It was not accepted on the reasoning alone
+### What was checked, and what the checking got wrong
 
-The width risk was checked before this was written, because ADR-016's mistake
-was asserting a thing about phones without measuring it. Checking it is what
-turned this ADR from a reversal into a reversal plus a defect report:
+The **shell itself** was added to the accessibility sweep, which had never
+built the navigation bar — it pumped screens, and the bar belongs to the
+shell. So ADR-016's claim could not have been tested by anything in the
+suite at the time it was made. That part was worth doing and stands: no
+overflow is thrown at 1.0x, 2.0x or 3.1x, populated or empty, and every
+destination announces its name.
 
-- The **shell itself** was added to the accessibility sweep. Nothing in that
-  sweep had ever built the navigation bar — it pumped screens, and the bar
-  belongs to the shell. So the claim ADR-016 made could not have been tested
-  by anything in the suite at the time it was made.
-- All five labels are asserted present in the bar at **3.1x on a 360pt
-  phone**, which is iOS AX5 on a small handset.
-- No overflow is thrown at 1.0x, 2.0x or 3.1x, with a family stored and with
-  nothing stored.
+Then three assertions were written about label *width*, and the process that
+produced them is more instructive than the result.
 
-Two of the three assertions written for it **could not fail**, which is the
+Two could not fail, which is the
 [#103](https://github.com/Jabulile1704/Mashibini-Prayer/issues/103) shape
-arriving for the third time:
+arriving again:
 
-- `findsOneWidget` on the label passes on "Settin" — the widget keeps its
-  whole string whatever is painted.
-- `RenderParagraph.didExceedMaxLines` is always false, because
-  `NavigationBar` sets no `maxLines` and clips instead. Proved by renaming a
-  tab to "Family hierarchy and the whole honeycomb of everybody" and watching
-  the assertion pass.
+- `findsOneWidget` on the label — a clipped `Text` keeps its whole string.
+- `RenderParagraph.didExceedMaxLines` — always false, because
+  `NavigationBar` sets no `maxLines`. Proved by renaming a tab to "Family
+  hierarchy and the whole honeycomb of everybody" and watching it pass.
 
-The third — `getMinIntrinsicWidth` against the cell, the width of the longest
-unbreakable word — fails, and is what produced the table in #111.
+The third, `getMinIntrinsicWidth` against the cell, **could** fail and did —
+and was wrong anyway, because **Flutter's widget tests render with a
+fixed-width placeholder font**. `iiiiiiii` and `MMMMMMMM` both measure 98.0.
+The table it produced described the harness, not any phone, and #111 is
+withdrawn.
 
-### So the labels are shipped cut off, on purpose
+**Day 21's rule was applied correctly and still produced a wrong answer.**
+Breaking an assertion on purpose proves it can fail. It does not prove it
+measures the right thing, and nothing in that procedure asks whether the
+apparatus is sound. What caught it was running the app and looking at it.
 
-The fix is a choice between renaming things the app calls `Journal`,
-`Family` and `Settings` everywhere else, hiding the labels on phones, or
-going back to four tabs. All three are product decisions, and the second was
-written on Day 21 and **deliberately not shipped**: because `Settings` already
-overflows a four-tab bar at 390pt, a measure-and-hide rule removes the labels
-from effectively every phone at every text size, which is a far larger change
-than the defect and the opposite of what ADR-016 was for.
+### So: five tabs, and the labels are fine as far as anyone has looked
 
-So the defect ships, recorded, with a characterisation test naming exactly
-which labels are cut off at which widths — it fails if that set changes, in
-either direction. Shipping a known, written-down, tested defect is worse than
-shipping a fix and better than shipping an undecided one.
+One screenshot, 402pt, default text size, all five labels complete and
+`Weeks ahead` wrapping to two lines. That is the whole of the evidence, and
+it is more than ADR-016 had.
+
+A measure-and-hide rule was written on Day 21 and **deliberately not
+shipped** — on figures now known to be meaningless, so it would have hidden
+the labels on every phone to fix nothing. Not shipping it was right for the
+wrong reason, which is worth writing down too.
+
+What would actually settle the question is a golden test with real fonts
+loaded, or a look at the app at the largest accessibility text size. Neither
+has been done.
 
 ### What the tab holds, and what it does not
 
@@ -140,5 +138,8 @@ what they used to assert and why that was right at the time.
 tree. When #109's hierarchy lands, the layout is the part that gets thrown
 away, which is the cheapest part of this to have built early.
 
-**#111 is open and the bar is visibly wrong until it closes.** That is the
-real cost of this ADR, and it is larger than "one more icon".
+**#111 was opened against this ADR and then withdrawn.** For a day this file
+claimed the bar was visibly broken on most phones. It was not, and the cost
+of that was two ADRs, two day logs, a PR body and a test all asserting a
+defect that did not exist — which is a larger mess than the one-line
+reversal this ADR was written for.

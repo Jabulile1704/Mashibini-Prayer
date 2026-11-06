@@ -189,77 +189,32 @@ void main() {
       }
     }
 
-    // ──────────────────────── the tab labels (#111) ────────────────────────
+    // Tab-label *width* is not measured here, and that is deliberate.
     //
-    // A **characterisation test**: it records a defect rather than forbidding
-    // one, with the numbers, because the fix is a naming decision that is not
-    // the developer's to make. If the labels or the tab count change, this
-    // fails and has to be updated — which is the point. It is the only thing
-    // in the suite that can see the problem at all.
+    // Day 22 filed #111 claiming the labels were cut off on most phones,
+    // with a table of widths from `RenderParagraph.getMinIntrinsicWidth`.
+    // The numbers were real and meant nothing: **Flutter's widget tests
+    // render with a fixed-width placeholder font**, every glyph a 1em
+    // square, so the figures described this test environment. `iiiiiiii`
+    // and `MMMMMMMM` both measure 98.0 in here. The tell was in the table
+    // and went unread — exactly 13.4 per character, which no proportional
+    // font does. A walk up the render tree also found no clipper above the
+    // label, so an over-wide one would overdraw into the gap rather than be
+    // cut off at all.
     //
-    // `NavigationBar` gives each label a cell of `width / destinations` and
-    // clips anything wider with `TextOverflow.clip`. Clipping **throws
-    // nothing**, sets no flag, and leaves the whole string in the widget
-    // tree. Three assertions were tried before one could fail:
+    // Running the app settled it in one screenshot: nothing is clipped.
     //
-    //  1. `findsOneWidget` on the label — passes on "Settin".
-    //  2. `RenderParagraph.didExceedMaxLines` — always false, because no
-    //     `maxLines` is set. Proved by renaming a tab to "Family hierarchy
-    //     and the whole honeycomb of everybody" and watching it pass.
-    //  3. `getMinIntrinsicWidth` against the cell — the width of the longest
-    //     unbreakable word, which wrapping cannot help. This one fails.
-    //
-    // What it found: **"Settings" has been cut off on every phone narrower
-    // than about 430pt since Day 18**, at ordinary text size, through four
-    // releases. Day 21's fifth tab takes it from one clipped label to three.
-    for (final double width in <double>[360, 390, 430]) {
-      testWidgets('which tab labels are cut off at ${width}pt', (
-        WidgetTester tester,
-      ) async {
-        await family.save(familyOfFour());
-        await pump(
-          tester,
-          screens()['The shell, with its five tabs']!,
-          scale: 1.0,
-          size: Size(width, 760),
-        );
+    // Whether text fits a box is a question about a typeface, and this
+    // suite has no typeface. It needs a golden test with real fonts loaded,
+    // or eyes on a device. A number here would be the third wrong thing
+    // that issue produced.
 
-        final List<String> clipped = <String>[];
-        for (final String label in HomeShell.labels) {
-          final RenderParagraph paragraph = tester
-              .renderObject<RenderParagraph>(
-                find.descendant(
-                  of: find.byKey(HomeShell.bar),
-                  matching: find.text(label),
-                ),
-              );
-          if (paragraph.getMinIntrinsicWidth(double.infinity) >
-              paragraph.size.width) {
-            clipped.add(label);
-          }
-        }
-
-        expect(
-          clipped,
-          switch (width) {
-            360 => <String>['Journal', 'Family', 'Settings'],
-            390 => <String>['Journal', 'Settings'],
-            _ => <String>['Journal', 'Settings'],
-          },
-          reason:
-              'the set of cut-off tab labels at ${width}pt has changed — if '
-              'this is the fix for #111, update it; if it is a new label, '
-              'it does not fit',
-        );
-      });
-    }
-
-    testWidgets('a label is announced in full however little of it is drawn', (
+    testWidgets('every destination announces its name', (
       WidgetTester tester,
     ) async {
-      // The one mercy in the current state: a screen reader is given the
-      // whole word, so the defect is visual only. Asserted so that a fix
-      // which hides the labels cannot also lose this.
+      // Still worth asserting, whatever the width turns out to be: the bar
+      // replaced three unlabelled icon buttons in an app bar (ADR-016), and
+      // losing those names again is the regression that matters.
       await family.save(familyOfFour());
       final SemanticsHandle handle = tester.ensureSemantics();
 

@@ -158,20 +158,27 @@ tests, nothing on screen. See [DAY-20.md](daily/DAY-20.md) and the
 implementation note on
 [ADR-019](adr/ADR-019-the-turnover-day-is-an-epoch-not-a-setting.md).
 
-### Day 21 — Change the family (#74), and the turnover day's row (#100)
+### Day 21 — Change the family (#74), and the turnover day's row (#100) · **Done**
 
-Add and remove members, from Settings, calling the `FamilyEditor` that has
-been built and unreachable since Day 7. The domain rules already refuse to
-leave fewer than two people and already defer changes to the next turnover —
-the screen must not re-implement any of that.
+The day that closed the biggest real gap. `FamilyEditor` could add and remove
+people from Day 7 and nothing called it; the turnover row was read-only until
+Day 20 built the epochs under it.
 
-This is the day that closes the biggest real gap, and it needs Settings to
-exist first, which is why it is here and not earlier.
+Both screens say **when** a change takes effect, because neither happens
+today, and both do it by building the change and describing the result rather
+than describing the rule — so the confirmation and the outcome are the same
+object.
 
-The turnover day becomes a real row at last, calling
-`FamilyEditor.changeTurnoverDay`. Both changes need the same thing of the
-screen: to say **when** the change takes effect, because neither happens
-today. A turnover-day change also has to own up to the short week.
+**Two things arrived mid-day and were taken on**: a Family tab (#109), which
+reversed ADR-016's four-tab ceiling and is recorded in ADR-020, and the
+decision to put the songbook (#110) before the photographs.
+
+**It also found [#111](https://github.com/Jabulile1704/Mashibini-Prayer/issues/111)**,
+a defect in four shipped releases: tab labels are cut off on most phones at
+the default text size, and the accessibility sweep could not see it because
+nothing in it had ever built the navigation bar. Open, with a decision owing.
+
+See [DAY-21.md](daily/DAY-21.md).
 
 ### Day 22 — Restyle the screens
 

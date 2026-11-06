@@ -220,7 +220,7 @@ class _SetupScreenState extends State<SetupScreen> {
         child: Form(
           key: _form,
           child: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(Space.lg),
             children: <Widget>[
               _Heading(
                 title: 'Whose week is it?',
@@ -294,7 +294,7 @@ class _SetupScreenState extends State<SetupScreen> {
                   label: const Text('Add someone'),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: Space.xl),
               _Heading(
                 title: 'Your week turns over on',
                 subtitle: 'The day the rota hands over to the next person.',
@@ -317,7 +317,7 @@ class _SetupScreenState extends State<SetupScreen> {
                   }
                 },
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: Space.xl),
               _Heading(
                 title: 'Which one are you?',
                 subtitle:
@@ -338,19 +338,19 @@ class _SetupScreenState extends State<SetupScreen> {
                 onChanged: (int? value) => setState(() => _youAre = value),
               ),
               if (_formError != null) ...<Widget>[
-                const SizedBox(height: 16),
+                const SizedBox(height: Space.lg),
                 Text(
                   _formError!,
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
               ],
-              const SizedBox(height: 32),
+              const SizedBox(height: Space.xxl),
               FilledButton(
                 key: SetupScreen.startButton,
                 onPressed: _saving ? null : _save,
                 child: Text(_saving ? 'Saving…' : 'Start the rota'),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: Space.xxl),
             ],
           ),
         ),
@@ -369,12 +369,12 @@ class _Heading extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: Space.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(title, style: theme.textTheme.titleMedium),
-          const SizedBox(height: 4),
+          const SizedBox(height: Space.xs),
           Text(
             subtitle,
             style: theme.textTheme.bodySmall?.copyWith(

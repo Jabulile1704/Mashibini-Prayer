@@ -10,6 +10,7 @@ import '../../domain/rota/rota_engine.dart';
 import '../../data/sources/assets/bundled_verses.dart';
 import '../../domain/verse/verse_for_the_day.dart';
 import '../brand/mark.dart';
+import '../brand/tokens.dart';
 import '../widgets/centred_message.dart';
 import '../widgets/date_text.dart';
 import '../widgets/leading_card.dart';
@@ -135,7 +136,7 @@ class _NoFamilyYet extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     return CentredMessage(
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.all(Space.xxl),
       children: <Widget>[
         // A ring with nothing filled: the shape of the thing, waiting.
         ExcludeSemantics(
@@ -148,20 +149,20 @@ class _NoFamilyYet extends StatelessWidget {
             currentColour: theme.colorScheme.secondary,
           ),
         ),
-        const SizedBox(height: 32),
+        const SizedBox(height: Space.xxl),
         Text(
           'No rota yet',
           style: theme.textTheme.headlineSmall,
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: Space.md),
         Text(
           'Add everyone who takes a week, and the day your week turns '
           'over. The app will keep track from there.',
           style: theme.textTheme.bodyMedium,
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 32),
+        const SizedBox(height: Space.xxl),
         FilledButton(onPressed: onSetUp, child: const Text('Set up the rota')),
       ],
     );
@@ -206,22 +207,31 @@ class _Rota extends StatelessWidget {
             child: ConstrainedBox(
               constraints: BoxConstraints(minHeight: constraints.maxHeight),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                // The gutter, not 20. Every screen used a slightly
+                // different horizontal inset — 8, 18, 20 — so nothing
+                // lined up between tabs, which is exactly where it shows.
+                padding: Space.gutter,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
-                    const SizedBox(height: 24),
+                    const SizedBox(height: Space.xl),
                     LeadingCard(turn: current, isYou: _isYou(current)),
                     if (ahead.isNotEmpty) ...<Widget>[
-                      const SizedBox(height: 28),
+                      // Same section as the card above: who is next is part
+                      // of whose week it is.
+                      const SizedBox(height: Space.xl),
                       NextTurnTile(
                         turn: ahead.single,
                         isYou: _isYou(ahead.single),
                       ),
                     ],
-                    const SizedBox(height: 44),
+                    // The largest gap on the screen, and the only one that
+                    // is doing an argument rather than a rhythm: the verse
+                    // is a different thing from the rota, and Day 8's point
+                    // was that this screen answers one question.
+                    const SizedBox(height: Space.xxxl),
                     _TodaysVerse(verses: verses, today: today),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: Space.xxl),
                   ],
                 ),
               ),
@@ -255,7 +265,9 @@ class _TodaysVerse extends StatelessWidget {
           return const SizedBox.shrink();
         }
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
+          // Nothing. It was inset a further 8 inside the gutter, which left
+          // the verse's rule not quite aligned with the card above it.
+          padding: EdgeInsets.zero,
           child: VerseCard(
             verse: loaded.on(today),
             translation: loaded.translation.abbreviation,
@@ -275,14 +287,14 @@ class _NotStartedYet extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     return CentredMessage(
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.all(Space.xxl),
       children: <Widget>[
         Text(
           'The rota starts on',
           style: theme.textTheme.bodyLarge,
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: Space.sm),
         Text(
           DateLabels.full(context, startsOn),
           style: theme.textTheme.headlineSmall,

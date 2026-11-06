@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../domain/entities/verse.dart';
+import '../brand/tokens.dart';
 
 /// The verse for today.
 ///
@@ -29,12 +30,15 @@ class VerseCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
+            // A rule, not a gap: 28 wide and 2 high is a drawn line whose
+            // dimensions are what it looks like, so it stays a measurement
+            // rather than becoming two tokens that happen to be near it.
             Container(
               width: 28,
               height: 2,
               color: theme.colorScheme.outlineVariant,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: Space.lg),
             Text(
               verse.text,
               style: theme.textTheme.bodyLarge?.copyWith(
@@ -42,7 +46,7 @@ class VerseCard extends StatelessWidget {
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.82),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Space.md),
             Text(
               '${verse.reference} · $translation',
               style: theme.textTheme.bodySmall?.copyWith(

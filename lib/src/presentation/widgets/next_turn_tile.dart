@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../domain/entities/turn.dart';
+import '../brand/tokens.dart';
 import 'date_text.dart';
 
 /// Who takes the next turn, and the day it starts.
@@ -23,7 +24,10 @@ class NextTurnTile extends StatelessWidget {
       container: true,
       label: '$who next, from $when',
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(
+          horizontal: Space.sm,
+          vertical: Space.xs,
+        ),
         child: Row(
           children: <Widget>[
             Container(
@@ -40,13 +44,16 @@ class NextTurnTile extends StatelessWidget {
                 color: theme.colorScheme.secondary,
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: Space.lg),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(who, style: theme.textTheme.titleMedium),
-                  const SizedBox(height: 2),
+                  // Was 2. A hairline gap is not a step on the scale, and
+                  // between a name and the date under it `xs` is what the
+                  // scale says a label gap is.
+                  const SizedBox(height: Space.xs),
                   Text('from $when', style: theme.textTheme.bodySmall),
                 ],
               ),

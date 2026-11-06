@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../domain/entities/turn.dart';
 import '../brand/mark.dart';
+import '../brand/tokens.dart';
 import 'date_text.dart';
 
 /// Whose week it is — the one thing this app exists to say.
@@ -35,7 +36,12 @@ class LeadingCard extends StatelessWidget {
           : '${turn.leader.displayName} is leading family prayer this week',
       child: Card(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(28, 36, 28, 32),
+          padding: const EdgeInsets.fromLTRB(
+            Space.xl,
+            Space.xxl,
+            Space.xl,
+            Space.xxl,
+          ),
           child: Column(
             children: <Widget>[
               ExcludeSemantics(
@@ -49,9 +55,9 @@ class LeadingCard extends StatelessWidget {
                   currentColour: theme.colorScheme.secondary,
                 ),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: Space.xl),
               Text('This week', style: theme.textTheme.labelLarge),
-              const SizedBox(height: 10),
+              const SizedBox(height: Space.sm),
               // Shrinks only when it would otherwise break mid-word.
               //
               // At the largest accessibility text size a long name is wider
@@ -68,7 +74,7 @@ class LeadingCard extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: Space.md),
               Text(
                 'until ${DateLabels.full(context, turn.weekEnd)}',
                 style: theme.textTheme.bodyMedium,

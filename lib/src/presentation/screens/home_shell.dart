@@ -5,6 +5,7 @@ import '../../data/repositories/family_repository.dart';
 import '../../data/repositories/journal_repository.dart';
 import '../../data/sources/notifications/reminders.dart';
 import '../../data/sources/platform/app_version.dart';
+import '../../data/sources/platform/photos.dart';
 import '../../data/sources/platform/sharing.dart';
 import '../../domain/entities/calendar_date.dart';
 import '../../domain/ids.dart';
@@ -39,6 +40,7 @@ class HomeShell extends StatefulWidget {
     required this.sharing,
     required this.reminders,
     required this.appVersion,
+    required this.photos,
     required this.ids,
     this.today,
     super.key,
@@ -50,6 +52,7 @@ class HomeShell extends StatefulWidget {
   final Sharing sharing;
   final Reminders reminders;
   final AppVersion appVersion;
+  final Photos photos;
   final IdGenerator ids;
   final CalendarDate Function()? today;
 
@@ -101,6 +104,8 @@ class _HomeShellState extends State<HomeShell> {
           JournalScreen(journal: widget.journal, today: widget.today),
           FamilyTreeScreen(
             familyRepository: widget.repository,
+            photos: widget.photos,
+            ids: widget.ids,
             today: widget.today,
           ),
           SettingsScreen(

@@ -26,12 +26,22 @@ class Family {
   /// A change that an older build could not read increments this, and the
   /// migration becomes a documented, tested step rather than a crash report.
   ///
+  /// **3** — a member may carry a role, a photograph and their parents
+  /// (#109). Purely additive: every field is optional and absent means what
+  /// it meant before, so a v2 document reads as a family with no
+  /// relationships recorded — which is exactly what it is.
+  ///
+  /// The version moved anyway. A v2 build reading a v3 family would drop
+  /// the tree silently on the next save, and silently losing the thing
+  /// somebody has just sat down and entered is worse than refusing to open
+  /// the document.
+  ///
   /// **2** — the turnover day belongs to the cycle, not the family (#100).
   /// Nothing was added to the document and nothing was removed from it; what
   /// changed is that two cycles may now sit on different weekdays. A v1 build
   /// would read such a family, hand it to `RotaEngine`, and throw on every
   /// frame of the home screen. The version is what makes it refuse instead.
-  static const int currentSchemaVersion = 2;
+  static const int currentSchemaVersion = 3;
 
   final String id;
   final String name;

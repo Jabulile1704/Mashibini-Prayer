@@ -1,58 +1,101 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../../data/repositories/family_repository.dart';
+import '../../data/sources/platform/photos.dart';
 import '../../domain/entities/calendar_date.dart';
 import '../../domain/entities/family.dart';
 import '../../domain/entities/member.dart';
 import '../../domain/entities/turn.dart';
+import '../../domain/family/family_tree.dart';
+import '../../domain/ids.dart';
 import '../../domain/rota/family_editor.dart';
 import '../../domain/rota/rota_engine.dart';
 import '../brand/mark.dart';
 import '../brand/tokens.dart';
 import '../widgets/centred_message.dart';
 import '../widgets/date_text.dart';
+import 'family_member_sheet.dart';
 
 /// The family, as a comb (#109).
 ///
 /// Asked for as "a hierarchy of the family … a pic of each person, name,
-/// role … all within this bee-comb like branch tree hierarchy". This is the
-/// tab, and it is deliberately **not** that yet.
+/// role … all within this bee-comb like branch tree hierarchy".
 ///
-/// What it is: the people the app already knows, in cells, in the order they
-/// take their turns. What it is not, and says so on the screen rather than
-/// leaving somebody to wonder:
+/// **The tree is not the rota.** `cycle.order` says who takes a week;
+/// `Family.members` says who the family is, and that is the larger set — a
+/// grandchild belongs here without being handed a turn at leading prayer.
+/// Everyone drawn here comes from `members`, and whether they lead is a
+/// question this screen *answers* under their name rather than decides.
 ///
-/// - **No hierarchy.** The app has no idea who is whose parent. `cycle.order`
-///   is a flat list and `Family.members` has no edges between anybody, so
-///   there is nothing to draw a branch from. Adding that is a schema change
-///   with an ADR owing, and the rule it has to carry is that the tree and the
-///   rota are different things: a grandchild belongs in the tree without
-///   taking a week of prayer.
-/// - **No photographs.** ADR-010 forbids file uploads and that clause stands
-///   until there is a reason on paper to move it (#109).
-/// - **No roles.** A `Member` is an id and a display name. What is under each
-///   name here is their next turn, which the app does know.
-///
-/// A flat comb rather than an empty tab because the owner asked for the tab
-/// today and said empty would do. An empty tab reads as broken; this one
-/// shows real people, in the app's own shape, and names the three things that
-/// are missing.
-class FamilyTreeScreen extends StatelessWidget {
+/// Generations come from [FamilyTree], which is pure: every awkward family —
+/// a parent recorded after their child, a grandparent added later, two
+/// people who ended up as each other's parent through a merge — is a unit
+/// test rather than something to reproduce by tapping.
+class FamilyTreeScreen extends StatefulWidget {
   const FamilyTreeScreen({
     required this.familyRepository,
+    required this.photos,
+    required this.ids,
     this.today,
     super.key,
   });
 
   final FamilyRepository familyRepository;
+  final Photos photos;
+  final IdGenerator ids;
   final CalendarDate Function()? today;
 
-  static const Key notBuiltYet = Key('tree.notBuiltYet');
   static const Key comb = Key('tree.comb');
+  static const Key addRelative = Key('tree.addRelative');
+  static const Key onThisPhone = Key('tree.onThisPhone');
+  static const Key nameField = Key('tree.addRelative.name');
+  static const Key confirmAdd = Key('tree.addRelative.confirm');
 
   static Key cellFor(String memberId) => Key('tree.cell.$memberId');
 
-  CalendarDate get _today => today?.call() ?? CalendarDate.from(DateTime.now());
+  @override
+  State<FamilyTreeScreen> createState() => _FamilyTreeScreenState();
+}
+
+class _FamilyTreeScreenState extends State<FamilyTreeScreen> {
+  late final Stream<Family?> _families = widget.familyRepository.watch();
+
+  CalendarDate get _today =>
+      widget.today?.call() ?? CalendarDate.from(DateTime.now());
+
+  Future<void> _edit(Family family, Member member) async {
+    final Member? updated = await showModalBottomSheet<Member>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (BuildContext context) => FamilyMemberSheet(
+        family: family,
+        member: member,
+        photos: widget.photos,
+      ),
+    );
+    if (updated == null) {
+      return;
+    }
+    await widget.familyRepository.save(
+      FamilyEditor.updateMember(family, updated),
+    );
+  }
+
+  Future<void> _add(Family family) async {
+    final String? name = await showDialog<String>(
+      context: context,
+      builder: (BuildContext context) => const _AddRelativeDialog(),
+    );
+    if (name == null) {
+      return;
+    }
+    await widget.familyRepository.save(
+      FamilyEditor.addRelative(family, displayName: name, ids: widget.ids),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +105,7 @@ class FamilyTreeScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('Family')),
       body: SafeArea(
         child: StreamBuilder<Family?>(
-          stream: familyRepository.watch(),
+          stream: _families,
           builder: (BuildContext context, AsyncSnapshot<Family?> stored) {
             final Family? family = stored.data;
             if (family == null) {
@@ -83,56 +126,94 @@ class FamilyTreeScreen extends StatelessWidget {
                 ],
               );
             }
-
-            final List<Member> members = FamilyEditor.activeMembers(
-              family,
-              _today,
-            );
-            final RotaEngine engine = RotaEngine.forFamily(family);
-
-            return ListView(
-              padding: const EdgeInsets.only(bottom: Space.xxl),
-              children: <Widget>[
-                const SizedBox(height: Space.xl),
-                _Comb(
-                  key: FamilyTreeScreen.comb,
-                  members: members,
-                  subtitleFor: (Member member) =>
-                      _whenTheyLead(context, engine, member),
-                ),
-                const SizedBox(height: Space.xxl),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: Space.lg),
-                  child: Text(
-                    'NOT BUILT YET',
-                    style: theme.textTheme.labelLarge,
-                  ),
-                ),
-                const SizedBox(height: Space.sm),
-                Padding(
-                  key: FamilyTreeScreen.notBuiltYet,
-                  padding: const EdgeInsets.symmetric(horizontal: Space.lg),
-                  child: Text(
-                    'These are the people in the rota, not the whole family, '
-                    'and they are a row of cells rather than a tree.\n\n'
-                    'The branches are missing because the app does not know '
-                    'who is whose parent — it only knows the order you take '
-                    'your turns in. A tree can hold people who are not in '
-                    'the rota at all, which is most of a family.\n\n'
-                    'A photograph and a role for each person are missing too. '
-                    'Both are coming; neither is here.',
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                ),
-              ],
-            );
+            return _tree(theme, family);
           },
         ),
       ),
     );
   }
 
-  String _whenTheyLead(BuildContext context, RotaEngine engine, Member member) {
+  Widget _tree(ThemeData theme, Family family) {
+    final List<List<Member>> rows = FamilyTree.generations(family.members);
+    final RotaEngine engine = RotaEngine.forFamily(family);
+    final Set<String> inTheRota = <String>{
+      for (final Member member in FamilyEditor.activeMembers(family, _today))
+        member.id,
+    };
+
+    return ListView(
+      padding: const EdgeInsets.only(bottom: Space.xxl),
+      children: <Widget>[
+        const SizedBox(height: Space.lg),
+        for (int row = 0; row < rows.length; row++) ...<Widget>[
+          if (row > 0) const _Branch(),
+          _CombRow(
+            key: row == 0 ? FamilyTreeScreen.comb : null,
+            // Alternate rows sit half a cell across, so they nest the way a
+            // comb does rather than stacking into a grid.
+            inset: row.isOdd,
+            children: <Widget>[
+              for (final Member member in rows[row])
+                _Cell(
+                  member: member,
+                  note: _noteFor(engine, member, inTheRota),
+                  onTap: () => _edit(family, member),
+                ),
+            ],
+          ),
+        ],
+        const SizedBox(height: Space.xl),
+        Padding(
+          padding: Space.gutter,
+          child: OutlinedButton.icon(
+            key: FamilyTreeScreen.addRelative,
+            onPressed: () => _add(family),
+            icon: const Icon(Icons.person_add_outlined),
+            label: const Text('Add someone to the family'),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            Space.lg,
+            Space.sm,
+            Space.lg,
+            Space.lg,
+          ),
+          child: Text(
+            'Adding someone here does not give them a week of prayer. The '
+            'rota is who leads; this is everybody.',
+            style: theme.textTheme.bodySmall,
+          ),
+        ),
+        const Divider(),
+        Padding(
+          key: FamilyTreeScreen.onThisPhone,
+          padding: const EdgeInsets.fromLTRB(Space.lg, Space.lg, Space.lg, 0),
+          child: Text(
+            'Photographs stay on this phone. They are never uploaded — which '
+            'also means the others cannot see them, and reinstalling the app '
+            'loses them.',
+            style: theme.textTheme.bodySmall,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// The line under a name.
+  ///
+  /// Their role if the family has given them one, because that is what they
+  /// chose to say. Otherwise the rota answers: when they next lead, or that
+  /// they are not in it — which is the fact most likely to be misread about
+  /// a screen that shows more people than the rota does.
+  String _noteFor(RotaEngine engine, Member member, Set<String> inTheRota) {
+    final String? role = member.role;
+    if (role != null && role.isNotEmpty) {
+      return role;
+    }
+    if (!inTheRota.contains(member.id)) {
+      return 'Not in the rota';
+    }
     for (final Turn turn in engine.turnsFrom(_today, count: 24)) {
       if (turn.leader.id == member.id) {
         return turn.contains(_today)
@@ -144,143 +225,220 @@ class FamilyTreeScreen extends StatelessWidget {
   }
 }
 
-/// Cells in staggered rows, the way a comb is built.
-///
-/// Three to a row, and every second row inset by half a cell so the cells
-/// nest rather than stack in a grid. Rows of three fit a 375pt phone with the
-/// screen gutter intact; a family larger than the rota will need this to
-/// reflow rather than assume three, which is one of the things the tree work
-/// will have to solve properly (#109).
-class _Comb extends StatelessWidget {
-  const _Comb({required this.members, required this.subtitleFor, super.key});
+/// One generation, laid out as a row of cells.
+class _CombRow extends StatelessWidget {
+  const _CombRow({required this.children, required this.inset, super.key});
 
-  final List<Member> members;
-  final String Function(Member) subtitleFor;
-
-  static const int _perRow = 3;
-  static const double _radius = 40;
+  final List<Widget> children;
+  final bool inset;
 
   @override
-  Widget build(BuildContext context) {
-    final List<List<Member>> rows = <List<Member>>[
-      for (int i = 0; i < members.length; i += _perRow)
-        members.sublist(
-          i,
-          i + _perRow > members.length ? members.length : i + _perRow,
-        ),
-    ];
-
-    return Column(
-      children: <Widget>[
-        for (int row = 0; row < rows.length; row++)
-          Padding(
-            // Half a cell's width on alternate rows, which is what makes a
-            // comb a comb rather than a grid.
-            padding: EdgeInsets.only(
-              left: row.isOdd ? _radius : 0,
-              right: row.isOdd ? 0 : _radius,
-              bottom: Space.lg,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                for (final Member member in rows[row])
-                  _Cell(
-                    member: member,
-                    subtitle: subtitleFor(member),
-                    radius: _radius,
-                  ),
-              ],
-            ),
-          ),
-      ],
-    );
-  }
+  Widget build(BuildContext context) => Padding(
+    // Half a cell on alternate rows, so generations nest the way a comb
+    // does. **Only on the inset rows.** The first version balanced it with
+    // the same padding on the right of every other row, which cost 38pt of
+    // width and made a four-person family wrap after three — and a wrapped
+    // run looks exactly like a generation below, which is the one thing
+    // this screen must not say by accident.
+    padding: EdgeInsets.only(left: inset ? _Cell.diameter / 2 : 0),
+    // Wrap rather than Row: a generation can be larger than a phone, and a
+    // family that outgrows one line should flow onto the next rather than
+    // overflow off the side. What distinguishes a wrapped run from the next
+    // generation is the stem drawn between generations and not between
+    // runs.
+    child: Wrap(
+      alignment: WrapAlignment.center,
+      spacing: Space.xs,
+      runSpacing: Space.sm,
+      children: children,
+    ),
+  );
 }
 
-/// One person: a hexagon with their initial, and their name underneath.
+/// The join between one generation and the next.
 ///
-/// The name is **outside** the hexagon on purpose. Text inside a clipped
+/// A single stem, not a line per parent. Drawing every edge needs the cells'
+/// painted positions, which a `Wrap` settles at layout time and does not
+/// report — and a line drawn between the wrong two people would be worse
+/// than an honest one saying only "these came from those".
+class _Branch extends StatelessWidget {
+  const _Branch();
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Container(
+      width: 2,
+      height: Space.xl,
+      color: Theme.of(context).colorScheme.outlineVariant,
+    ),
+  );
+}
+
+/// One person: a hexagon, their name, and a line about them.
+///
+/// The name sits **outside** the hexagon on purpose. Text inside a clipped
 /// shape has nowhere to go when somebody turns the font size up, and the
-/// largest text size is where this app's last four accessibility defects
-/// were found. Outside, it wraps.
-///
-/// The hexagon is where a photograph goes when there is one.
+/// largest text size is where this app's accessibility defects have been
+/// found.
 class _Cell extends StatelessWidget {
-  const _Cell({
-    required this.member,
-    required this.subtitle,
-    required this.radius,
-  });
+  const _Cell({required this.member, required this.note, required this.onTap});
 
   final Member member;
-  final String subtitle;
-  final double radius;
+  final String note;
+  final VoidCallback onTap;
+
+  static const double diameter = 76;
 
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final String initial = member.displayName.trim().isEmpty
+    final String trimmed = member.displayName.trim();
+    final String initial = trimmed.isEmpty
         ? '?'
-        : member.displayName.trim().characters.first;
+        : trimmed.characters.first.toUpperCase();
 
     return Semantics(
-      key: FamilyTreeScreen.cellFor(member.id),
-      label: subtitle.isEmpty
-          ? member.displayName
-          : '${member.displayName}, ${subtitle.toLowerCase()}',
-      child: SizedBox(
-        width: radius * 2 + Space.sm,
-        child: Column(
-          children: <Widget>[
-            ClipPath(
-              clipper: _HexagonClipper(),
-              child: Container(
-                width: radius * 2,
-                height: radius * 2,
-                color: theme.colorScheme.secondaryContainer,
-                alignment: Alignment.center,
-                child: ExcludeSemantics(
-                  child: Text(
-                    initial.toUpperCase(),
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      color: theme.colorScheme.onSecondaryContainer,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: Space.sm),
-            ExcludeSemantics(
+      button: true,
+      label: note.isEmpty ? member.displayName : '${member.displayName}, $note',
+      child: ExcludeSemantics(
+        child: InkWell(
+          key: FamilyTreeScreen.cellFor(member.id),
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(Radii.md),
+          child: SizedBox(
+            width: diameter + Space.lg,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: Space.xs),
               child: Column(
                 children: <Widget>[
+                  ClipPath(
+                    clipper: _HexagonClipper(),
+                    child: SizedBox(
+                      width: diameter,
+                      height: diameter,
+                      child: _face(theme, initial),
+                    ),
+                  ),
+                  const SizedBox(height: Space.sm),
                   Text(
                     member.displayName,
                     textAlign: TextAlign.center,
                     style: theme.textTheme.titleSmall,
                   ),
-                  if (subtitle.isNotEmpty)
+                  if (note.isNotEmpty)
                     Text(
-                      subtitle,
+                      note,
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodySmall,
                     ),
                 ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
   }
+
+  Widget _face(ThemeData theme, String initial) {
+    final String? path = member.photoPath;
+    if (path == null) {
+      return _initial(theme, initial);
+    }
+    return Image.file(
+      File(path),
+      fit: BoxFit.cover,
+      // A photograph whose file has gone — deleted from the phone, or a
+      // restore that did not carry it — falls back rather than showing a
+      // broken-image glyph. Paths outlive files.
+      errorBuilder: (BuildContext context, Object error, StackTrace? stack) =>
+          _initial(theme, initial),
+    );
+  }
+
+  Widget _initial(ThemeData theme, String initial) => Container(
+    color: theme.colorScheme.secondaryContainer,
+    alignment: Alignment.center,
+    child: Text(
+      initial,
+      style: theme.textTheme.headlineSmall?.copyWith(
+        color: theme.colorScheme.onSecondaryContainer,
+      ),
+    ),
+  );
+}
+
+/// Asks for a name, and will not return an empty one.
+class _AddRelativeDialog extends StatefulWidget {
+  const _AddRelativeDialog();
+
+  @override
+  State<_AddRelativeDialog> createState() => _AddRelativeDialogState();
+}
+
+class _AddRelativeDialogState extends State<_AddRelativeDialog> {
+  final TextEditingController _name = TextEditingController();
+
+  @override
+  void dispose() {
+    _name.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final String name = _name.text.trim();
+    if (name.isNotEmpty) {
+      Navigator.of(context).pop(name);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: const Text('Add someone to the family'),
+    content: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Text(
+          'They appear straight away and are not given a week of prayer. '
+          'You can say who their parents are once they are here.',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: Space.lg),
+        TextField(
+          key: FamilyTreeScreen.nameField,
+          controller: _name,
+          autofocus: true,
+          textCapitalization: TextCapitalization.words,
+          textInputAction: TextInputAction.done,
+          decoration: const InputDecoration(labelText: 'Their name'),
+          onSubmitted: (_) => _submit(),
+        ),
+      ],
+    ),
+    actions: <Widget>[
+      TextButton(
+        onPressed: () => Navigator.of(context).pop(),
+        child: const Text('Cancel'),
+      ),
+      ValueListenableBuilder<TextEditingValue>(
+        valueListenable: _name,
+        builder: (BuildContext context, TextEditingValue value, _) =>
+            TextButton(
+              key: FamilyTreeScreen.confirmAdd,
+              onPressed: value.text.trim().isEmpty ? null : _submit,
+              child: const Text('Add'),
+            ),
+      ),
+    ],
+  );
 }
 
 /// The same hexagon the app's mark is drawn from, as a clip.
 ///
-/// Reusing `CombMarkPainter.cell` rather than writing a second hexagon:
-/// two shapes drawn from two bits of trigonometry are two shapes that can
-/// stop matching.
+/// Reusing `CombMarkPainter.cell` rather than writing a second hexagon: two
+/// shapes drawn from two bits of trigonometry are two shapes that can stop
+/// matching.
 class _HexagonClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) => CombMarkPainter.cell(

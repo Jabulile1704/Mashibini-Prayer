@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- Choosing a family photograph for the family tree (#109). The image is
+	     copied into the app's own directory and never leaves the phone. -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Choose a photograph for someone in your family. It stays on this phone and is never sent anywhere.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>

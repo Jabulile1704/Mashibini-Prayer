@@ -6,6 +6,7 @@ import '../src/data/repositories/family_repository.dart';
 import '../src/data/repositories/journal_repository.dart';
 import '../src/data/sources/notifications/reminders.dart';
 import '../src/data/sources/platform/app_version.dart';
+import '../src/data/sources/platform/photos.dart';
 import '../src/data/sources/platform/sharing.dart';
 import '../src/domain/ids.dart';
 import 'presentation/brand/gallery.dart';
@@ -62,6 +63,7 @@ class MashibiniPrayerApp extends StatefulWidget {
     required this.sharing,
     required this.reminders,
     required this.appVersion,
+    required this.photos,
     required this.ids,
     this.initialAppearance = Appearance.system,
     super.key,
@@ -73,6 +75,7 @@ class MashibiniPrayerApp extends StatefulWidget {
   final Sharing sharing;
   final Reminders reminders;
   final AppVersion appVersion;
+  final Photos photos;
   final IdGenerator ids;
 
   /// The stored appearance, read before the first frame.
@@ -129,6 +132,7 @@ class _MashibiniPrayerAppState extends State<MashibiniPrayerApp> {
                 sharing: widget.sharing,
                 reminders: widget.reminders,
                 appVersion: widget.appVersion,
+                photos: widget.photos,
                 ids: widget.ids,
               ),
             ),

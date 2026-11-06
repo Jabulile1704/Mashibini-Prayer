@@ -36,6 +36,17 @@ abstract final class Space {
 
   /// Padding for a screen that is one column of content.
   static const EdgeInsets screen = EdgeInsets.fromLTRB(lg, lg, lg, xxl);
+
+  /// 96 — bottom room for a floating action button to sit over a list.
+  ///
+  /// Not a step on the scale, and deliberately named rather than snapped to
+  /// one. It is the height of a thing — a 56pt button plus its margin and
+  /// then some — not a decision about rhythm, and rounding it to 48 would
+  /// put the last journal entry under the button that writes the next one.
+  ///
+  /// The scale's own rule is that an off-scale number means a layout nobody
+  /// has thought about. This one has been, which is what the name is for.
+  static const double fabClearance = 96;
 }
 
 /// Corner radii.

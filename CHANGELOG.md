@@ -4,6 +4,63 @@ What changed, written for the family rather than for whoever wrote it.
 Versions follow [Semantic Versioning](https://semver.org); the process is in
 [docs/RELEASING.md](docs/RELEASING.md).
 
+## [2.0.0] — 2026-11-06
+
+**The app stopped being something you set up once.** Nearly everything the
+rota asked you at the beginning — who is in it, which day the week turns
+over, which person you are — can be changed now without throwing the rota
+away. And there is a new tab for the family itself.
+
+### New
+
+- **A Family tab.** Everyone in the family as a honeycomb, with a photograph
+  and a word for each person — *Mama*, *eldest sister*, *born 2019*, whatever
+  your family says. Say who somebody's parents are and the comb arranges
+  itself into generations. **Adding somebody here does not give them a week
+  of prayer**: the tree is everybody, the rota is who leads, and they are not
+  the same list. Photographs stay on this phone — they are never sent
+  anywhere, which also means the others cannot see them, and reinstalling the
+  app loses them.
+- **Add and remove people from the rota**, from Settings. Before this, the
+  only way was to start the whole rota again, which threw away the order, the
+  turnover day and every week anybody had skipped. Changes start at the next
+  turnover and this week is never altered, so nobody's week changes under
+  them.
+- **Change the day the week turns over.** Also from Settings, and it tells
+  you what will happen before you agree to it: the date it starts, whose week
+  gets shortened and by how many days, and who takes the first full week.
+  Weeks that have already happened keep whoever led them.
+- **Keep a copy of your journal.** Sends the whole thing to yourself as plain
+  text. Worth doing: reinstalling the app loses what is not kept.
+- **Skipping a week now says so**, with an Undo in the message. It used to
+  rearrange the list in silence.
+
+### Better
+
+- **A new bottom bar.** *This week* sits in the middle now, raised out of the
+  bar as a honey comb cell, because it is the question the app exists to
+  answer. The other four sit either side with one word each — *Weeks ahead*
+  was two words and wrapped onto two lines, which left the row looking
+  uneven.
+
+- Every screen uses the same spacing, so the tabs line up with each other.
+- The empty screens offer the next thing to do instead of stopping. *The
+  weeks ahead* now names the date the rota starts; the journal offers to
+  write the first entry.
+
+### Fixed
+
+- A check that was supposed to prove each release is signed with the same key
+  had been proving nothing for four releases. It now fails when it cannot
+  read the key, which is what a check is for.
+
+### A note on the version
+
+This is **2.0.0** rather than 1.5.0 for one reason: the family is stored in a
+new shape, and version 1.4.0 cannot read it. Nothing is lost going forward —
+this version reads everything older perfectly — but a phone that installs
+this cannot go back.
+
 ## [1.4.0] — 2026-11-04
 
 **You can change your mind now.** Two things the app would only ask you

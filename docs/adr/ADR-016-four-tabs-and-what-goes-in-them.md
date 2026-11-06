@@ -85,12 +85,13 @@ a menu.
 > that nothing in the test suite had ever built the navigation bar to check
 > it — so this sentence could not have been verified when it was written.
 >
-> Measured afterwards, **the judgement here was right**: five labels do not
-> fit a phone, and neither, quite, do four. See
-> [ADR-020](ADR-020-a-fifth-tab-and-what-four-was-worth.md) and
-> [#111](https://github.com/Jabulile1704/Mashibini-Prayer/issues/111). The
-> table above is out of date by one row; it is left as written, because a
-> record quietly corrected is a record nobody can date.
+> It was then "measured" and declared right, on figures that turned out to
+> be an artefact of the test font (#111, withdrawn). **It remains
+> unverified.** Five labels render correctly on a 402pt phone at the default
+> text size, which is the only real evidence there is. See
+> [ADR-020](ADR-020-a-fifth-tab-and-what-four-was-worth.md). The table above
+> is out of date by one row; it is left as written, because a record quietly
+> corrected is a record nobody can date.
 
 ## Alternatives considered
 

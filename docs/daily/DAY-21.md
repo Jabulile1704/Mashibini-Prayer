@@ -20,8 +20,8 @@ the **songbook before the photographs**. Both are recorded below.
 - `lib/src/application/RescheduleReminders`, and the first use of a layer
   `ARCHITECTURE.md` has described since Day 1
 - `FamilyEditor.changesTakeEffect`, so a screen can say *when* before it asks
-- **#111**, a defect in four shipped releases, found by trying to write an
-  assertion that could fail
+- **#111**, filed as a defect in four shipped releases and **withdrawn the
+  next day** — the measurement was of the test font, not the app
 - 573 tests, up from 518.
 
 ## Build it, describe it, save the thing you described
@@ -81,53 +81,56 @@ tab that silently omits three quarters of a feature gets reported as one.
 ADR-016 demanded rethinking rather than adding. The rethinking is the rest of
 this entry.
 
-## #111 — the third check that could not fail
+## #111 — a check that could fail, and was wrong anyway
+
+> **Corrected on Day 22.** What follows is what was written on the day. The
+> conclusion was false and the issue is withdrawn; the correction is at the
+> end of this section rather than pasted over it, because the sequence is
+> the useful part.
 
 ADR-016's claim was that five tabs stop working on a phone. Before writing
-ADR-020 against it, that needed measuring, and **nothing in the accessibility
-sweep had ever built the navigation bar** — it pumps screens, and the bar
-belongs to the shell. So the claim could not have been checked when it was
-made.
+ADR-020 against it, that needed measuring, and **nothing in the
+accessibility sweep had ever built the navigation bar** — it pumps screens,
+and the bar belongs to the shell. So the claim could not have been checked
+when it was made. That part was real and the fix stands.
 
 Three assertions were written. The first two cannot fail:
 
-1. **`findsOneWidget` on the label.** A clipped `Text` still carries its whole
-   string, so this passes on "Settin".
-2. **`RenderParagraph.didExceedMaxLines`.** Always false: `NavigationBar` sets
-   no `maxLines` and uses `TextOverflow.clip`. Proved by renaming a tab to
-   "Family hierarchy and the whole honeycomb of everybody" and watching the
-   assertion pass.
+1. **`findsOneWidget` on the label.** A clipped `Text` still carries its
+   whole string, so this passes on "Settin".
+2. **`RenderParagraph.didExceedMaxLines`.** Always false: `NavigationBar`
+   sets no `maxLines`. Proved by renaming a tab to "Family hierarchy and the
+   whole honeycomb of everybody" and watching the assertion pass.
 
-The third works. `getMinIntrinsicWidth` is the width of the longest
-unbreakable word, and no amount of wrapping helps a word wider than its box:
+The third used `getMinIntrinsicWidth` against the cell width, failed, and
+produced a table showing `Settings` cut off on every phone narrower than
+430pt — supposedly through four shipped releases.
+
+### The correction
+
+**Flutter's widget tests render with a fixed-width placeholder font.** Every
+glyph is a 1em square:
 
 ```
-cell = bar width ÷ destinations
+iiiiiiii -> 98.0
+MMMMMMMM -> 98.0
 ```
 
-| Phone | Four tabs (v1.1.0–v1.4.0) | Five tabs |
-|:--|:--|:--|
-| 360pt | `Settings` 100 > 90 | `Journal` 88>72, `Family` 75>72, `Settings` 100>72 |
-| 390pt | `Settings` 100 > 98 | `Journal` 88>78, `Settings` 100>78 |
-| 430pt | — | `Journal` 88>86, `Settings` 100>86 |
+So the table measured the test harness. The tell was in the table and went
+unread — `Family` 80.4, `Journal` 93.8, `Settings` 107.2, exactly 13.4 per
+character, which no proportional font does. A walk up the render tree also
+found no clipper above the label, so even a genuinely over-wide one would
+overdraw into the gap rather than be cut off.
 
-**"Settings" has read "Settin" on most phones since Day 18, at the default
-text size, through four releases.** Not a large-text defect. The default.
+Running the app on a 402pt simulator settled it in one screenshot: **all
+five labels render in full.**
 
-Three "checks that could not fail" now, each a different species:
-
-- **#103** — a step that reported success without reading anything.
-- **Day 20** — a comparison that became a tautology when a field became
-  derived, and had to be *deleted* rather than repaired.
-- **#111** — an assertion aimed at a defect the platform makes invisible: no
-  exception, no flag, full string still in the tree.
-
-The first was a broken instrument. The second was a question that had stopped
-having two sides. The third is the hardest to spot, because the assertion
-looks like it is about the right thing. The only defence found so far is the
-one used here: **break it on purpose and watch it pass.** That took one
-rename and thirty seconds, and it is the step that would have caught all
-three.
+**Day 21's own lesson was applied correctly and still gave the wrong
+answer.** Breaking an assertion on purpose proves it can fail; it says
+nothing about whether it measures the right thing, and nothing in that
+procedure asks whether the apparatus is sound. The thing that caught it is
+the thing this project's retrospective has named eight times — running the
+app and looking at it — applied, this time, to a bug that was never there.
 
 ## A fix written and deliberately not shipped
 
@@ -169,4 +172,5 @@ Two product asks, filed rather than built:
 
 ## Tomorrow
 
-#111's answer, which is a product decision. Then the restyle, now Day 22.
+The restyle, now Day 22. (#111's "answer" turned out to be that there was
+nothing to answer.)

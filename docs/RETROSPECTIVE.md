@@ -195,18 +195,29 @@ species — which is why "write the test" has stopped being an adequate answer:
 |:--|:--|:--|
 | #103 | A release step printing a signing fingerprint | Read the wrong signature block, found nothing, and `\|\| true` turned that into a pass |
 | Day 20 | `cycle.effectiveFrom.weekday != turnoverWeekday` | Became a comparison between a value and itself when the field became derived |
-| #111 | An assertion that tab labels are not cut off | The platform clips silently — no exception, no flag, whole string still in the widget tree |
+| #111 | An assertion that tab labels are not cut off | **Nothing.** It could fail, and did. It was measuring the test font, and the defect it reported never existed |
 
 The first was a broken instrument. The second was a question that had stopped
 having two sides. The third is the worst, because the assertion *looks* like
 it is about the right thing: `findsOneWidget` on a label is a reasonable line
 of test code that passes on "Settin".
 
-**The only defence that has worked is breaking it on purpose and watching it
-pass.** On Day 21 that meant renaming a tab to "Family hierarchy and the whole
-honeycomb of everybody" and re-running the test, which took one edit and
-thirty seconds, and immediately disqualified two of three candidate
-assertions. It would have caught all three of the rows above.
+**Breaking it on purpose and watching it pass** disqualified two of the three
+candidate assertions on Day 21, in one edit and thirty seconds. It is cheap
+and it works, and it would have caught the first two rows above.
+
+**It did not catch the third, and could not.** The surviving assertion failed
+exactly as a working assertion should, and reported a defect that did not
+exist, because it measured text in a font where every glyph is a 1em square.
+A test that can fail is not the same as a test that measures the right thing,
+and nothing in "break it and watch" asks whether the apparatus is sound.
+
+What caught it was running the app and looking at the screen — which is the
+eight-times-repeated lesson at the top of this section, arriving from the
+opposite direction. Every previous entry is a bug the tests missed and a
+person found. This one is a bug the tests **invented** and a person
+disproved. The rule is the same either way: **the running app is the ground
+truth, and a number is only as good as what produced it.**
 
 So it is now the rule for any test written to catch a *specific* defect: make
 the defect, confirm the test fails, then fix it. Not for every test — most

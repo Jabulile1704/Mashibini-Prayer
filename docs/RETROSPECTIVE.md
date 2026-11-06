@@ -230,6 +230,27 @@ bar, so ADR-016's claim about tabs on a phone was unverifiable from the day it
 was written. A sweep named "every screen" is a sweep nobody re-reads the
 definition of.
 
+### PR hygiene has caught five mistakes, each on a different rule
+
+| Day | What it caught |
+|:--|:--|
+| 12 | A branch name that did not follow the model |
+| 16 | A body missing the "How it was verified" heading |
+| 18 | A PR opened against the wrong base branch |
+| 19 | The heading dropped again, in a different section |
+| 23 | A title typed `style`, which is not in the project's vocabulary |
+
+Five catches, five rules, no repeats. That is the shape of a check doing
+real work rather than one everybody has learned to pre-satisfy — and it is
+the cheapest automation in the repository: four shell steps and a regex.
+
+The one on Day 23 is the most interesting, because the type was not a
+careless choice. `style` is a Conventional Commits type in general use; it
+simply is not one of the nine this project allows. A convention that is
+*nearly* the standard one is exactly the kind a person gets wrong from
+memory, which is the argument for the check rather than against the
+convention.
+
 ### The git workflow is wrong, and it took two releases to show
 
 Rebase-merging into `main` and then merging `main` back into `develop` is a

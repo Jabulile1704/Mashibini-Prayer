@@ -194,4 +194,36 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   });
+
+  group('the empty state offers the next step (Day 22)', () {
+    testWidgets('it carries a button, not only a description of emptiness', (
+      WidgetTester tester,
+    ) async {
+      // It said "Nothing written yet" and then stopped, leaving somebody to
+      // work out that the thing which fills it is the button floating over
+      // the sentence they are reading.
+      await open(tester);
+
+      expect(find.text('Nothing written yet'), findsOneWidget);
+      expect(find.text("Write today's entry"), findsOneWidget);
+    });
+
+    testWidgets('and the button opens the editor', (WidgetTester tester) async {
+      await open(tester);
+
+      await tester.tap(find.text("Write today's entry"));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(TextField), findsOneWidget);
+    });
+
+    testWidgets('it goes once there is something written', (
+      WidgetTester tester,
+    ) async {
+      await journal.write(date: today, text: 'A line.', now: noon);
+      await open(tester);
+
+      expect(find.text("Write today's entry"), findsNothing);
+    });
+  });
 }

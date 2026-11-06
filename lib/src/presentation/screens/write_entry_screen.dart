@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../data/repositories/journal_repository.dart';
 import '../../domain/entities/calendar_date.dart';
 import '../../domain/entities/journal_entry.dart';
+import '../brand/tokens.dart';
 import '../widgets/date_text.dart';
 
 /// Writing or changing one day's entry.
@@ -124,7 +125,7 @@ class _WriteEntryScreenState extends State<WriteEntryScreen>
       appBar: AppBar(title: Text(DateLabels.dayAndDate(context, widget.date))),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(Space.lg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
@@ -132,7 +133,7 @@ class _WriteEntryScreenState extends State<WriteEntryScreen>
                 DateLabels.full(context, widget.date),
                 style: theme.textTheme.labelLarge,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: Space.lg),
               Expanded(
                 child: TextField(
                   key: WriteEntryScreen.textField,
@@ -150,7 +151,7 @@ class _WriteEntryScreenState extends State<WriteEntryScreen>
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: Space.md),
               Text(
                 // True today, and only today. Saying "private to you" would
                 // be a promise this build cannot keep: nothing signs in yet,
@@ -161,7 +162,7 @@ class _WriteEntryScreenState extends State<WriteEntryScreen>
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: Space.lg),
               FilledButton(
                 key: WriteEntryScreen.saveButton,
                 onPressed: _saving ? null : _save,

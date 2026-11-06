@@ -37,11 +37,19 @@ void main() {
         .toList();
   }
 
-  /// A `SizedBox` standing in for a gap: one axis, a bare number.
+  /// A `SizedBox` standing in for a gap: **one** axis, a bare number.
   ///
-  /// `SizedBox(width: 34, height: 34)` is a shape and is not matched. A
-  /// single axis is always a gap in this codebase.
-  final RegExp gap = RegExp(r'SizedBox\(\s*(?:height|width):\s*\d');
+  /// Two axes is a shape — a photograph's placeholder, a swatch — and `Space`
+  /// is about the rhythm between things rather than how big they are. The
+  /// first version of this said exactly that in its doc comment, matched on
+  /// the opening of the call and so caught both, and had a self-test
+  /// asserting the wrong one of the two. It was found by the guard flagging
+  /// a legitimate `SizedBox(width: 64, height: 64)` the next day.
+  ///
+  /// The closing bracket is the whole fix: one argument, then `)`.
+  final RegExp gap = RegExp(
+    r'SizedBox\(\s*(?:height|width):\s*\d+(?:\.\d+)?\s*,?\s*\)',
+  );
 
   /// Padding given a number instead of a token.
   ///
@@ -56,12 +64,31 @@ void main() {
   /// rather than assumed.
   final RegExp edgeInsets = RegExp(r'EdgeInsets\.\w+\(([^)]*)\)');
   final RegExp number = RegExp(r'(?<![\w.])(\d+(?:\.\d+)?)');
+  final RegExp anyName = RegExp(r'[A-Za-z_]');
 
+  /// Whether any argument is a number and nothing else.
+  ///
+  /// Per argument rather than per call, and the label is dropped first, so
+  /// `bottom: 12` is judged on `12`. An argument that names anything —
+  /// `Space.lg`, `Space.fabClearance + Space.md`, `inset ? _Cell.diameter /
+  /// 2 : 0` — is somebody's decision with a name on it, which is all this
+  /// guard has ever been asking for. The second of those was allowed from
+  /// the start; the third was not, and was a false positive on the day the
+  /// family tree landed.
   bool isPaddingByNumber(String line) {
     for (final RegExpMatch call in edgeInsets.allMatches(line)) {
-      for (final RegExpMatch found in number.allMatches(call.group(1)!)) {
-        if (double.parse(found.group(1)!) != 0) {
-          return true;
+      for (final String argument in call.group(1)!.split(',')) {
+        final int label = argument.indexOf(':');
+        final String value = label == -1
+            ? argument
+            : argument.substring(label + 1);
+        if (anyName.hasMatch(value)) {
+          continue;
+        }
+        for (final RegExpMatch found in number.allMatches(value)) {
+          if (double.parse(found.group(1)!) != 0) {
+            return true;
+          }
         }
       }
     }
@@ -121,7 +148,11 @@ void main() {
     // clean codebase forever.
     expect(gap.hasMatch('const SizedBox(height: 24),'), isTrue);
     expect(gap.hasMatch('const SizedBox(height: Space.xl),'), isFalse);
-    expect(gap.hasMatch('SizedBox(width: 34, height: 34)'), isTrue);
+    expect(
+      gap.hasMatch('SizedBox(width: 34, height: 34)'),
+      isFalse,
+      reason: 'two axes is a shape, not a gap — which this once got wrong',
+    );
 
     expect(isPaddingByNumber('padding: const EdgeInsets.all(32),'), isTrue);
     expect(
@@ -149,6 +180,13 @@ void main() {
       ),
       isTrue,
       reason: 'a real number beside a zero is still a real number',
+    );
+    expect(
+      isPaddingByNumber(
+        'padding: EdgeInsets.only(left: inset ? _Cell.diameter / 2 : 0),',
+      ),
+      isFalse,
+      reason: 'arithmetic on a named dimension is not a bare number',
     );
   });
 }

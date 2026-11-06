@@ -9,13 +9,15 @@ import '../../data/sources/platform/photos.dart';
 import '../../data/sources/platform/sharing.dart';
 import '../../domain/entities/calendar_date.dart';
 import '../../domain/ids.dart';
+import '../widgets/comb_bar.dart';
 import 'family_tree_screen.dart';
 import 'journal_screen.dart';
 import 'schedule_screen.dart';
 import 'settings_screen.dart';
 import 'this_week_screen.dart';
 
-/// The five tabs, and the bar that moves between them (ADR-016, ADR-020).
+/// The five tabs, and the comb that moves between them (ADR-016, ADR-020,
+/// ADR-022).
 ///
 /// Before this, every destination in the app was a `Navigator.push` from
 /// This Week, three of them from icon buttons in the top-right — the hardest
@@ -58,17 +60,51 @@ class HomeShell extends StatefulWidget {
 
   static const Key bar = Key('shell.bar');
 
-  /// The five destination labels, in order.
+  /// Where the raised comb cell sits: the middle of five.
+  static const int centre = 2;
+
+  /// The five destinations, in the order they appear.
   ///
-  /// Exposed so the accessibility sweep measures the real list rather than a
-  /// copy of it that can fall behind — which matters more than it sounds,
-  /// because what that sweep measures is whether these words fit (#111).
-  static const List<String> labels = <String>[
-    'This week',
-    'Weeks ahead',
-    'Journal',
-    'Family',
-    'Settings',
+  /// **This week is in the middle**, not first, and is the raised cell. The
+  /// app answers one question and the bar should look like it does — see
+  /// ADR-022.
+  ///
+  /// Every label is **one word** except the centre's, which is not drawn.
+  /// Five labels share the width of a phone, and "Weeks ahead" wrapped onto
+  /// two lines, which pushed its icon up and left the row ragged. "Ahead"
+  /// beside a centre cell meaning this week is not ambiguous; it is the
+  /// same distinction in half the space.
+  static const List<CombDestination> destinations = <CombDestination>[
+    CombDestination(
+      icon: Icons.event_outlined,
+      selectedIcon: Icons.event,
+      label: 'Ahead',
+    ),
+    CombDestination(
+      icon: Icons.menu_book_outlined,
+      selectedIcon: Icons.menu_book,
+      label: 'Journal',
+    ),
+    CombDestination(
+      icon: Icons.hexagon_outlined,
+      selectedIcon: Icons.hexagon,
+      label: 'This week',
+    ),
+    CombDestination(
+      icon: Icons.groups_outlined,
+      selectedIcon: Icons.groups,
+      label: 'Family',
+    ),
+    CombDestination(
+      icon: Icons.tune_outlined,
+      selectedIcon: Icons.tune,
+      label: 'Settings',
+    ),
+  ];
+
+  /// The five labels, in order. For the accessibility sweep.
+  static List<String> get labels => <String>[
+    for (final CombDestination d in destinations) d.label,
   ];
 
   @override
@@ -76,7 +112,13 @@ class HomeShell extends StatefulWidget {
 }
 
 class _HomeShellState extends State<HomeShell> {
-  int _tab = 0;
+  /// Opens on This week.
+  ///
+  /// It is the middle destination now rather than the first, and the app
+  /// exists to answer the question that screen answers — so the index is
+  /// named rather than left as a 0 that used to mean the same thing by
+  /// accident.
+  int _tab = HomeShell.centre;
 
   @override
   Widget build(BuildContext context) {
@@ -89,12 +131,7 @@ class _HomeShellState extends State<HomeShell> {
       body: IndexedStack(
         index: _tab,
         children: <Widget>[
-          ThisWeekScreen(
-            repository: widget.repository,
-            settings: widget.settings,
-            ids: widget.ids,
-            today: widget.today,
-          ),
+          // In `HomeShell.destinations` order, which puts This week third.
           ScheduleScreen(
             familyRepository: widget.repository,
             settings: widget.settings,
@@ -102,6 +139,12 @@ class _HomeShellState extends State<HomeShell> {
             today: widget.today,
           ),
           JournalScreen(journal: widget.journal, today: widget.today),
+          ThisWeekScreen(
+            repository: widget.repository,
+            settings: widget.settings,
+            ids: widget.ids,
+            today: widget.today,
+          ),
           FamilyTreeScreen(
             familyRepository: widget.repository,
             photos: widget.photos,
@@ -120,37 +163,12 @@ class _HomeShellState extends State<HomeShell> {
           ),
         ],
       ),
-      bottomNavigationBar: NavigationBar(
+      bottomNavigationBar: CombBar(
         key: HomeShell.bar,
+        destinations: HomeShell.destinations,
+        centreIndex: HomeShell.centre,
         selectedIndex: _tab,
-        onDestinationSelected: (int to) => setState(() => _tab = to),
-        destinations: const <NavigationDestination>[
-          NavigationDestination(
-            icon: Icon(Icons.hexagon_outlined),
-            selectedIcon: Icon(Icons.hexagon),
-            label: 'This week',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.event_outlined),
-            selectedIcon: Icon(Icons.event),
-            label: 'Weeks ahead',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.menu_book_outlined),
-            selectedIcon: Icon(Icons.menu_book),
-            label: 'Journal',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.groups_outlined),
-            selectedIcon: Icon(Icons.groups),
-            label: 'Family',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.tune_outlined),
-            selectedIcon: Icon(Icons.tune),
-            label: 'Settings',
-          ),
-        ],
+        onSelected: (int to) => setState(() => _tab = to),
       ),
     );
   }

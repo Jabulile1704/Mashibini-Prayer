@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mashibini_prayer/src/app.dart';
+import 'package:mashibini_prayer/src/data/repositories/device_settings_repository.dart';
 import 'package:mashibini_prayer/src/data/repositories/local_family_repository.dart';
 import 'package:mashibini_prayer/src/domain/entities/family.dart';
 import 'package:mashibini_prayer/src/domain/entities/member.dart';
@@ -21,14 +22,20 @@ import '../support/family_fixtures.dart';
 /// thing the app is for.
 void main() {
   late LocalFamilyRepository family;
+  late LocalDeviceSettingsRepository settings;
   late FakePhotos photos;
 
   setUp(() {
-    family = LocalFamilyRepository(store: FakeKeyValueStore());
+    final FakeKeyValueStore store = FakeKeyValueStore();
+    family = LocalFamilyRepository(store: store);
+    settings = LocalDeviceSettingsRepository(store: store);
     photos = FakePhotos();
   });
 
-  tearDown(() => family.dispose());
+  tearDown(() async {
+    await family.dispose();
+    await settings.dispose();
+  });
 
   Future<void> open(WidgetTester tester) async {
     await tester.pumpWidget(
@@ -38,6 +45,7 @@ void main() {
         locale: const Locale('en', 'ZA'),
         home: FamilyTreeScreen(
           familyRepository: family,
+          settings: settings,
           photos: photos,
           ids: FakeIdGenerator(),
           today: () => anchor,

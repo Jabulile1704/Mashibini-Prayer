@@ -2,6 +2,7 @@ import '../entities/cycle.dart';
 import '../entities/family.dart';
 import '../entities/member.dart';
 import '../entities/skipped_turn.dart';
+import '../entities/song.dart';
 
 /// Reconciles two versions of the same family (R6.2).
 ///
@@ -76,6 +77,20 @@ abstract final class FamilyMerge {
         resolve: (SkippedTurn x, SkippedTurn y) => x.withdrawn ? x : y,
         order: (SkippedTurn x, SkippedTurn y) {
           final int byDate = x.weekStart.compareTo(y.weekStart);
+          return byDate != 0 ? byDate : x.id.compareTo(y.id);
+        },
+      ),
+      songs: _unionBy<Song>(
+        a.songs,
+        b.songs,
+        id: (Song s) => s.id,
+        preferFirst: identical(newer, a),
+        // Removal wins, exactly as withdrawal does for a skip: `removed`
+        // only ever goes false to true, so the answer is the same in either
+        // argument order and the same again if the merge runs twice.
+        resolve: (Song x, Song y) => x.removed ? x : y,
+        order: (Song x, Song y) {
+          final int byDate = x.addedOn.compareTo(y.addedOn);
           return byDate != 0 ? byDate : x.id.compareTo(y.id);
         },
       ),

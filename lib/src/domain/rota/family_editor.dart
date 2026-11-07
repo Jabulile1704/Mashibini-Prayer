@@ -3,6 +3,7 @@ import '../entities/cycle.dart';
 import '../entities/family.dart';
 import '../entities/member.dart';
 import '../entities/skipped_turn.dart';
+import '../entities/song.dart';
 import '../entities/turn.dart';
 import '../family/family_tree.dart';
 import '../ids.dart';
@@ -360,6 +361,83 @@ abstract final class FamilyEditor {
   /// asking here.
   static CalendarDate changesTakeEffect(Family family, CalendarDate today) =>
       _nextTurnover(RotaEngine.forFamily(family), today);
+
+  /// Adds a song to the family's book (#110).
+  ///
+  /// Takes effect immediately. There is no epoch and no next turnover to
+  /// wait for: a song is not a turn, and nothing about who leads prayer
+  /// changes because somebody wrote down what they like.
+  static Family addSong(
+    Family family, {
+    required String title,
+    required String addedBy,
+    required CalendarDate today,
+    required IdGenerator ids,
+    String? performer,
+    String? link,
+  }) {
+    final String name = title.trim();
+    if (name.isEmpty) {
+      throw ArgumentError.value(title, 'title', 'cannot be empty');
+    }
+    if (!family.membersById.containsKey(addedBy)) {
+      throw ArgumentError.value(addedBy, 'addedBy', 'is not in this family');
+    }
+
+    return family.copyWith(
+      songs: <Song>[
+        ...family.songs,
+        Song(
+          id: ids.newId('song'),
+          title: name,
+          performer: _orNull(performer),
+          addedBy: addedBy,
+          addedOn: today,
+          link: _orNull(link),
+        ),
+      ],
+    );
+  }
+
+  /// Takes a song out of the book.
+  ///
+  /// Marked rather than deleted (ADR-012). Two phones merge by union, so a
+  /// record removed on one would come back from the other; a flag merges in
+  /// one direction and survives.
+  static Family removeSong(Family family, {required String songId}) {
+    final bool known = family.songs.any((Song s) => s.id == songId);
+    if (!known) {
+      throw ArgumentError.value(songId, 'songId', 'is not in the songbook');
+    }
+    return family.copyWith(
+      songs: <Song>[
+        for (final Song song in family.songs)
+          if (song.id == songId) song.remove() else song,
+      ],
+    );
+  }
+
+  /// The songs still in the book, newest first.
+  ///
+  /// Removed records stay in `family.songs` because that is how two phones
+  /// agree one was taken out; they are not in the book any more, so they do
+  /// not answer here.
+  static List<Song> songbook(Family family) {
+    final List<Song> kept = <Song>[
+      for (final Song song in family.songs)
+        if (!song.removed) song,
+    ];
+    kept.sort((Song a, Song b) {
+      final int byDate = b.addedOn.compareTo(a.addedOn);
+      return byDate != 0 ? byDate : b.id.compareTo(a.id);
+    });
+    return kept;
+  }
+
+  static String? _orNull(String? value) {
+    final String trimmed = value?.trim() ?? '';
+    return trimmed.isEmpty ? null : trimmed;
+  }
 
   /// The skip standing against [weekStart], or null if that week is running.
   ///

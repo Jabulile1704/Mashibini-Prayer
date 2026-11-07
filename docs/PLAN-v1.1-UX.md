@@ -215,7 +215,20 @@ nobody a week of prayer.
 It also began with withdrawing #111, which was wrong, and correcting the six
 places the wrong number had reached. See [DAY-23.md](daily/DAY-23.md).
 
-### Day 24 — Icon, accessibility re-pass, release
+### Day 24 — Accessibility re-pass · **Done, minus the release**
+
+The icon was already refined: this plan asks for "the same ring mark, drawn
+better", and ADR-017 replaced the ring with the comb on Day 17 with every
+size regenerated on Day 18. Re-drawing it to tick off a plan written eight
+days earlier would be work that looks like progress.
+
+The pass itself found two defects — a navigation bar announcing buttons with
+no activate action, and `ThemeData.disabledColor` still at the 2.42:1 Day 19
+found and fixed only at the call site. See [DAY-24.md](daily/DAY-24.md).
+
+The release is cut, green and waiting on a tag.
+
+### Day 24 as planned — Icon, accessibility re-pass, release
 
 A refined icon — the same ring mark, drawn better — and the launch screen
 regenerated from it by `tool/generate_icons.dart`, which already produces

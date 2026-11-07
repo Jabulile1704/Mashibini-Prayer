@@ -5,6 +5,7 @@ import '../../domain/entities/cycle.dart';
 import '../../domain/entities/family.dart';
 import '../../domain/entities/member.dart';
 import '../../domain/entities/skipped_turn.dart';
+import '../../domain/entities/song.dart';
 import 'json_reads.dart';
 
 /// Translates between a [Family] and the JSON the local store holds.
@@ -51,11 +52,18 @@ abstract final class FamilyJson {
     'skips': <Map<String, Object?>>[
       for (final SkippedTurn skip in family.skips) _skipToMap(skip),
     ],
+    // Written only when there are any, so a family that has never added a
+    // song carries no field describing its absence — and a v3 document and
+    // a v4 one with an empty book are byte-identical.
+    if (family.songs.isNotEmpty)
+      'songs': <Map<String, Object?>>[
+        for (final Song song in family.songs) _songToMap(song),
+      ],
   };
 
   /// Reads a family, migrating it to the current schema on the way through.
   ///
-  /// Two migrations so far and neither moves a byte. v1 to v2 changed what
+  /// Three migrations so far and none of them moves a byte. v1 to v2 changed what
   /// the turnover day *meant*; v2 to v3 added three optional fields to a
   /// member, so a v2 document is a v3 family with no tree recorded — which
   /// is what it is. See [Family.currentSchemaVersion]. A v1 document's cycles are all anchored
@@ -101,6 +109,9 @@ abstract final class FamilyJson {
       members: readObjectList(json, 'members', _memberFromMap),
       cycles: cycles,
       skips: readObjectList(json, 'skips', _skipFromMap),
+      songs: json.containsKey('songs')
+          ? readObjectList(json, 'songs', _songFromMap)
+          : const <Song>[],
       schemaVersion: Family.currentSchemaVersion,
     );
   }
@@ -156,6 +167,26 @@ abstract final class FamilyJson {
     }
     return CycleReason.reordered;
   }
+
+  static Map<String, Object?> _songToMap(Song song) => <String, Object?>{
+    'id': song.id,
+    'title': song.title,
+    'addedBy': song.addedBy,
+    'addedOn': song.addedOn.toString(),
+    if (song.performer != null) 'performer': song.performer,
+    if (song.link != null) 'link': song.link,
+    if (song.removed) 'removed': true,
+  };
+
+  static Song _songFromMap(Map<String, Object?> json) => Song(
+    id: readString(json, 'id'),
+    title: readString(json, 'title'),
+    addedBy: readString(json, 'addedBy'),
+    addedOn: CalendarDate.parse(readString(json, 'addedOn')),
+    performer: readStringOrNull(json, 'performer'),
+    link: readStringOrNull(json, 'link'),
+    removed: readBoolOr(json, 'removed', false),
+  );
 
   static Map<String, Object?> _skipToMap(SkippedTurn skip) => <String, Object?>{
     'id': skip.id,

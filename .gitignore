@@ -56,3 +56,14 @@ test/rules/node_modules/
 # stale silently, which is the exact failure this fixture exists to fix — the
 # rules and the app agreeing on paper and not in fact.
 test/rules/fixtures/
+
+# Built artefacts, which belong on a GitHub Release and not in the history.
+#
+# A 52MB APK was committed here on 4 November while testing
+# `tool/apk_signing_key.dart` against a real release — swept in by a
+# `git add -A` that should have been a named path. Removing it from the
+# tree does not remove it from the history; this stops the next one.
+dist/
+*.apk
+*.aab
+*.ipa

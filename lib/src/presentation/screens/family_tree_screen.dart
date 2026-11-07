@@ -75,6 +75,11 @@ class _FamilyTreeScreenState extends State<FamilyTreeScreen> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
+      // A sheet whose body scrolls swallows the drag that would dismiss
+      // it: pulling down moves the list, and only a pull that starts at
+      // the very top closes anything. The handle is a target that always
+      // dismisses, wherever the list happens to be scrolled to.
+      showDragHandle: true,
       builder: (BuildContext context) => FamilyMemberSheet(
         family: family,
         member: member,

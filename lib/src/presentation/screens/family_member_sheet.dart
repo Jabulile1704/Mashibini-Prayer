@@ -37,6 +37,7 @@ class FamilyMemberSheet extends StatefulWidget {
   static const Key choosePhoto = Key('member.photo.choose');
   static const Key removePhoto = Key('member.photo.remove');
   static const Key save = Key('member.save');
+  static const Key close = Key('member.close');
 
   static Key parentToggle(String id) => Key('member.parent.$id');
 
@@ -125,133 +126,186 @@ class _FamilyMemberSheetState extends State<FamilyMemberSheet> {
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
-      child: ListView(
-        shrinkWrap: true,
-        padding: const EdgeInsets.fromLTRB(
-          Space.lg,
-          Space.lg,
-          Space.lg,
-          Space.xl,
-        ),
+      // A column with the scroll inside it, so **Keep stays put**. It used
+      // to be the last item of the list, which meant that adding a
+      // photograph grew the content and pushed the only way to save below
+      // the fold — a tap aimed at it landed on the scrim and dismissed the
+      // sheet instead. Found by a test that had been passing while the
+      // sheet happened to be short enough.
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Text(widget.member.displayName, style: theme.textTheme.titleLarge),
-          const SizedBox(height: Space.xl),
-
-          // ───────────────────────── photograph ─────────────────────────
-          Row(
-            children: <Widget>[
-              if (_photoPath != null)
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(Radii.sm),
-                  child: Image.file(
-                    File(_photoPath!),
-                    width: 64,
-                    height: 64,
-                    fit: BoxFit.cover,
-                    errorBuilder: (
-                      BuildContext context,
-                      Object e,
-                      StackTrace? s,
-                    ) => const SizedBox(width: 64, height: 64),
-                  ),
-                ),
-              if (_photoPath != null) const SizedBox(width: Space.lg),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          Flexible(
+            child: ListView(
+              shrinkWrap: true,
+              padding: const EdgeInsets.fromLTRB(
+                Space.lg,
+                Space.lg,
+                Space.lg,
+                Space.lg,
+              ),
+              children: <Widget>[
+                // A way out that is a button rather than a gesture. The drag
+                // handle above dismisses too, but a handle is a thing you have to
+                // know about — and this sheet is reached by tapping a face, which
+                // is the kind of tap somebody makes to *look* rather than to
+                // edit.
+                Row(
                   children: <Widget>[
-                    OutlinedButton.icon(
-                      key: FamilyMemberSheet.choosePhoto,
-                      onPressed: _busy ? null : _choosePhoto,
-                      icon: const Icon(Icons.photo_outlined),
-                      label: Text(
-                        _photoPath == null
-                            ? 'Choose a photograph'
-                            : 'Change the photograph',
+                    Expanded(
+                      child: Text(
+                        widget.member.displayName,
+                        style: theme.textTheme.titleLarge,
                       ),
                     ),
-                    if (_photoPath != null)
-                      TextButton(
-                        key: FamilyMemberSheet.removePhoto,
-                        onPressed: _busy
-                            ? null
-                            : () => setState(() => _photoPath = null),
-                        child: const Text('Remove it'),
-                      ),
+                    IconButton(
+                      key: FamilyMemberSheet.close,
+                      icon: const Icon(Icons.close),
+                      tooltip: 'Close without keeping changes',
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
                   ],
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: Space.sm),
-          Text(
-            'It stays on this phone and is never uploaded.',
-            style: theme.textTheme.bodySmall,
-          ),
+                const SizedBox(height: Space.lg),
 
-          // ──────────────────────────── role ────────────────────────────
-          const SizedBox(height: Space.xl),
-          TextField(
-            key: FamilyMemberSheet.roleField,
-            controller: _role,
-            textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(
-              labelText: 'What they are to the family',
-              hintText: 'Mama, eldest sister, born 2019…',
+                // ───────────────────────── photograph ─────────────────────────
+                Row(
+                  children: <Widget>[
+                    if (_photoPath != null)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(Radii.sm),
+                        child: Image.file(
+                          File(_photoPath!),
+                          width: 64,
+                          height: 64,
+                          fit: BoxFit.cover,
+                          errorBuilder: (
+                            BuildContext context,
+                            Object e,
+                            StackTrace? s,
+                          ) => const SizedBox(width: 64, height: 64),
+                        ),
+                      ),
+                    if (_photoPath != null) const SizedBox(width: Space.lg),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          OutlinedButton.icon(
+                            key: FamilyMemberSheet.choosePhoto,
+                            onPressed: _busy ? null : _choosePhoto,
+                            icon: const Icon(Icons.photo_outlined),
+                            label: Text(
+                              _photoPath == null
+                                  ? 'Choose a photograph'
+                                  : 'Change the photograph',
+                            ),
+                          ),
+                          if (_photoPath != null)
+                            TextButton(
+                              key: FamilyMemberSheet.removePhoto,
+                              onPressed: _busy
+                                  ? null
+                                  : () => setState(() => _photoPath = null),
+                              child: const Text('Remove it'),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: Space.sm),
+                Text(
+                  'It stays on this phone and is never uploaded.',
+                  style: theme.textTheme.bodySmall,
+                ),
+
+                // ──────────────────────────── role ────────────────────────────
+                const SizedBox(height: Space.xl),
+                TextField(
+                  key: FamilyMemberSheet.roleField,
+                  controller: _role,
+                  textCapitalization: TextCapitalization.sentences,
+                  decoration: const InputDecoration(
+                    labelText: 'What they are to the family',
+                    hintText: 'Mama, eldest sister, born 2019…',
+                  ),
+                ),
+                const SizedBox(height: Space.sm),
+                Text(
+                  'Your words, not a list the app chose.',
+                  style: theme.textTheme.bodySmall,
+                ),
+
+                // ─────────────────────────── parents ──────────────────────────
+                const SizedBox(height: Space.xl),
+                Text('Whose child they are', style: theme.textTheme.titleSmall),
+                const SizedBox(height: Space.sm),
+                if (possible.isEmpty)
+                  Text(
+                    'Nobody in the family can be a parent of '
+                    '${widget.member.displayName} — everyone else is already '
+                    'below them.',
+                    style: theme.textTheme.bodySmall,
+                  )
+                else
+                  // Only names that cannot close a loop are offered, so the
+                  // refusal is an absence rather than an error afterwards.
+                  for (final Member candidate in possible)
+                    CheckboxListTile(
+                      key: FamilyMemberSheet.parentToggle(candidate.id),
+                      value: _parents.contains(candidate.id),
+                      title: Text(candidate.displayName),
+                      subtitle: candidate.role == null
+                          ? null
+                          : Text(candidate.role!),
+                      controlAffinity: ListTileControlAffinity.leading,
+                      contentPadding: EdgeInsets.zero,
+                      onChanged: (bool? on) => setState(() {
+                        if (on ?? false) {
+                          _parents.add(candidate.id);
+                        } else {
+                          _parents.remove(candidate.id);
+                        }
+                      }),
+                    ),
+              ],
             ),
           ),
-          const SizedBox(height: Space.sm),
-          Text(
-            'Your words, not a list the app chose.',
-            style: theme.textTheme.bodySmall,
-          ),
-
-          // ─────────────────────────── parents ──────────────────────────
-          const SizedBox(height: Space.xl),
-          Text('Whose child they are', style: theme.textTheme.titleSmall),
-          const SizedBox(height: Space.sm),
-          if (possible.isEmpty)
-            Text(
-              'Nobody in the family can be a parent of '
-              '${widget.member.displayName} — everyone else is already '
-              'below them.',
-              style: theme.textTheme.bodySmall,
-            )
-          else
-            // Only names that cannot close a loop are offered, so the
-            // refusal is an absence rather than an error afterwards.
-            for (final Member candidate in possible)
-              CheckboxListTile(
-                key: FamilyMemberSheet.parentToggle(candidate.id),
-                value: _parents.contains(candidate.id),
-                title: Text(candidate.displayName),
-                subtitle: candidate.role == null ? null : Text(candidate.role!),
-                controlAffinity: ListTileControlAffinity.leading,
-                contentPadding: EdgeInsets.zero,
-                onChanged: (bool? on) => setState(() {
-                  if (on ?? false) {
-                    _parents.add(candidate.id);
-                  } else {
-                    _parents.remove(candidate.id);
-                  }
-                }),
+          // Outside the scroll too. It was the last item of the list, which
+          // meant a picker that would not open reported itself somewhere
+          // below the fold — an error nobody can see is the same defect as
+          // a button nobody can reach.
+          if (_message != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                Space.lg,
+                0,
+                Space.lg,
+                Space.sm,
               ),
-
-          if (_message != null) ...<Widget>[
-            const SizedBox(height: Space.lg),
-            Text(
-              _message!,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.error,
+              child: Text(
+                _message!,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.error,
+                ),
               ),
             ),
-          ],
-
-          const SizedBox(height: Space.xl),
-          FilledButton(
-            key: FamilyMemberSheet.save,
-            onPressed: _busy ? null : _keep,
-            child: const Text('Keep'),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              Space.lg,
+              Space.sm,
+              Space.lg,
+              Space.lg,
+            ),
+            child: SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                key: FamilyMemberSheet.save,
+                onPressed: _busy ? null : _keep,
+                child: const Text('Keep'),
+              ),
+            ),
           ),
         ],
       ),

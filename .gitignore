@@ -49,3 +49,14 @@ app.*.map.json
 
 # Rules tests pull a node_modules tree; the lockfile is what we version.
 test/rules/node_modules/
+
+# Built artefacts, which belong on a GitHub Release and not in the history.
+#
+# A 52MB APK was committed here on 4 November while testing
+# `tool/apk_signing_key.dart` against a real release — swept in by a
+# `git add -A` that should have been a named path. Removing it from the
+# tree does not remove it from the history; this stops the next one.
+dist/
+*.apk
+*.aab
+*.ipa

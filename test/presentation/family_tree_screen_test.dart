@@ -282,6 +282,32 @@ void main() {
       expect(after.cycles.single.order, before.cycles.single.order);
     });
 
+    testWidgets('there is a way out that is not a gesture', (
+      WidgetTester tester,
+    ) async {
+      // The sheet's body scrolls, which swallows the drag that would
+      // dismiss it — so pulling down moved the list and the owner reported
+      // it as hard to get back out of. A handle and a close button now do
+      // it, and the button is the one you can find without knowing it is
+      // there.
+      await family.save(familyOfFour());
+      await open(tester);
+      await openSheetFor(tester, 'm3');
+
+      expect(find.byKey(FamilyMemberSheet.close), findsOneWidget);
+
+      await tester.enterText(find.byKey(FamilyMemberSheet.roleField), 'Mama');
+      await tester.tap(find.byKey(FamilyMemberSheet.close));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(FamilyMemberSheet.roleField), findsNothing);
+      expect(
+        (await family.load())!.membersById['m3']!.role,
+        isNull,
+        reason: 'closing is not keeping',
+      );
+    });
+
     testWidgets('a name that would close a loop is never offered', (
       WidgetTester tester,
     ) async {

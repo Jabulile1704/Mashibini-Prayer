@@ -22,6 +22,20 @@ abstract final class AppTheme {
     return ThemeData(
       colorScheme: colours,
       useMaterial3: true,
+      // Flutter's default is 38% black, which composites to **2.42:1**
+      // against the wax ground — the exact ratio Day 19 found on a
+      // simulator, on a row that was stating a fact rather than offering a
+      // disabled control.
+      //
+      // WCAG exempts genuinely inactive controls from a contrast
+      // requirement. This is deliberately stricter, because the defect was
+      // not an inactive control: it was information nobody could read. At
+      // 55% the treatment still reads as muted — 3.99:1 on light, 5.91:1 on
+      // dark — and stays legible if anybody reaches for it again.
+      //
+      // `contrast_test.dart` asserts both, so lowering this fails rather
+      // than waiting to be noticed on a phone.
+      disabledColor: colours.onSurface.withValues(alpha: 0.55),
       textTheme: text,
       scaffoldBackgroundColor: colours.surface,
 

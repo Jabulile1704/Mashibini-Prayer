@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mashibini_prayer/src/presentation/brand/palette.dart';
+import 'package:mashibini_prayer/src/presentation/brand/theme.dart';
 
 /// N5 asks that the app is readable. Text scaling is only half of that; the
 /// other half is contrast, and nothing in this project measured it until
@@ -196,6 +197,40 @@ void main() {
           c.onSurfaceVariant,
           c.surface,
           atLeast: 4.5,
+        );
+      });
+
+      // Day 19 shipped a row at **2.42:1** and this file passed it, because
+      // every pair above comes from `Palette` and the offending colour did
+      // not: `enabled: false` paints a `ListTile` at `ThemeData.
+      // disabledColor`, which Flutter defaults to 38% black.
+      //
+      // Day 24 then tried Flutter's own `textContrastGuideline`, which
+      // measures rendered pixels and ought to be exactly the right tool.
+      // **It does not catch this.** Reintroducing the defect on purpose and
+      // scrolling the row into view, the matcher still passed. So the gap
+      // is closed here, where the value can at least be asserted.
+      test('the disabled treatment is readable, or it is not used', () {
+        final ThemeData theme = name == 'light'
+            ? AppTheme.light()
+            : AppTheme.dark();
+        // WCAG exempts genuinely inactive controls from a contrast
+        // requirement, and this is deliberately stricter: Day 19's row was
+        // not an inactive control, it was a **statement of fact** wearing
+        // the disabled treatment. 3:1 is the large-text and graphics bar —
+        // enough that a greyed label stays legible if anybody reaches for
+        // it again.
+        expectContrast(
+          '$name disabledColor on surface',
+          theme.disabledColor,
+          c.surface,
+          atLeast: 3,
+        );
+        expectContrast(
+          '$name disabledColor on card',
+          theme.disabledColor,
+          c.surfaceContainerHighest,
+          atLeast: 3,
         );
       });
 

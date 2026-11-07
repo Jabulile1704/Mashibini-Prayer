@@ -149,6 +149,14 @@ class _SideDestination extends StatelessWidget {
       button: true,
       selected: selected,
       label: destination.label,
+      // **The action belongs on the node, not only on the widget.** The
+      // handler below sits inside `ExcludeSemantics`, so without this the
+      // tree offers a node that announces itself as a button and exposes no
+      // way to press it. Found by stripping the labels to check that
+      // `labeledTapTargetGuideline` could fail — it passed, because a
+      // button with no action is not a tap target it looks at, which made
+      // the missing action visible rather than the missing label.
+      onTap: onTap,
       child: ExcludeSemantics(
         child: InkResponse(
           onTap: onTap,
@@ -218,6 +226,7 @@ class _CentreCell extends StatelessWidget {
       button: true,
       selected: selected,
       label: destination.label,
+      onTap: onTap,
       child: ExcludeSemantics(
         child: GestureDetector(
           onTap: onTap,

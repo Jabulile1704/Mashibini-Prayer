@@ -134,7 +134,7 @@ void main() {
     });
 
     test('the schema version is written', () {
-      expect(FamilyJson.encode(familyOfFour()), contains('"schemaVersion":3'));
+      expect(FamilyJson.encode(familyOfFour()), contains('"schemaVersion":4'));
     });
 
     test('the turnover day is written, for a person reading the file', () {
@@ -235,7 +235,7 @@ void main() {
       // migration past its own check as well.
       final Map<String, Object?> json = FamilyJson.toMap(familyOfFour())
         ..remove('schemaVersion');
-      expect(FamilyJson.fromMap(json).schemaVersion, 3);
+      expect(FamilyJson.fromMap(json).schemaVersion, 4);
       expect(
         RotaEngine.forFamily(FamilyJson.fromMap(json)).turnOn(anchor)!.leader,
         jabulile,
@@ -292,7 +292,7 @@ void main() {
 
     test('it reads, and comes back stamped with the current version', () {
       final Family restored = FamilyJson.decode(v1);
-      expect(restored.schemaVersion, 3);
+      expect(restored.schemaVersion, 4);
       expect(restored.id, 'f1');
       expect(restored.members, hasLength(4));
       expect(restored.skips.single.id, 's1');
@@ -335,13 +335,13 @@ void main() {
       }
     });
 
-    test('and is written back as v3, so an older build refuses it', () {
+    test('and is written back as v4, so an older build refuses it', () {
       // The reason the version moved at all. An older build reading a family
       // whose epochs sit on different weekdays would hand it to its own
       // engine and throw on every frame of the home screen; the marker makes
       // it decline instead.
       final String rewritten = FamilyJson.encode(FamilyJson.decode(v1));
-      expect(rewritten, contains('"schemaVersion":3'));
+      expect(rewritten, contains('"schemaVersion":4'));
     });
 
     test('a v1 document whose turnover day disagreed with its cycles now '

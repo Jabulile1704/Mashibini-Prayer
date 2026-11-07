@@ -13,6 +13,7 @@ import 'package:mashibini_prayer/src/presentation/screens/journal_screen.dart';
 import 'package:mashibini_prayer/src/presentation/screens/schedule_screen.dart';
 import 'package:mashibini_prayer/src/presentation/screens/settings_screen.dart';
 import 'package:mashibini_prayer/src/presentation/screens/setup_screen.dart';
+import 'package:mashibini_prayer/src/presentation/screens/songbook_screen.dart';
 import 'package:mashibini_prayer/src/presentation/screens/this_week_screen.dart';
 
 import '../support/fake_app_version.dart';
@@ -117,8 +118,15 @@ void main() {
       ids: FakeIdGenerator(),
       today: () => anchor,
     ),
+    'Songs we love': SongbookScreen(
+      familyRepository: family,
+      settings: settings,
+      ids: FakeIdGenerator(),
+      today: () => anchor,
+    ),
     'Family': FamilyTreeScreen(
       familyRepository: family,
+      settings: settings,
       photos: FakePhotos(),
       ids: FakeIdGenerator(),
       today: () => anchor,
@@ -145,6 +153,7 @@ void main() {
     'Set up the rota',
     'Who takes a week',
     'Family',
+    'Songs we love',
     'The shell',
   ];
 

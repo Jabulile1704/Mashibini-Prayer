@@ -1,6 +1,7 @@
 import 'cycle.dart';
 import 'member.dart';
 import 'skipped_turn.dart';
+import 'song.dart';
 
 /// Everything the rota needs to answer a question, in one value.
 ///
@@ -18,6 +19,7 @@ class Family {
     required this.members,
     required this.cycles,
     this.skips = const <SkippedTurn>[],
+    this.songs = const <Song>[],
     this.schemaVersion = currentSchemaVersion,
   });
 
@@ -25,6 +27,9 @@ class Family {
   ///
   /// A change that an older build could not read increments this, and the
   /// migration becomes a documented, tested step rather than a crash report.
+  ///
+  /// **4** — the family has a songbook (#110). Additive and append-only,
+  /// like the skips: absent means a family that has not added one.
   ///
   /// **3** — a member may carry a role, a photograph and their parents
   /// (#109). Purely additive: every field is optional and absent means what
@@ -41,7 +46,7 @@ class Family {
   /// changed is that two cycles may now sit on different weekdays. A v1 build
   /// would read such a family, hand it to `RotaEngine`, and throw on every
   /// frame of the home screen. The version is what makes it refuse instead.
-  static const int currentSchemaVersion = 3;
+  static const int currentSchemaVersion = 4;
 
   final String id;
   final String name;
@@ -49,6 +54,15 @@ class Family {
   final List<Member> members;
   final List<Cycle> cycles;
   final List<SkippedTurn> skips;
+
+  /// The songs this family loves (#110).
+  ///
+  /// On the family rather than beside the journal, because a songbook is
+  /// shared and a journal is not (R4.2). That one placement decision is the
+  /// difference between a thing the family keeps together and a thing each
+  /// person keeps alone.
+  final List<Song> songs;
+
   final int schemaVersion;
 
   Map<String, Member> get membersById => <String, Member>{
@@ -92,12 +106,14 @@ class Family {
     List<Member>? members,
     List<Cycle>? cycles,
     List<SkippedTurn>? skips,
+    List<Song>? songs,
   }) => Family(
     id: id,
     name: name ?? this.name,
     members: members ?? this.members,
     cycles: cycles ?? this.cycles,
     skips: skips ?? this.skips,
+    songs: songs ?? this.songs,
     schemaVersion: schemaVersion,
   );
 

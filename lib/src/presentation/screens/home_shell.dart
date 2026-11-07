@@ -147,6 +147,7 @@ class _HomeShellState extends State<HomeShell> {
           ),
           FamilyTreeScreen(
             familyRepository: widget.repository,
+            settings: widget.settings,
             photos: widget.photos,
             ids: widget.ids,
             today: widget.today,

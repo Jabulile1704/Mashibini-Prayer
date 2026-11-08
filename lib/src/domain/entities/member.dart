@@ -18,6 +18,7 @@ class Member {
     this.role,
     this.photoPath,
     this.parentIds = const <String>[],
+    this.uid,
   });
 
   final String id;
@@ -56,11 +57,20 @@ class Member {
   /// child is not owed one.
   final List<String> parentIds;
 
+  /// Who this person is, to Firebase — null until they sign in (#76).
+  ///
+  /// The security rules written on Day 9 ask `request.auth.uid in
+  /// resource.data.memberUids`, and until this field existed the app wrote
+  /// no uids at all. The rules passed their own tests and would have
+  /// refused every document the app produces; see `Family.memberUids`.
+  final String? uid;
+
   Member copyWith({
     String? displayName,
     String? role,
     String? photoPath,
     List<String>? parentIds,
+    String? uid,
     bool clearRole = false,
     bool clearPhoto = false,
   }) => Member(
@@ -69,6 +79,7 @@ class Member {
     role: clearRole ? null : (role ?? this.role),
     photoPath: clearPhoto ? null : (photoPath ?? this.photoPath),
     parentIds: parentIds ?? this.parentIds,
+    uid: uid ?? this.uid,
   );
 
   @override
@@ -78,6 +89,7 @@ class Member {
       other.displayName == displayName &&
       other.role == role &&
       other.photoPath == photoPath &&
+      other.uid == uid &&
       _sameIds(other.parentIds, parentIds);
 
   static bool _sameIds(List<String> a, List<String> b) {
@@ -93,8 +105,14 @@ class Member {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, displayName, role, photoPath, Object.hashAll(parentIds));
+  int get hashCode => Object.hash(
+    id,
+    displayName,
+    role,
+    photoPath,
+    uid,
+    Object.hashAll(parentIds),
+  );
 
   @override
   String toString() => 'Member($id, $displayName)';

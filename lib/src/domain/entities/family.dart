@@ -82,6 +82,29 @@ class Family {
   /// the epoch actually governing that date.
   int get turnoverWeekday => latestCycle.turnoverWeekday;
 
+  /// Every signed-in member's uid, for the security rules.
+  ///
+  /// Denormalised on purpose. Firestore rules cannot walk a subcollection or
+  /// iterate an array of objects, so "is the caller in this family" has to
+  /// be answerable from one flat field on the document itself — which is
+  /// what `firestore.rules` has asked for since Day 9:
+  ///
+  /// ```
+  /// request.auth.uid in resource.data.memberUids
+  /// ```
+  ///
+  /// Nothing wrote it until #76. The rules passed their own tests the whole
+  /// time, because those tests hand-built the documents they tested against
+  /// and the app's real ones were never shown to them.
+  ///
+  /// Empty until somebody signs in, which correctly means a family that has
+  /// not signed in cannot sync. That is the honest answer rather than a
+  /// loophole.
+  List<String> get memberUids => <String>[
+    for (final Member member in members)
+      if (member.uid case final String uid) uid,
+  ];
+
   /// The newest epoch, by date and then by id.
   ///
   /// The id tie-break matches `RotaEngine`'s, so two phones that each wrote

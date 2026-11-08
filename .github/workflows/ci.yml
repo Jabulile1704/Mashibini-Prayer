@@ -70,6 +70,19 @@ jobs:
           cache: npm
           cache-dependency-path: test/rules/package-lock.json
 
+      # The rules tests hand-built every document they checked, which is how
+      # they passed for twenty-five days while the rules asked for a
+      # `memberUids` the app never wrote. This emits the document the app's
+      # own serialiser produces, and the suite asserts the rules accept it.
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Emit the document the app actually writes
+        run: dart run tool/emit_rules_fixture.dart
+
       - name: Install
         working-directory: test/rules
         run: npm ci

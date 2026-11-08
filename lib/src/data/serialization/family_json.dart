@@ -43,6 +43,11 @@ abstract final class FamilyJson {
     // legible to a person, and "which day does this family hand over on" is
     // a tedious thing to work out from a date.
     'turnoverWeekday': family.turnoverWeekday,
+    // Flat, denormalised, and read by `firestore.rules` rather than by this
+    // app — see `Family.memberUids`. Written unconditionally, including as
+    // an empty list, because a rule asking `uid in resource.data.memberUids`
+    // errors on a missing field rather than evaluating false.
+    'memberUids': family.memberUids,
     'members': <Map<String, Object?>>[
       for (final Member member in family.members) _memberToMap(member),
     ],
@@ -119,6 +124,7 @@ abstract final class FamilyJson {
   static Map<String, Object?> _memberToMap(Member member) => <String, Object?>{
     'id': member.id,
     'displayName': member.displayName,
+    if (member.uid != null) 'uid': member.uid,
     // Written only when set, so a family that has recorded no tree carries
     // no empty fields describing its absence — and a v2 document and a v3
     // one with nothing filled in are byte-identical.
@@ -135,6 +141,7 @@ abstract final class FamilyJson {
     // and #75 will have to drop it on the way in rather than show a broken
     // image for somebody else's file.
     photoPath: readStringOrNull(json, 'photoPath'),
+    uid: readStringOrNull(json, 'uid'),
     parentIds: json.containsKey('parentIds')
         ? readStringList(json, 'parentIds')
         : const <String>[],

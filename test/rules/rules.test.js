@@ -43,6 +43,34 @@ const familyDoc = {
   memberUids: [JABU, SISI],
 };
 
+// The document the **app** produces, emitted by its own serialiser.
+//
+// Everything above is hand-built, which is how these tests could pass for
+// twenty-five days while the rules asked for a `memberUids` the app never
+// wrote. Both halves were right in isolation and had never been introduced.
+//
+// Written by `tool/emit_rules_fixture.dart`, which CI runs before this
+// suite. A Dart test cannot reach the emulator and this file cannot reach
+// `FamilyJson`; a fixture on disk is the only honest seam between them.
+const fixturePath = new URL(
+  './fixtures/family-from-the-app.json',
+  import.meta.url,
+);
+
+let fromTheApp;
+try {
+  fromTheApp = JSON.parse(readFileSync(fixturePath, 'utf8'));
+} catch (cause) {
+  // Not committed on purpose: a checked-in copy of a generated document
+  // goes stale silently, which is the exact failure this fixture exists to
+  // fix.
+  throw new Error(
+    'Missing the app-produced fixture. Run, from the repository root:\n' +
+      '  dart run tool/emit_rules_fixture.dart',
+    { cause },
+  );
+}
+
 before(async () => {
   env = await initializeTestEnvironment({
     projectId: 'demo-mashibini',
@@ -255,5 +283,43 @@ describe('the rules file is the one in the repository', () => {
   it('reads from firestore.rules rather than an inline copy', () => {
     const source = readFileSync('../../firestore.rules', 'utf8');
     assert.match(source, /match \/journals\/\{uid\}/);
+  });
+});
+
+describe('the document the app actually writes', () => {
+  // The test that would have caught it. Not "do the rules work" — they did
+  // — but "do the rules accept what this app produces", which nothing had
+  // ever asked.
+  it('is accepted by the rules it has to pass', async () => {
+    const db = env.authenticatedContext(JABU).firestore();
+    await assertSucceeds(
+      setDoc(doc(db, `families/${fromTheApp.id}`), fromTheApp),
+    );
+  });
+
+  it('carries the field the rules read', () => {
+    // Belt and braces, and it fails for a clearer reason than a rules
+    // rejection would: if `memberUids` ever stops being written, this says
+    // so in one line instead of as a permission error.
+    assert.ok(
+      Array.isArray(fromTheApp.memberUids),
+      'the app must write memberUids, or every rule that reads it errors',
+    );
+    assert.ok(fromTheApp.memberUids.includes(JABU));
+  });
+
+  it('is refused for somebody who is not in it', async () => {
+    const db = env.authenticatedContext(STRANGER).firestore();
+    await assertFails(
+      setDoc(doc(db, `families/${fromTheApp.id}`), fromTheApp),
+    );
+  });
+
+  it('a member who has not signed in is simply not in memberUids', () => {
+    // Mama has no uid in the fixture. She is in the family and cannot
+    // sync, which is the honest consequence rather than a loophole.
+    const names = fromTheApp.members.map((m) => m.displayName);
+    assert.ok(names.includes('Mama'));
+    assert.equal(fromTheApp.memberUids.length, 2);
   });
 });

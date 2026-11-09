@@ -47,7 +47,7 @@ lib/
   src/
     app.dart                 MaterialApp shell and routing
     domain/
-      entities/              Member, Cycle, Turn, Skip, JournalEntry, Verse
+      entities/              Member, Cycle, Turn, Skip, JournalEntry, Saying
       rota/
         rota_engine.dart     leaderOn(date), turnsFrom(date, count)
         week.dart            week arithmetic against the turnover weekday
@@ -59,10 +59,10 @@ lib/
       sources/
         local/               on-device store — the read path
         remote/              Firestore — the sync path (day 7)
-        assets/              bundled verses (day 9)
+        assets/              bundled sayings (day 9, replaced day 28)
     application/             controllers, one per screen
     presentation/
-      screens/               ThisWeek, Setup, Journal, Verse
+      screens/               ThisWeek, Setup, Journal, Family, Songs, Settings
       widgets/               shared pieces
 test/
   domain/                    the bulk of it — pure, fast, no Flutter binding

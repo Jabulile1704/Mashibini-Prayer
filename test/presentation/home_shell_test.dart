@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mashibini_prayer/src/app.dart';
+import 'package:mashibini_prayer/src/data/repositories/audio_library_repository.dart';
 import 'package:mashibini_prayer/src/data/repositories/device_settings_repository.dart';
 import 'package:mashibini_prayer/src/data/repositories/journal_repository.dart';
 import 'package:mashibini_prayer/src/data/repositories/local_family_repository.dart';
@@ -11,6 +12,7 @@ import 'package:mashibini_prayer/src/presentation/screens/settings_screen.dart';
 import '../support/fake_photos.dart';
 import '../support/fake_app_version.dart';
 import '../support/fake_identity.dart';
+import '../support/fake_audio.dart';
 import '../support/fake_id_generator.dart';
 import '../support/fake_key_value_store.dart';
 import '../support/fake_reminders.dart';
@@ -59,6 +61,8 @@ void main() {
           reminders: FakeReminders(),
           appVersion: FakeAppVersion(),
           identity: FakeIdentity(),
+          audio: FakeAudio(),
+          library: AudioLibraryRepository(store: FakeKeyValueStore()),
           photos: FakePhotos(),
           ids: FakeIdGenerator(),
           today: () => anchor,
@@ -108,7 +112,7 @@ void main() {
       for (final String tab in <String>[
         'Ahead',
         'Journal',
-        'Family',
+        'Songs',
         'Settings',
       ]) {
         expect(find.text(tab), findsWidgets, reason: '$tab should be a tab');
@@ -177,8 +181,11 @@ void main() {
       await tapTab(tester, 'Journal');
       expect(find.textContaining('Nothing written yet'), findsOneWidget);
 
-      await tapTab(tester, 'Family');
-      expect(find.textContaining('never uploaded'), findsOneWidget);
+      // Songs took the Family tab's slot on Day 27; the family tree is
+      // reached from inside it now — a tree you set up once, a library you
+      // open often (#124).
+      await tapTab(tester, 'Songs');
+      expect(find.textContaining('Everyone in the family sees'), findsWidgets);
 
       await tapTab(tester, 'Settings');
       expect(find.text('Which one are you?'), findsOneWidget);

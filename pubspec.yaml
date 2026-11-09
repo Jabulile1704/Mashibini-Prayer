@@ -7,6 +7,11 @@ environment:
   sdk: ^3.13.3
 
 dependencies:
+  # Choosing and playing a recording the family already has (#124). The
+  # file is copied into the app's own directory and its path is kept out of
+  # the shared document — see `AudioLibraryRepository`.
+  audioplayers: ^6.5.1
+  file_selector: ^1.0.3
   firebase_auth: ^7.0.0
   firebase_core: ^5.1.0
   flutter:

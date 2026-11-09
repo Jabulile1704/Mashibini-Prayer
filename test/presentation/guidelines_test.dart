@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mashibini_prayer/src/app.dart';
+import 'package:mashibini_prayer/src/data/repositories/audio_library_repository.dart';
 import 'package:mashibini_prayer/src/data/repositories/device_settings_repository.dart';
 import 'package:mashibini_prayer/src/data/repositories/journal_repository.dart';
 import 'package:mashibini_prayer/src/data/repositories/local_family_repository.dart';
@@ -18,6 +19,7 @@ import 'package:mashibini_prayer/src/presentation/screens/this_week_screen.dart'
 
 import '../support/fake_app_version.dart';
 import '../support/fake_identity.dart';
+import '../support/fake_audio.dart';
 import '../support/fake_id_generator.dart';
 import '../support/fake_key_value_store.dart';
 import '../support/fake_photos.dart';
@@ -123,6 +125,9 @@ void main() {
     'Songs we love': SongbookScreen(
       familyRepository: family,
       settings: settings,
+      audio: FakeAudio(),
+      library: AudioLibraryRepository(store: FakeKeyValueStore()),
+      photos: FakePhotos(),
       ids: FakeIdGenerator(),
       today: () => anchor,
     ),
@@ -141,6 +146,8 @@ void main() {
       reminders: reminders,
       appVersion: FakeAppVersion(),
       identity: FakeIdentity(),
+      audio: FakeAudio(),
+      library: AudioLibraryRepository(store: FakeKeyValueStore()),
       photos: FakePhotos(),
       ids: FakeIdGenerator(),
       today: () => anchor,

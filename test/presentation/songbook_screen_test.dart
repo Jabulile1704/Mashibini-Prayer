@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mashibini_prayer/src/app.dart';
+import 'package:mashibini_prayer/src/data/repositories/audio_library_repository.dart';
 import 'package:mashibini_prayer/src/data/repositories/device_settings_repository.dart';
 import 'package:mashibini_prayer/src/data/repositories/local_family_repository.dart';
 import 'package:mashibini_prayer/src/domain/entities/family.dart';
@@ -10,6 +11,8 @@ import 'package:mashibini_prayer/src/presentation/screens/songbook_screen.dart';
 
 import '../support/fake_id_generator.dart';
 import '../support/fake_key_value_store.dart';
+import '../support/fake_audio.dart';
+import '../support/fake_photos.dart';
 import '../support/family_fixtures.dart';
 
 /// The songbook (#110).
@@ -21,11 +24,15 @@ import '../support/family_fixtures.dart';
 void main() {
   late LocalFamilyRepository family;
   late LocalDeviceSettingsRepository settings;
+  late AudioLibraryRepository library;
+  late FakeAudio audio;
 
   setUp(() {
     final FakeKeyValueStore store = FakeKeyValueStore();
     family = LocalFamilyRepository(store: store);
     settings = LocalDeviceSettingsRepository(store: store);
+    library = AudioLibraryRepository(store: store);
+    audio = FakeAudio();
   });
 
   tearDown(() async {
@@ -42,6 +49,9 @@ void main() {
         home: SongbookScreen(
           familyRepository: family,
           settings: settings,
+          audio: audio,
+          library: library,
+          photos: FakePhotos(),
           ids: FakeIdGenerator(),
           today: () => anchor,
         ),
@@ -230,6 +240,153 @@ void main() {
 
       expect(find.byKey(SongbookScreen.addSong), findsOneWidget);
     });
+  });
+
+  group('recordings on this phone (#124)', () {
+    Future<void> withOneSong(WidgetTester tester) async {
+      await family.save(familyOfFour());
+      await settings.saveYouAre(jabulile.id);
+      await open(tester);
+      await addSong(tester, title: 'Siyahamba');
+    }
+
+    testWidgets('a song with no recording offers to take one', (
+      WidgetTester tester,
+    ) async {
+      await withOneSong(tester);
+      final Song song = FamilyEditor.songbook((await family.load())!).single;
+
+      expect(find.byKey(SongbookScreen.addAudioFor(song.id)), findsOneWidget);
+      expect(find.byKey(SongbookScreen.playFor(song.id)), findsNothing);
+    });
+
+    testWidgets('adding one turns the row into a play button', (
+      WidgetTester tester,
+    ) async {
+      await withOneSong(tester);
+      final Song song = FamilyEditor.songbook((await family.load())!).single;
+
+      audio.next = '/tmp/siyahamba.mp3';
+      await tester.tap(find.byKey(SongbookScreen.addAudioFor(song.id)));
+      await tester.pumpAndSettle();
+
+      expect(audio.pickedFor, <String>[song.id]);
+      expect(find.byKey(SongbookScreen.playFor(song.id)), findsOneWidget);
+      expect(await library.pathFor(song.id), '/tmp/siyahamba.mp3');
+    });
+
+    testWidgets('the path is kept out of the shared document', (
+      WidgetTester tester,
+    ) async {
+      // The decision this feature turns on. A path means nothing on
+      // anybody else's phone, and syncing it would show the family a play
+      // button that does nothing.
+      await withOneSong(tester);
+      final Song song = FamilyEditor.songbook((await family.load())!).single;
+
+      audio.next = '/tmp/siyahamba.mp3';
+      await tester.tap(find.byKey(SongbookScreen.addAudioFor(song.id)));
+      await tester.pumpAndSettle();
+
+      final Family stored = (await family.load())!;
+      expect(
+        stored.songs.single.toString(),
+        isNot(contains('siyahamba.mp3')),
+        reason: 'the recording is local; only the song is shared',
+      );
+      expect(await library.pathFor(song.id), isNotNull);
+    });
+
+    testWidgets('playing it, and stopping it again', (
+      WidgetTester tester,
+    ) async {
+      await withOneSong(tester);
+      final Song song = FamilyEditor.songbook((await family.load())!).single;
+      audio.next = '/tmp/siyahamba.mp3';
+      await tester.tap(find.byKey(SongbookScreen.addAudioFor(song.id)));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(SongbookScreen.playFor(song.id)));
+      await tester.pumpAndSettle();
+      expect(audio.played, <String>['/tmp/siyahamba.mp3']);
+
+      await tester.tap(find.byKey(SongbookScreen.playFor(song.id)));
+      await tester.pumpAndSettle();
+      expect(audio.stops, 1);
+    });
+
+    testWidgets('a track reaching its end stops looking like it is playing', (
+      WidgetTester tester,
+    ) async {
+      // Without this the pause button stays after the song has finished,
+      // and tapping it does nothing anybody can see.
+      await withOneSong(tester);
+      final Song song = FamilyEditor.songbook((await family.load())!).single;
+      audio.next = '/tmp/siyahamba.mp3';
+      await tester.tap(find.byKey(SongbookScreen.addAudioFor(song.id)));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(SongbookScreen.playFor(song.id)));
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.pause_circle_filled), findsOneWidget);
+
+      audio.finish();
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.pause_circle_filled), findsNothing);
+      expect(find.byIcon(Icons.play_circle_fill), findsOneWidget);
+    });
+
+    testWidgets('changing your mind in the file browser changes nothing', (
+      WidgetTester tester,
+    ) async {
+      await withOneSong(tester);
+      final Song song = FamilyEditor.songbook((await family.load())!).single;
+
+      audio.next = null;
+      await tester.tap(find.byKey(SongbookScreen.addAudioFor(song.id)));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(SongbookScreen.playFor(song.id)), findsNothing);
+      expect(await library.pathFor(song.id), isNull);
+    });
+
+    testWidgets('a file that cannot be used is said out loud', (
+      WidgetTester tester,
+    ) async {
+      await withOneSong(tester);
+      final Song song = FamilyEditor.songbook((await family.load())!).single;
+
+      audio.throws = StateError('not audio');
+      await tester.tap(find.byKey(SongbookScreen.addAudioFor(song.id)));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('could not be used'), findsOneWidget);
+    });
+
+    testWidgets('it says recordings do not travel with the song', (
+      WidgetTester tester,
+    ) async {
+      await withOneSong(tester);
+
+      expect(
+        find.textContaining('Recordings stay on the phone'),
+        findsOneWidget,
+      );
+    });
+  });
+
+  testWidgets('the family tree is reached from here now', (
+    WidgetTester tester,
+  ) async {
+    await family.save(familyOfFour());
+    await settings.saveYouAre(jabulile.id);
+    await open(tester);
+
+    await tester.tap(find.byKey(SongbookScreen.familyTree));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('never uploaded'), findsOneWidget);
   });
 
   testWidgets('an empty book says what it is for', (WidgetTester tester) async {

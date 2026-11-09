@@ -1,6 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../data/repositories/device_settings_repository.dart';
+import '../../data/repositories/audio_library_repository.dart';
+import '../../data/sources/platform/audio.dart';
+import '../../data/sources/platform/photos.dart';
 import '../../data/repositories/family_repository.dart';
 import '../../domain/entities/calendar_date.dart';
 import '../../domain/entities/family.dart';
@@ -11,6 +16,7 @@ import '../../domain/rota/family_editor.dart';
 import '../brand/tokens.dart';
 import '../widgets/centred_message.dart';
 import '../widgets/date_text.dart';
+import 'family_tree_screen.dart';
 
 /// The songs this family loves, and who chose them (#110, R7.1).
 ///
@@ -28,6 +34,9 @@ class SongbookScreen extends StatefulWidget {
   const SongbookScreen({
     required this.familyRepository,
     required this.settings,
+    required this.audio,
+    required this.library,
+    required this.photos,
     required this.ids,
     this.today,
     super.key,
@@ -35,6 +44,13 @@ class SongbookScreen extends StatefulWidget {
 
   final FamilyRepository familyRepository;
   final DeviceSettingsRepository settings;
+  final Audio audio;
+  final AudioLibraryRepository library;
+
+  /// Only to hand on to the family tree, which lives behind this screen
+  /// now (#124). This screen never touches it.
+  final Photos photos;
+
   final IdGenerator ids;
   final CalendarDate Function()? today;
 
@@ -43,6 +59,10 @@ class SongbookScreen extends StatefulWidget {
   static const Key performerField = Key('songbook.add.performer');
   static const Key confirmAdd = Key('songbook.add.confirm');
   static const Key everyoneSees = Key('songbook.everyoneSees');
+  static const Key familyTree = Key('songbook.familyTree');
+
+  static Key playFor(String songId) => Key('songbook.play.$songId');
+  static Key addAudioFor(String songId) => Key('songbook.audio.$songId');
 
   static Key rowFor(String songId) => Key('songbook.row.$songId');
   static Key removeFor(String songId) => Key('songbook.remove.$songId');
@@ -54,6 +74,46 @@ class SongbookScreen extends StatefulWidget {
 class _SongbookScreenState extends State<SongbookScreen> {
   late final Stream<Family?> _families = widget.familyRepository.watch();
   late final Stream<String?> _youAre = widget.settings.watchYouAre();
+  late final Stream<String?> _playing = widget.audio.playing();
+
+  /// Song id to a file **on this phone**. Reloaded rather than watched —
+  /// it only changes when this screen changes it.
+  Map<String, String> _recordings = <String, String>{};
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_reloadRecordings());
+  }
+
+  Future<void> _reloadRecordings() async {
+    final Map<String, String> found = await widget.library.all();
+    if (mounted) {
+      setState(() => _recordings = found);
+    }
+  }
+
+  Future<void> _addRecording(Song song) async {
+    try {
+      final String? path = await widget.audio.pickFor(song.id);
+      if (path != null) {
+        await widget.library.remember(song.id, path);
+        await _reloadRecordings();
+      }
+    } on Object catch (error) {
+      if (mounted) {
+        setState(() => _message = 'That recording could not be used: $error');
+      }
+    }
+  }
+
+  Future<void> _togglePlay(Song song, String path, bool isPlaying) async {
+    if (isPlaying) {
+      await widget.audio.stop();
+    } else {
+      await widget.audio.play(path);
+    }
+  }
 
   String? _message;
 
@@ -146,7 +206,13 @@ class _SongbookScreenState extends State<SongbookScreen> {
             return StreamBuilder<String?>(
               stream: _youAre,
               builder: (BuildContext context, AsyncSnapshot<String?> who) =>
-                  _book(theme, family, who.data),
+                  StreamBuilder<String?>(
+                    stream: _playing,
+                    builder: (
+                      BuildContext context,
+                      AsyncSnapshot<String?> playing,
+                    ) => _book(theme, family, who.data, playing.data),
+                  ),
             );
           },
         ),
@@ -154,7 +220,12 @@ class _SongbookScreenState extends State<SongbookScreen> {
     );
   }
 
-  Widget _book(ThemeData theme, Family family, String? youAre) {
+  Widget _book(
+    ThemeData theme,
+    Family family,
+    String? youAre,
+    String? playing,
+  ) {
     final List<Song> songs = FamilyEditor.songbook(family);
     final Map<String, Member> byId = family.membersById;
 
@@ -198,7 +269,37 @@ class _SongbookScreenState extends State<SongbookScreen> {
               key: SongbookScreen.rowFor(song.id),
               title: Text(song.title),
               subtitle: Text(_who(byId, song)),
-              isThreeLine: false,
+              // The recording lives on this phone and the song does not,
+              // so the leading control differs per device: a play button
+              // where the file is, an invitation to add one where it is
+              // not. Both are honest; neither pretends.
+              leading: _recordings.containsKey(song.id)
+                  ? IconButton(
+                      key: SongbookScreen.playFor(song.id),
+                      icon: Icon(
+                        playing == _recordings[song.id]
+                            ? Icons.pause_circle_filled
+                            : Icons.play_circle_fill,
+                      ),
+                      iconSize: 36,
+                      color: theme.colorScheme.secondary,
+                      tooltip: playing == _recordings[song.id]
+                          ? 'Stop "${song.title}"'
+                          : 'Play "${song.title}"',
+                      onPressed: () => _togglePlay(
+                        song,
+                        _recordings[song.id]!,
+                        playing == _recordings[song.id],
+                      ),
+                    )
+                  : IconButton(
+                      key: SongbookScreen.addAudioFor(song.id),
+                      icon: const Icon(Icons.library_music_outlined),
+                      tooltip:
+                          'Add a recording of "${song.title}" to this '
+                          'phone',
+                      onPressed: () => _addRecording(song),
+                    ),
               trailing: IconButton(
                 key: SongbookScreen.removeFor(song.id),
                 icon: const Icon(Icons.close),
@@ -218,6 +319,18 @@ class _SongbookScreenState extends State<SongbookScreen> {
             ),
           ),
 
+        if (songs.isNotEmpty) ...<Widget>[
+          Padding(
+            padding: const EdgeInsets.fromLTRB(Space.lg, Space.md, Space.lg, 0),
+            child: Text(
+              'Recordings stay on the phone they were added to. The list of '
+              'songs is shared; the audio is not, so a song can play here '
+              'and not on somebody else\'s phone.',
+              style: theme.textTheme.bodySmall,
+            ),
+          ),
+        ],
+
         const SizedBox(height: Space.lg),
         Padding(
           padding: Space.gutter,
@@ -236,6 +349,26 @@ class _SongbookScreenState extends State<SongbookScreen> {
                   icon: const Icon(Icons.add),
                   label: const Text('Add a song'),
                 ),
+        ),
+
+        const Divider(height: Space.xxl),
+        ListTile(
+          key: SongbookScreen.familyTree,
+          leading: const Icon(Icons.groups_outlined),
+          title: const Text('The family'),
+          subtitle: const Text('Who everybody is, and who they belong to'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (BuildContext context) => FamilyTreeScreen(
+                familyRepository: widget.familyRepository,
+                settings: widget.settings,
+                photos: widget.photos,
+                ids: widget.ids,
+                today: widget.today,
+              ),
+            ),
+          ),
         ),
       ],
     );

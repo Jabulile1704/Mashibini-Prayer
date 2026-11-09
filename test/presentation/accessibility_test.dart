@@ -19,6 +19,7 @@ import 'package:mashibini_prayer/src/presentation/screens/this_week_screen.dart'
 import '../support/fake_id_generator.dart';
 import '../support/fake_key_value_store.dart';
 import '../support/fake_app_version.dart';
+import '../support/fake_identity.dart';
 import '../support/fake_photos.dart';
 import '../support/fake_reminders.dart';
 import '../support/fake_sharing.dart';
@@ -76,6 +77,7 @@ void main() {
       sharing: FakeSharing(),
       reminders: reminders,
       appVersion: FakeAppVersion(),
+      identity: FakeIdentity(),
       ids: FakeIdGenerator(),
       today: () => anchor,
     ),
@@ -113,6 +115,7 @@ void main() {
       sharing: FakeSharing(),
       reminders: reminders,
       appVersion: FakeAppVersion(),
+      identity: FakeIdentity(),
       photos: FakePhotos(),
       ids: FakeIdGenerator(),
       today: () => anchor,

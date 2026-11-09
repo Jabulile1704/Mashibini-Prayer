@@ -7,6 +7,7 @@ environment:
   sdk: ^3.13.3
 
 dependencies:
+  firebase_auth: ^7.0.0
   firebase_core: ^5.1.0
   flutter:
     sdk: flutter
@@ -16,6 +17,7 @@ dependencies:
   # Picking a family photograph. The image is copied into the app's own
   # directory and never uploaded, so ADR-010's third clause is untouched —
   # see Member.photoPath.
+  google_sign_in: ^7.2.0
   image_picker: ^1.2.0
   package_info_plus: ^10.2.2
   path_provider: ^2.1.5

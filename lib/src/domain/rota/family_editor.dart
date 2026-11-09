@@ -362,6 +362,98 @@ abstract final class FamilyEditor {
   static CalendarDate changesTakeEffect(Family family, CalendarDate today) =>
       _nextTurnover(RotaEngine.forFamily(family), today);
 
+  /// Ties a signed-in account to one member of the family (#76, ADR-023).
+  ///
+  /// This is what makes `Family.memberUids` non-empty, and therefore what
+  /// lets anything sync at all — every path in `firestore.rules` asks
+  /// whether `request.auth.uid` is in that list.
+  ///
+  /// **A uid belongs to exactly one person.** Two members sharing one
+  /// account would make "only the author may read this journal" (R4.2)
+  /// unenforceable, because the database could not tell them apart. So
+  /// linking an account that is already on somebody else is refused rather
+  /// than quietly moved: it almost always means the wrong name was picked,
+  /// and silently reassigning it would hand one person another's journal.
+  ///
+  /// Linking is idempotent — signing in twice on the same phone, which
+  /// happens on every reinstall, must not be an error.
+  static Family linkUid(
+    Family family, {
+    required String memberId,
+    required String uid,
+  }) {
+    final Member? member = family.membersById[memberId];
+    if (member == null) {
+      throw ArgumentError.value(memberId, 'memberId', 'is not in this family');
+    }
+    if (uid.trim().isEmpty) {
+      throw ArgumentError.value(uid, 'uid', 'cannot be empty');
+    }
+
+    for (final Member other in family.members) {
+      if (other.uid == uid && other.id != memberId) {
+        throw ArgumentError.value(
+          uid,
+          'uid',
+          'already belongs to ${other.displayName}; sign out on that phone '
+              'or choose the right name',
+        );
+      }
+    }
+
+    if (member.uid == uid) {
+      return family;
+    }
+
+    return family.copyWith(
+      members: <Member>[
+        for (final Member each in family.members)
+          if (each.id == memberId) each.copyWith(uid: uid) else each,
+      ],
+    );
+  }
+
+  /// Takes the account off a member, so another can be linked.
+  ///
+  /// Signing out on a phone does **not** call this: the account still
+  /// belongs to that person, and unlinking would drop them out of
+  /// `memberUids` and stop every other phone syncing their changes. This is
+  /// for the other case — the wrong name was picked and has to be undone.
+  static Family unlinkUid(Family family, {required String memberId}) {
+    final Member? member = family.membersById[memberId];
+    if (member == null) {
+      throw ArgumentError.value(memberId, 'memberId', 'is not in this family');
+    }
+    if (member.uid == null) {
+      return family;
+    }
+    return family.copyWith(
+      members: <Member>[
+        for (final Member each in family.members)
+          if (each.id == memberId)
+            Member(
+              id: each.id,
+              displayName: each.displayName,
+              role: each.role,
+              photoPath: each.photoPath,
+              parentIds: each.parentIds,
+            )
+          else
+            each,
+      ],
+    );
+  }
+
+  /// Which member, if any, this account is already tied to.
+  static Member? memberFor(Family family, String uid) {
+    for (final Member member in family.members) {
+      if (member.uid == uid) {
+        return member;
+      }
+    }
+    return null;
+  }
+
   /// Adds a song to the family's book (#110).
   ///
   /// Takes effect immediately. There is no epoch and no next turnover to

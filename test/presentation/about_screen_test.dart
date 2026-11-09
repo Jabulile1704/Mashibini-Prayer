@@ -67,10 +67,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(
-      find.textContaining('2 Southern African sayings'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('2 Southern African sayings'), findsOneWidget);
     expect(find.textContaining('isiXhosa and Sesotho'), findsOneWidget);
   });
 

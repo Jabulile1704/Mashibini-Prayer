@@ -404,9 +404,7 @@ void main() {
       expect(shown(tester), isNot(today));
     });
 
-    testWidgets('the empty state shows no saying', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('the empty state shows no saying', (WidgetTester tester) async {
       await show(tester, on: anchor);
 
       expect(find.text('No rota yet'), findsOneWidget);

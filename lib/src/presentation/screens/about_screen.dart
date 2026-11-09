@@ -175,9 +175,9 @@ class _SayingsSectionState extends State<_SayingsSection> {
               '${loaded.count} ${source.tradition} sayings, in $languages. '
               '${source.notice}'
               '${source.reviewed ? '' : '\n\n'
-                  'Nobody who speaks these languages has checked the '
-                  'spelling yet. If something reads wrong to you, it '
-                  'probably is wrong — say so and it will be fixed.'}',
+                        'Nobody who speaks these languages has checked the '
+                        'spelling yet. If something reads wrong to you, it '
+                        'probably is wrong — say so and it will be fixed.'}',
         );
       },
     );

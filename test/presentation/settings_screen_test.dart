@@ -7,11 +7,14 @@ import 'package:mashibini_prayer/src/data/repositories/local_family_repository.d
 import 'package:mashibini_prayer/src/domain/entities/calendar_date.dart';
 import 'package:mashibini_prayer/src/domain/entities/family.dart';
 import 'package:mashibini_prayer/src/domain/rota/rota_engine.dart';
+import 'package:mashibini_prayer/src/data/sources/platform/identity.dart';
+import 'package:mashibini_prayer/src/domain/rota/family_editor.dart';
 import 'package:mashibini_prayer/src/presentation/screens/about_screen.dart';
 import 'package:mashibini_prayer/src/presentation/screens/family_members_screen.dart';
 import 'package:mashibini_prayer/src/presentation/screens/settings_screen.dart';
 
 import '../support/fake_app_version.dart';
+import '../support/fake_identity.dart';
 import '../support/fake_id_generator.dart';
 import '../support/fake_key_value_store.dart';
 import '../support/fake_reminders.dart';
@@ -30,6 +33,7 @@ void main() {
   late LocalDeviceSettingsRepository settings;
   late FakeReminders reminders;
   late FakeSharing sharing;
+  late FakeIdentity identity;
   late LocalJournalRepository journal;
 
   setUp(() {
@@ -38,6 +42,7 @@ void main() {
     settings = LocalDeviceSettingsRepository(store: store);
     reminders = FakeReminders();
     sharing = FakeSharing();
+    identity = FakeIdentity();
     journal = LocalJournalRepository(store: store, ids: FakeIdGenerator());
   });
 
@@ -60,6 +65,7 @@ void main() {
           sharing: sharing,
           reminders: reminders,
           appVersion: FakeAppVersion(),
+          identity: identity,
           ids: FakeIdGenerator(),
           today: () => anchor,
           now: () => DateTime(2026, 10, 18, 9),
@@ -177,6 +183,148 @@ void main() {
       expect(
         tester.widget<ListTile>(find.byKey(SettingsScreen.youAreRow)).onTap,
         isNull,
+      );
+    });
+  });
+
+  group('signing in (#76)', () {
+    testWidgets('it will not start before the app knows who you are', (
+      WidgetTester tester,
+    ) async {
+      // Signing in without linking puts nobody in `memberUids`, which is
+      // the field every rule reads — so it would look like it worked and
+      // sync nothing. Said rather than allowed.
+      await family.save(familyOfFour());
+      await open(tester);
+      await tapRow(tester, SettingsScreen.signInRow);
+
+      expect(identity.signInCalls, 0);
+      expect(
+        find.textContaining('Say which one you are first'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('signing in ties the account to that person', (
+      WidgetTester tester,
+    ) async {
+      await family.save(familyOfFour());
+      await settings.saveYouAre(mama.id);
+      identity.next = const SignedIn(
+        uid: 'uid-mama',
+        displayName: 'Mama Mashibini',
+      );
+      await open(tester);
+      await tapRow(tester, SettingsScreen.signInRow);
+
+      final Family stored = (await family.load())!;
+      expect(stored.membersById[mama.id]!.uid, 'uid-mama');
+      expect(stored.memberUids, <String>[
+        'uid-mama',
+      ], reason: 'this is what lets anything sync at all');
+    });
+
+    testWidgets('and the row then says who, as whom', (
+      WidgetTester tester,
+    ) async {
+      await family.save(familyOfFour());
+      await settings.saveYouAre(mama.id);
+      identity.next = const SignedIn(
+        uid: 'uid-mama',
+        displayName: 'Mama Mashibini',
+      );
+      await open(tester);
+      await tapRow(tester, SettingsScreen.signInRow);
+      await reveal(tester, SettingsScreen.signInRow);
+
+      expect(find.textContaining('as Mama'), findsOneWidget);
+    });
+
+    testWidgets('changing your mind in the sheet changes nothing', (
+      WidgetTester tester,
+    ) async {
+      // Dismissing the sheet is an ordinary answer, not a failure.
+      await family.save(familyOfFour());
+      await settings.saveYouAre(mama.id);
+      identity.next = null;
+      await open(tester);
+      await tapRow(tester, SettingsScreen.signInRow);
+
+      expect(identity.signInCalls, 1);
+      expect((await family.load())!.memberUids, isEmpty);
+    });
+
+    testWidgets('an account already on somebody else says whose', (
+      WidgetTester tester,
+    ) async {
+      // Refused rather than moved: two members on one uid makes the
+      // journal's promise unenforceable, and the likely cause is the wrong
+      // name having been picked.
+      await family.save(
+        FamilyEditor.linkUid(
+          familyOfFour(),
+          memberId: tata.id,
+          uid: 'uid-shared',
+        ),
+      );
+      await settings.saveYouAre(mama.id);
+      identity.next = const SignedIn(uid: 'uid-shared');
+      await open(tester);
+      await tapRow(tester, SettingsScreen.signInRow);
+
+      expect(find.textContaining('Tata'), findsWidgets);
+      expect((await family.load())!.membersById[mama.id]!.uid, isNull);
+    });
+
+    testWidgets('a sign-in that fails is said out loud', (
+      WidgetTester tester,
+    ) async {
+      await family.save(familyOfFour());
+      await settings.saveYouAre(mama.id);
+      identity.throws = StateError('no network');
+      await open(tester);
+      await tapRow(tester, SettingsScreen.signInRow);
+
+      expect(find.textContaining('did not work'), findsOneWidget);
+    });
+
+    testWidgets('signing out keeps you in the rota and does not unlink', (
+      WidgetTester tester,
+    ) async {
+      // The distinction ADR-023 is about. Unlinking on sign-out would drop
+      // this person from `memberUids` and stop every *other* phone syncing
+      // the changes they make.
+      await family.save(familyOfFour());
+      await settings.saveYouAre(mama.id);
+      identity.next = const SignedIn(uid: 'uid-mama');
+      await open(tester);
+      await tapRow(tester, SettingsScreen.signInRow);
+
+      await tapRow(tester, SettingsScreen.signInRow);
+      await tester.tap(find.byKey(SettingsScreen.confirmSignOut));
+      await tester.pumpAndSettle();
+
+      expect(identity.signOutCalls, 1);
+      expect(
+        (await family.load())!.membersById[mama.id]!.uid,
+        'uid-mama',
+        reason: 'signing out is not unlinking',
+      );
+    });
+
+    testWidgets('and it says so before you agree to it', (
+      WidgetTester tester,
+    ) async {
+      await family.save(familyOfFour());
+      await settings.saveYouAre(mama.id);
+      identity.next = const SignedIn(uid: 'uid-mama');
+      await open(tester);
+      await tapRow(tester, SettingsScreen.signInRow);
+      await tapRow(tester, SettingsScreen.signInRow);
+
+      expect(
+        find.textContaining('Your name stays in the rota'),
+        findsOneWidget,
       );
     });
   });

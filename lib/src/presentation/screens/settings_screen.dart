@@ -6,6 +6,7 @@ import '../../data/repositories/family_repository.dart';
 import '../../data/repositories/journal_repository.dart';
 import '../../data/sources/notifications/reminders.dart';
 import '../../data/sources/platform/app_version.dart';
+import '../../data/sources/platform/identity.dart';
 import '../../data/sources/platform/sharing.dart';
 import '../../domain/entities/calendar_date.dart';
 import '../../domain/entities/family.dart';
@@ -54,6 +55,7 @@ class SettingsScreen extends StatefulWidget {
     required this.sharing,
     required this.reminders,
     required this.appVersion,
+    required this.identity,
     required this.ids,
     this.today,
     this.now,
@@ -66,11 +68,14 @@ class SettingsScreen extends StatefulWidget {
   final Sharing sharing;
   final Reminders reminders;
   final AppVersion appVersion;
+  final Identity identity;
   final IdGenerator ids;
   final CalendarDate Function()? today;
   final DateTime Function()? now;
 
   static const Key youAreRow = Key('settings.youAre');
+  static const Key signInRow = Key('settings.signIn');
+  static const Key confirmSignOut = Key('settings.signOut.confirm');
   static const Key remindersRow = Key('settings.reminders');
   static const Key appearanceRow = Key('settings.appearance');
   static const Key turnoverRow = Key('settings.turnover');
@@ -96,6 +101,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late final Stream<bool> _remindersOn = widget.settings
       .watchRemindersEnabled();
   late final Stream<Appearance> _appearance = widget.settings.watchAppearance();
+  late final Stream<SignedIn?> _signedIn = widget.identity.watch();
 
   /// True while a write is in flight, which disables the controls rather than
   /// letting two taps race each other to the store.
@@ -150,6 +156,109 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (mounted) {
       setState(() => _busy = false);
     }
+  }
+
+  // ──────────────────────────────── signing in ────────────────────────────
+
+  /// Signs in and ties the account to whoever this phone belongs to (#76).
+  ///
+  /// The two have to happen together. An account with no member attached
+  /// puts nobody in `Family.memberUids`, which is the field every rule in
+  /// `firestore.rules` reads — so signing in without linking would look
+  /// like it worked and sync nothing.
+  ///
+  /// Which is why this refuses to start before "which one are you" has an
+  /// answer, and says so rather than signing somebody in and leaving them
+  /// to wonder why nothing happened.
+  Future<void> _signIn(Family? family, String? youAre) async {
+    if (family == null || youAre == null) {
+      setState(() {
+        _message =
+            'Say which one you are first — signing in ties this phone to '
+            'one person in the rota.';
+      });
+      return;
+    }
+
+    setState(() {
+      _busy = true;
+      _message = null;
+    });
+
+    try {
+      final SignedIn? who = await widget.identity.signIn();
+      if (who != null) {
+        // Re-read rather than closing over the family above: the sheet is
+        // somebody else's code and anything may have changed behind it.
+        final Family? latest = await widget.familyRepository.load();
+        if (latest != null) {
+          await widget.familyRepository.save(
+            FamilyEditor.linkUid(latest, memberId: youAre, uid: who.uid),
+          );
+        }
+      }
+    } on ArgumentError catch (error) {
+      // The uid already belongs to somebody else. The domain says whose,
+      // which is the thing that makes it fixable.
+      _say(error.message.toString());
+    } on Object catch (error) {
+      _say('Signing in did not work: $error');
+    }
+
+    if (mounted) {
+      setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _signOut() async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text('Sign out of this phone?'),
+        content: const Text(
+          'Your name stays in the rota and the others keep seeing your '
+          'weeks. This phone just stops syncing until you sign in again.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Stay signed in'),
+          ),
+          TextButton(
+            key: SettingsScreen.confirmSignOut,
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Sign out'),
+          ),
+        ],
+      ),
+    );
+    if (!(confirmed ?? false)) {
+      return;
+    }
+    // Deliberately **not** unlinking. Signing out says this phone is not
+    // holding the account; unlinking would drop the person out of
+    // `memberUids` and stop every *other* phone syncing their changes
+    // (ADR-023).
+    await widget.identity.signOut();
+  }
+
+  void _say(String message) {
+    if (mounted) {
+      setState(() => _message = message);
+    }
+  }
+
+  String _signInSubtitle(Family? family, SignedIn? who) {
+    if (who == null) {
+      return 'Sign in so the family\'s phones can see each other';
+    }
+    final Member? linked = family == null
+        ? null
+        : FamilyEditor.memberFor(family, who.uid);
+    final String name = who.displayName ?? who.email ?? 'Signed in';
+    return linked == null
+        ? '$name — not yet tied to anybody in the rota'
+        : '$name, as ${linked.displayName}';
   }
 
   // ─────────────────────────────── reminders ───────────────────────────────
@@ -533,21 +642,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   builder: (BuildContext context, AsyncSnapshot<bool> on) {
                     final bool remindersOn = on.data ?? false;
 
-                    return StreamBuilder<Appearance>(
-                      stream: _appearance,
+                    return StreamBuilder<SignedIn?>(
+                      stream: _signedIn,
                       builder:
                           (
                             BuildContext context,
-                            AsyncSnapshot<Appearance> look,
-                          ) => ListView(
-                            padding: const EdgeInsets.only(bottom: Space.xxl),
-                            children: _rows(
-                              theme: theme,
-                              family: family,
-                              youAre: youAre,
-                              remindersOn: remindersOn,
-                              appearance: look.data ?? Appearance.system,
-                            ),
+                            AsyncSnapshot<SignedIn?> signedIn,
+                          ) => StreamBuilder<Appearance>(
+                            stream: _appearance,
+                            builder:
+                                (
+                                  BuildContext context,
+                                  AsyncSnapshot<Appearance> look,
+                                ) => ListView(
+                                  padding: const EdgeInsets.only(
+                                    bottom: Space.xxl,
+                                  ),
+                                  children: _rows(
+                                    theme: theme,
+                                    family: family,
+                                    youAre: youAre,
+                                    remindersOn: remindersOn,
+                                    appearance: look.data ?? Appearance.system,
+                                    signedIn: signedIn.data,
+                                  ),
+                                ),
                           ),
                     );
                   },
@@ -566,6 +685,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required String? youAre,
     required bool remindersOn,
     required Appearance appearance,
+    required SignedIn? signedIn,
   }) {
     return <Widget>[
       const _Heading('This phone'),
@@ -578,6 +698,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
         // hidden: a row that appears later is harder to find than one that
         // was always there.
         onTap: family == null || _busy ? null : () => _chooseYouAre(family),
+      ),
+      ListTile(
+        key: SettingsScreen.signInRow,
+        title: Text(signedIn == null ? 'Sign in' : 'Signed in'),
+        subtitle: Text(_signInSubtitle(family, signedIn)),
+        isThreeLine: false,
+        trailing: const Icon(Icons.chevron_right),
+        onTap: _busy
+            ? null
+            : () => signedIn == null ? _signIn(family, youAre) : _signOut(),
       ),
       ListTile(
         key: SettingsScreen.appearanceRow,

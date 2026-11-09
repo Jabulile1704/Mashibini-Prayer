@@ -1,0 +1,19 @@
+{
+  "name": "mashibini-sas-function",
+  "version": "1.0.0",
+  "description": "Mints short-lived SAS URLs for the family's files (ADR-024)",
+  "private": true,
+  "main": "dist/src/{index.js,functions/*.js}",
+  "scripts": {
+    "build": "tsc",
+    "start": "func start"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.5.1",
+    "@azure/storage-blob": "^12.26.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "@types/node": "^22.7.5"
+  }
+}

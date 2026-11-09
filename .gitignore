@@ -56,3 +56,10 @@ test/rules/node_modules/
 # stale silently, which is the exact failure this fixture exists to fix — the
 # rules and the app agreeing on paper and not in fact.
 test/rules/fixtures/
+
+# The Azure spike's build output and local settings (ADR-024).
+# `local.settings.json` holds the storage key when running the Function on
+# a laptop, and must never be committed.
+azure/**/node_modules/
+azure/**/dist/
+azure/**/local.settings.json

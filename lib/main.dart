@@ -1,5 +1,7 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
+import 'firebase_options.dart';
 import 'src/app.dart';
 import 'src/data/random_id_generator.dart';
 import 'src/data/repositories/device_settings_repository.dart';
@@ -18,6 +20,22 @@ Future<void> main() async {
   // shared_preferences talks over a platform channel, so the binding has to
   // exist before anything reads storage.
   WidgetsFlutterBinding.ensureInitialized();
+
+  // **Never fatal.** Signing in is the one thing that needs a configured
+  // Firebase project; the rota, the journal, the tree and the songbook do
+  // not. An exception escaping `main()` kills the app before `runApp` and
+  // leaves the native launch screen on screen for ever — which is exactly
+  // what shipped on Day 27, because `FirebaseIdentity` touched
+  // `FirebaseAuth.instance` and this call was missing entirely.
+  Identity identity = const NoIdentity();
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    identity = FirebaseIdentity();
+  } on Object catch (error) {
+    debugPrint('Firebase did not start, so signing in is unavailable: $error');
+  }
 
   // The whole dependency graph, in one place and in plain sight. This is the
   // "container" the architecture doc refers to: a constructor call, not a
@@ -56,7 +74,7 @@ Future<void> main() async {
       journal: LocalJournalRepository(store: store, ids: ids),
       sharing: const PlatformSharing(),
       photos: const PlatformPhotos(),
-      identity: FirebaseIdentity(),
+      identity: identity,
       audio: PlatformAudio(),
       library: AudioLibraryRepository(store: store),
       reminders: LocalReminders(),

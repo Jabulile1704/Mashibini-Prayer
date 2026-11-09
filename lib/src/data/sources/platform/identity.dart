@@ -55,12 +55,49 @@ class SignedIn {
   String toString() => 'SignedIn($uid, ${displayName ?? email ?? 'no name'})';
 }
 
+/// Nobody is signed in, and nobody can be.
+///
+/// Used when Firebase could not start. Signing in is the one thing in this
+/// app that genuinely needs the network and a configured project; the rota,
+/// the journal, the tree and the songbook do not. So a Firebase that will
+/// not initialise costs the sign-in row and nothing else, rather than the
+/// whole app.
+class NoIdentity implements Identity {
+  const NoIdentity();
+
+  @override
+  SignedIn? get current => null;
+
+  @override
+  Stream<SignedIn?> watch() => Stream<SignedIn?>.value(null);
+
+  @override
+  Future<SignedIn?> signIn() async =>
+      throw StateError('Signing in is not available on this phone');
+
+  @override
+  Future<void> signOut() async {}
+}
+
 /// Firebase Authentication, with Google as the only provider.
 class FirebaseIdentity implements Identity {
-  FirebaseIdentity({FirebaseAuth? auth})
-    : _auth = auth ?? FirebaseAuth.instance;
+  FirebaseIdentity({FirebaseAuth? auth}) : _given = auth;
 
-  final FirebaseAuth _auth;
+  final FirebaseAuth? _given;
+
+  /// **Resolved on first use, not in the constructor.**
+  ///
+  /// `FirebaseAuth.instance` throws `[core/no-app]` until
+  /// `Firebase.initializeApp()` has run. This class is built in `main()`,
+  /// so touching it there killed `main()` before `runApp` — and the app sat
+  /// on the native launch screen for ever, which looks exactly like being
+  /// slow to start rather than like a crash.
+  ///
+  /// Nothing caught it. Every test injects a fake, so the only code that
+  /// ever constructs the real one is `main()` — the one file with no test.
+  /// The seam that makes the app testable is the same seam that hid the
+  /// wiring.
+  late final FirebaseAuth _auth = _given ?? FirebaseAuth.instance;
 
   @override
   SignedIn? get current => _fromUser(_auth.currentUser);

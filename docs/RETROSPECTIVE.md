@@ -239,10 +239,32 @@ definition of.
 | 18 | A PR opened against the wrong base branch |
 | 19 | The heading dropped again, in a different section |
 | 23 | A title typed `style`, which is not in the project's vocabulary |
+| 27 | The "How it was verified" heading — **again**, a third time |
+
+> **Corrected on Day 27.** There is now a sixth catch, and it is a
+> **repeat**: the "How it was verified" heading again, for the third time
+> after Days 16 and 19. The paragraph below was written when the record
+> looked cleaner than it was, and is left as it stood.
 
 Five catches, five rules, no repeats. That is the shape of a check doing
 real work rather than one everybody has learned to pre-satisfy — and it is
 the cheapest automation in the repository: four shell steps and a regex.
+
+### What the repeat actually means
+
+Five distinct rules looked like a broad check catching varied slips. Three
+catches on **one** rule is a different finding: it is catching a habit
+rather than an accident.
+
+The habit is specific and worth naming. The section goes missing when the
+PR body is mostly *explanation* — a long account of what was found and why
+it was decided — because by the end it feels as though how it was verified
+has already been said. It has not. An explanation of the reasoning is not a
+list of what was run, and the heading exists for exactly the difference.
+
+Every one of the three was on a PR with an unusually long body. That is the
+tell, and it is the opposite of what one would guess: the carefully written
+PRs are the ones that lose the section, not the hurried ones.
 
 The one on Day 23 is the most interesting, because the type was not a
 careless choice. `style` is a Conventional Commits type in general use; it

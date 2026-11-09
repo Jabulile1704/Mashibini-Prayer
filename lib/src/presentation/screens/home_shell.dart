@@ -100,9 +100,9 @@ class HomeShell extends StatefulWidget {
       label: 'This week',
     ),
     CombDestination(
-      icon: Icons.library_music_outlined,
-      selectedIcon: Icons.library_music,
-      label: 'Songs',
+      icon: Icons.groups_outlined,
+      selectedIcon: Icons.groups,
+      label: 'Family',
     ),
     CombDestination(
       icon: Icons.tune_outlined,
@@ -154,9 +154,10 @@ class _HomeShellState extends State<HomeShell> {
             ids: widget.ids,
             today: widget.today,
           ),
-          // Songs, with the family tree reachable from inside it: a tree
-          // is set up once and a library is opened often, so the library
-          // takes the tab (#124).
+          // The Family tab, holding both the people and the songs. The
+          // songbook took the tab outright on Day 27 and the owner asked
+          // for it back under the family's name — a tab called "Songs"
+          // described its first screen rather than what the tab is for.
           SongbookScreen(
             familyRepository: widget.repository,
             settings: widget.settings,

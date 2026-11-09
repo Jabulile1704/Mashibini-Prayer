@@ -112,7 +112,7 @@ void main() {
       for (final String tab in <String>[
         'Ahead',
         'Journal',
-        'Songs',
+        'Family',
         'Settings',
       ]) {
         expect(find.text(tab), findsWidgets, reason: '$tab should be a tab');
@@ -181,10 +181,11 @@ void main() {
       await tapTab(tester, 'Journal');
       expect(find.textContaining('Nothing written yet'), findsOneWidget);
 
-      // Songs took the Family tab's slot on Day 27; the family tree is
-      // reached from inside it now — a tree you set up once, a library you
-      // open often (#124).
-      await tapTab(tester, 'Songs');
+      // The Family tab holds both the people and the songs. The songbook
+      // took the tab outright for part of Day 27 and the owner asked for
+      // it back under the family's name — "Songs" described the first
+      // screen rather than what the tab is for.
+      await tapTab(tester, 'Family');
       expect(find.textContaining('Everyone in the family sees'), findsWidgets);
 
       await tapTab(tester, 'Settings');

@@ -2,6 +2,21 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- Google sign-in hands control to Safari and comes back through this
+	     scheme (#76). The value is the REVERSED_CLIENT_ID from
+	     GoogleService-Info.plist, which is public — it identifies the app to
+	     Google and authorises nothing on its own. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.647724958585-ns4sjgqt26pesadt70m0o1i5cna2djaa</string>
+			</array>
+		</dict>
+	</array>
 	<!-- Choosing a family photograph for the family tree (#109). The image is
 	     copied into the app's own directory and never leaves the phone. -->
 	<key>NSPhotoLibraryUsageDescription</key>

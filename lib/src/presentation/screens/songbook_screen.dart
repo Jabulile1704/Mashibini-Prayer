@@ -178,7 +178,7 @@ class _SongbookScreenState extends State<SongbookScreen> {
     final ThemeData theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Songs we love')),
+      appBar: AppBar(title: const Text('Family')),
       body: SafeArea(
         child: StreamBuilder<Family?>(
           stream: _families,
@@ -232,6 +232,25 @@ class _SongbookScreenState extends State<SongbookScreen> {
     return ListView(
       padding: const EdgeInsets.only(bottom: Space.xxl),
       children: <Widget>[
+        ListTile(
+          key: SongbookScreen.familyTree,
+          leading: const Icon(Icons.groups_outlined),
+          title: const Text('The family'),
+          subtitle: const Text('Who everybody is, and who they belong to'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (BuildContext context) => FamilyTreeScreen(
+                familyRepository: widget.familyRepository,
+                settings: widget.settings,
+                photos: widget.photos,
+                ids: widget.ids,
+                today: widget.today,
+              ),
+            ),
+          ),
+        ),
+        const Divider(height: Space.lg),
         Padding(
           key: SongbookScreen.everyoneSees,
           padding: const EdgeInsets.fromLTRB(
@@ -349,26 +368,6 @@ class _SongbookScreenState extends State<SongbookScreen> {
                   icon: const Icon(Icons.add),
                   label: const Text('Add a song'),
                 ),
-        ),
-
-        const Divider(height: Space.xxl),
-        ListTile(
-          key: SongbookScreen.familyTree,
-          leading: const Icon(Icons.groups_outlined),
-          title: const Text('The family'),
-          subtitle: const Text('Who everybody is, and who they belong to'),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (BuildContext context) => FamilyTreeScreen(
-                familyRepository: widget.familyRepository,
-                settings: widget.settings,
-                photos: widget.photos,
-                ids: widget.ids,
-                today: widget.today,
-              ),
-            ),
-          ),
         ),
       ],
     );

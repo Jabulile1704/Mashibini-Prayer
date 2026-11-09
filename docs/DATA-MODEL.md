@@ -235,6 +235,21 @@ Nothing in the model exists without a line in this table. There is no `email`,
 no `phone`, no `lastSeen`, no analytics identifier — N4 says collect only what
 the app needs, and the app needs names and an order.
 
+## Q3, answered on Day 26
+
+> **Each person signs in as themselves, with Google — and the journal
+> syncs, privately.**
+>
+> Decided by the owner and recorded in
+> [ADR-023](adr/ADR-023-each-person-signs-in-as-themselves.md). It stayed
+> open for twenty-four days longer than this document expected, because
+> nothing forced it: Q3 changes exactly one feature, and everything else
+> works identically either way. Day 25 forced it — the security rules
+> require an authenticated caller, so sync could not be built without an
+> answer.
+>
+> The section below is what was written on Day 2, left as it was.
+
 ## Open question Q3, and what it changes
 
 The model above assumes **each member signs in as themselves**. That assumption

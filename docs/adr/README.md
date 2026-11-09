@@ -30,3 +30,4 @@ names it.
 | [020](ADR-020-a-fifth-tab-and-what-four-was-worth.md) | A fifth tab, and what "four is the ceiling" was worth | Accepted |
 | [021](ADR-021-the-tree-is-not-the-rota.md) | The tree is not the rota, and photographs stay on the phone | Accepted |
 | [022](ADR-022-the-centre-of-the-bar-is-a-comb-cell.md) | The centre of the bar is a comb cell | Accepted |
+| [023](ADR-023-each-person-signs-in-as-themselves.md) | Each person signs in as themselves (closes Q3) | Accepted |

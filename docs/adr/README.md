@@ -31,4 +31,5 @@ names it.
 | [021](ADR-021-the-tree-is-not-the-rota.md) | The tree is not the rota, and photographs stay on the phone | Accepted |
 | [022](ADR-022-the-centre-of-the-bar-is-a-comb-cell.md) | The centre of the bar is a comb cell | Accepted |
 | [023](ADR-023-each-person-signs-in-as-themselves.md) | Each person signs in as themselves (closes Q3) | Accepted |
+| [024](ADR-024-azure-is-a-spike-and-must-stay-disposable.md) | Azure is a spike, and must stay disposable | Accepted |
 | [025](ADR-025-the-daily-reading-is-an-african-saying.md) | The daily reading is an African saying, not a Bible verse | Accepted |

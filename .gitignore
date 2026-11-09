@@ -67,3 +67,10 @@ dist/
 *.apk
 *.aab
 *.ipa
+
+# The Azure spike's build output and local settings (ADR-024).
+# `local.settings.json` holds the storage key when running the Function on
+# a laptop, and must never be committed.
+azure/**/node_modules/
+azure/**/dist/
+azure/**/local.settings.json

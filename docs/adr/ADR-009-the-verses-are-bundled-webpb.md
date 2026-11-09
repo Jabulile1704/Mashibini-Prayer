@@ -1,6 +1,6 @@
 # ADR-009 — The verses are bundled, and they are the WEBPB
 
-**Status:** Accepted · **Date:** 2026-10-27 · **Deciders:** PO, Developer
+**Status:** Superseded by [ADR-025](ADR-025-the-daily-reading-is-an-african-saying.md) · **Date:** 2026-10-27 · **Deciders:** PO, Developer
 
 ## Context
 

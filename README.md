@@ -15,10 +15,10 @@ This app holds the cycle, so nobody has to.
 | --- | --- |
 | **This week** | Whose week it is, who is next, and the day it changes hands |
 | **Setup** | Who is in the family, in what order, and which weekday the week turns over |
-| **Verse** | One verse for the day, the same one for everybody |
+| **Saying** | One African saying for the day, the same one for everybody |
 | **Journal** | What you prayed about, private to you |
 
-The rota is the product. The verse and the journal sit around it.
+The rota is the product. The saying and the journal sit around it.
 
 ## How this project is run
 

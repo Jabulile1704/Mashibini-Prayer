@@ -7,15 +7,15 @@ import '../../domain/entities/family.dart';
 import '../../domain/entities/turn.dart';
 import '../../domain/ids.dart';
 import '../../domain/rota/rota_engine.dart';
-import '../../data/sources/assets/bundled_verses.dart';
-import '../../domain/verse/verse_for_the_day.dart';
+import '../../data/sources/assets/bundled_sayings.dart';
+import '../../domain/saying/saying_for_the_day.dart';
 import '../brand/mark.dart';
 import '../brand/tokens.dart';
 import '../widgets/centred_message.dart';
 import '../widgets/date_text.dart';
 import '../widgets/leading_card.dart';
 import '../widgets/next_turn_tile.dart';
-import '../widgets/verse_card.dart';
+import '../widgets/saying_card.dart';
 import 'setup_screen.dart';
 
 /// The home screen: whose week it is, who is next, and when it changes hands.
@@ -65,7 +65,7 @@ class ThisWeekScreen extends StatefulWidget {
 class _ThisWeekScreenState extends State<ThisWeekScreen> {
   late final Stream<Family?> _families = widget.repository.watch();
   late final Stream<String?> _youAre = widget.settings.watchYouAre();
-  late final Future<VerseForTheDay> _verses = BundledVerses.load();
+  late final Future<SayingForTheDay> _sayings = BundledSayings.load();
 
   CalendarDate get _today =>
       widget.today?.call() ?? CalendarDate.from(DateTime.now());
@@ -104,7 +104,7 @@ class _ThisWeekScreenState extends State<ThisWeekScreen> {
                     family: family,
                     today: _today,
                     youAre: who.data,
-                    verses: _verses,
+                    sayings: _sayings,
                   ),
             );
           },
@@ -173,14 +173,14 @@ class _Rota extends StatelessWidget {
   const _Rota({
     required this.family,
     required this.today,
-    required this.verses,
+    required this.sayings,
     this.youAre,
   });
 
   final Family family;
   final CalendarDate today;
   final String? youAre;
-  final Future<VerseForTheDay> verses;
+  final Future<SayingForTheDay> sayings;
 
   @override
   Widget build(BuildContext context) {
@@ -199,7 +199,7 @@ class _Rota extends StatelessWidget {
     // The card sits in the upper middle rather than at the top, and the
     // space below it is left on purpose: this screen answers one question,
     // and crowding it with a second thing would make the first harder to
-    // find. The verse and the journal arrive on days 10 and 11 and have a
+    // find. The saying and the journal arrive on days 10 and 11 and have a
     // place waiting.
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) =>
@@ -226,11 +226,11 @@ class _Rota extends StatelessWidget {
                       ),
                     ],
                     // The largest gap on the screen, and the only one that
-                    // is doing an argument rather than a rhythm: the verse
+                    // is doing an argument rather than a rhythm: the saying
                     // is a different thing from the rota, and Day 8's point
                     // was that this screen answers one question.
                     const SizedBox(height: Space.xxxl),
-                    _TodaysVerse(verses: verses, today: today),
+                    _TodaysSaying(sayings: sayings, today: today),
                     const SizedBox(height: Space.xxl),
                   ],
                 ),
@@ -243,35 +243,32 @@ class _Rota extends StatelessWidget {
   bool _isYou(Turn turn) => youAre != null && turn.leader.id == youAre;
 }
 
-/// Today's verse, or nothing at all.
+/// Today's saying, or nothing at all.
 ///
-/// A verse that failed to load is not worth an error: the rota is the app,
-/// and a missing verse should cost the screen nothing. So this renders empty
+/// A saying that failed to load is not worth an error: the rota is the app,
+/// and a missing saying should cost the screen nothing. So this renders empty
 /// rather than apologising — the one place in this app where silence is the
 /// right answer.
-class _TodaysVerse extends StatelessWidget {
-  const _TodaysVerse({required this.verses, required this.today});
+class _TodaysSaying extends StatelessWidget {
+  const _TodaysSaying({required this.sayings, required this.today});
 
-  final Future<VerseForTheDay> verses;
+  final Future<SayingForTheDay> sayings;
   final CalendarDate today;
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<VerseForTheDay>(
-      future: verses,
-      builder: (BuildContext context, AsyncSnapshot<VerseForTheDay> snapshot) {
-        final VerseForTheDay? loaded = snapshot.data;
+    return FutureBuilder<SayingForTheDay>(
+      future: sayings,
+      builder: (BuildContext context, AsyncSnapshot<SayingForTheDay> snapshot) {
+        final SayingForTheDay? loaded = snapshot.data;
         if (loaded == null) {
           return const SizedBox.shrink();
         }
         return Padding(
           // Nothing. It was inset a further 8 inside the gutter, which left
-          // the verse's rule not quite aligned with the card above it.
+          // the saying's rule not quite aligned with the card above it.
           padding: EdgeInsets.zero,
-          child: VerseCard(
-            verse: loaded.on(today),
-            translation: loaded.translation.abbreviation,
-          ),
+          child: SayingCard(saying: loaded.on(today)),
         );
       },
     );

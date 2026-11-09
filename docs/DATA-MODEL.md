@@ -157,7 +157,7 @@ families/{familyId}                     one document, read on open
 
 journals/{uid}/entries/{entryId}        outside the family tree, on purpose
 
-(verses are a bundled asset, not a collection — see below)
+(sayings are a bundled asset, not a collection — see below)
 ```
 
 ### One field exists only for the rules
@@ -194,16 +194,31 @@ match /journals/{uid}/{document=**} {
 Nothing a family-level query can do reaches it. That satisfies R4.2 and N3 by
 construction rather than by vigilance. Written up as [ADR-004](adr/ADR-004-journals-outside-the-family-tree.md).
 
-### Why verses are an asset, not a collection
+### Why sayings are an asset, not a collection
 
 They are the same for everyone, they never change, and they must be readable
-with no connection (R3.1). A bundled `assets/verses.json` gives all three for
-free. Selection is `daysSinceEpoch(date) % verses.length` — deterministic, so
-every member sees the same verse on the same day with nothing coordinating
+with no connection (R3.1). A bundled `assets/sayings.json` gives all three for
+free. Selection is `daysSinceEpoch(date) % sayings.length` — deterministic, so
+every member sees the same saying on the same day with nothing coordinating
 them.
 
-The licence decides which translation can ship at all (R3.2, **Q2**), and that
-is a blocker for Day 9, not a detail.
+The shape is `Saying{text, original?, language}` under a `SayingSource{
+tradition, languages, notice, reviewed}`. Three of those fields are there
+because of what the thing *is*:
+
+- **`language`** carries the attribution. There is no author and no
+  translator, so the language is all there is to name, and R3.2 requires it
+  wherever a saying appears.
+- **`original`** is nullable. A saying nobody here can vouch for in its own
+  tongue ships in English with its language named rather than guessed at.
+- **`reviewed`** is a fact about the data, not a sentence in a screen. The
+  About screen reads it and says whether a speaker has checked the spelling
+  (R3.3); written into the screen instead, the two would drift.
+
+Until Day 28 this held 75 Bible verses under a `Translation{name,
+abbreviation, licence, notice}`, and the licence was the gating question
+(**Q2**). Nothing is licensed now, because nothing is owned — see
+[ADR-025](adr/ADR-025-the-daily-reading-is-an-african-saying.md).
 
 ### Denormalisation, and the one place it is used
 
@@ -262,7 +277,7 @@ shares one install:
 - The honest fallback is journals stored **only on the device**, never synced,
   with the privacy claim in the UI reduced to match
 
-Everything else — the rota, the cycle epochs, the skips, the verse — works
+Everything else — the rota, the cycle epochs, the skips, the saying — works
 identically either way. So Day 3 through Day 6 are not blocked by Q3, and the
 decision is genuinely needed by Day 7.
 

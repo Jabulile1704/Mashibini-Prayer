@@ -1,0 +1,166 @@
+{
+  "source": {
+    "tradition": "Southern African",
+    "languages": [
+      "isiXhosa",
+      "isiZulu",
+      "Sesotho",
+      "Setswana",
+      "Sepedi"
+    ],
+    "notice": "Traditional sayings, carried orally. The sayings themselves belong to nobody, so none is quoted from a published collection — each is written from widely circulated wording and attributed to the language it comes from rather than to an author.",
+    "reviewed": false
+  },
+  "sayings": [
+    {
+      "original": "Umntu ngumntu ngabantu",
+      "text": "A person is a person through other people.",
+      "language": "isiXhosa"
+    },
+    {
+      "original": "Indlela ibuzwa kwabaphambili",
+      "text": "The road is asked of those who went ahead.",
+      "language": "isiXhosa"
+    },
+    {
+      "original": "Izandla ziyahlambana",
+      "text": "Hands wash one another.",
+      "language": "isiXhosa"
+    },
+    {
+      "original": "Ingwe idla ngamabala",
+      "text": "The leopard eats by its spots.",
+      "language": "isiXhosa"
+    },
+    {
+      "original": "Unyawo alunampumlo",
+      "text": "The foot has no nose — it will carry you back to where you were unkind.",
+      "language": "isiXhosa"
+    },
+    {
+      "original": "Intaka yakha ngoboya benye",
+      "text": "The bird builds its nest with another bird's feathers.",
+      "language": "isiXhosa"
+    },
+    {
+      "original": "Ubuhle bomzi bubonwa ngabahambi",
+      "text": "The beauty of a home is seen by those passing through.",
+      "language": "isiXhosa"
+    },
+    {
+      "original": "Inyathi ibuzwa kwabaphambili",
+      "text": "You ask about the buffalo from those who went ahead.",
+      "language": "isiXhosa"
+    },
+    {
+      "original": "Motho ke motho ka batho",
+      "text": "A person is a person through other people.",
+      "language": "Sesotho"
+    },
+    {
+      "original": "Mmangwana o tshwara thipa ka bohaleng",
+      "text": "A child's mother takes hold of the knife by the blade.",
+      "language": "Sesotho"
+    },
+    {
+      "original": "Tau tsa hloka seboka di siilwe ke nare",
+      "text": "Lions that lacked unity were outrun by a buffalo.",
+      "language": "Sesotho"
+    },
+    {
+      "original": "Bana ba motho ba ngwathelana hlogo ya tsie",
+      "text": "Siblings share the head of a locust, however little there is.",
+      "language": "Sesotho"
+    },
+    {
+      "original": "Matsogo a hlatswana",
+      "text": "Hands wash one another.",
+      "language": "Sesotho"
+    },
+    {
+      "original": "Pelo e ja serati",
+      "text": "The heart eats what it loves.",
+      "language": "Sesotho"
+    },
+    {
+      "original": "Mphemphe o a lapisa, motho o kgonwa ke sa hae",
+      "text": "Always borrowing wears you out; a person is satisfied by what is their own.",
+      "language": "Sesotho"
+    },
+    {
+      "original": "Molato ha o bole",
+      "text": "A debt does not rot.",
+      "language": "Sesotho"
+    },
+    {
+      "original": "Ho tsamaya ke ho bona",
+      "text": "To travel is to see.",
+      "language": "Sesotho"
+    },
+    {
+      "original": "Sejo se monate ha se jewe se le mong",
+      "text": "Good food is not eaten alone.",
+      "language": "Sesotho"
+    },
+    {
+      "original": "Khotso ke nala",
+      "text": "Where there is peace there is plenty.",
+      "language": "Sesotho"
+    },
+    {
+      "original": "Moroto o mong ha o kgaole noka",
+      "text": "One person's water does not dam a river.",
+      "language": "Sesotho"
+    },
+    {
+      "original": "Akukho qili elazikhotha emhlane",
+      "text": "No cunning one ever licked their own back.",
+      "language": "isiZulu"
+    },
+    {
+      "original": "Inkunzi isematholeni",
+      "text": "The bull is among the calves.",
+      "language": "isiZulu"
+    },
+    {
+      "original": "Umthente uhlaba usamila",
+      "text": "The grass pricks while it is still growing.",
+      "language": "isiZulu"
+    },
+    {
+      "original": "Injobo enhle ithungelwa ebandla",
+      "text": "A good garment is sewn in the company of others.",
+      "language": "isiZulu"
+    },
+    {
+      "original": "Ingane engakhali ifela embelekweni",
+      "text": "The child who does not cry dies on its mother's back.",
+      "language": "isiZulu"
+    },
+    {
+      "original": "Hamba juba, bayokuchutha phambili",
+      "text": "Go on then, dove — they will pluck you further ahead.",
+      "language": "isiZulu"
+    },
+    {
+      "original": "Kgetsi ya tsie e kgonwa ka go tshwaraganelwa",
+      "text": "A bag of locusts is carried by holding it together.",
+      "language": "Setswana"
+    },
+    {
+      "original": "Lefufa ga le age motse",
+      "text": "Jealousy does not build a village.",
+      "language": "Setswana"
+    },
+    {
+      "original": "Botlhale jwa phala bo tswa phalaneng",
+      "text": "The wisdom of the impala comes from the young impala.",
+      "language": "Setswana"
+    },
+    {
+      "original": "Mphiri o tee ga o lle",
+      "text": "One bangle does not jingle.",
+      "language": "Sepedi"
+    }
+  ]
+}

@@ -15,7 +15,7 @@ import 'package:flutter_test/flutter_test.dart';
 /// the scale after the day that introduced it.
 ///
 /// It deliberately does **not** police every number in the layer. A hexagon's
-/// radius, an icon's size, the 28×2 rule under the verse — those are the
+/// radius, an icon's size, the 28×2 rule under the saying — those are the
 /// dimensions of things, and `Space` is about rhythm between them. The two
 /// patterns below are the ones that are always rhythm: a `SizedBox` with one
 /// axis set is a gap, and padding is padding.

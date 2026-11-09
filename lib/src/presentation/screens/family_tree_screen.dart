@@ -18,7 +18,6 @@ import '../brand/tokens.dart';
 import '../widgets/centred_message.dart';
 import '../widgets/date_text.dart';
 import 'family_member_sheet.dart';
-import 'songbook_screen.dart';
 
 /// The family, as a comb (#109).
 ///
@@ -52,7 +51,6 @@ class FamilyTreeScreen extends StatefulWidget {
   final CalendarDate Function()? today;
 
   static const Key comb = Key('tree.comb');
-  static const Key songbook = Key('tree.songbook');
   static const Key addRelative = Key('tree.addRelative');
   static const Key onThisPhone = Key('tree.onThisPhone');
   static const Key nameField = Key('tree.addRelative.name');
@@ -173,28 +171,6 @@ class _FamilyTreeScreenState extends State<FamilyTreeScreen> {
           ),
         ],
         const SizedBox(height: Space.xl),
-        Padding(
-          padding: Space.gutter,
-          child: ListTile(
-            key: FamilyTreeScreen.songbook,
-            contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.music_note_outlined),
-            title: const Text('Songs we love'),
-            subtitle: const Text('What this family sings, and who chose it'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (BuildContext context) => SongbookScreen(
-                  familyRepository: widget.familyRepository,
-                  settings: widget.settings,
-                  ids: widget.ids,
-                  today: widget.today,
-                ),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: Space.sm),
         Padding(
           padding: Space.gutter,
           child: OutlinedButton.icon(

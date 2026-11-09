@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import '../src/data/repositories/audio_library_repository.dart';
+import '../src/data/sources/platform/audio.dart';
 import '../src/data/repositories/device_settings_repository.dart';
 import '../src/data/repositories/family_repository.dart';
 import '../src/data/repositories/journal_repository.dart';
@@ -65,6 +67,8 @@ class MashibiniPrayerApp extends StatefulWidget {
     required this.reminders,
     required this.appVersion,
     required this.identity,
+    required this.audio,
+    required this.library,
     required this.photos,
     required this.ids,
     this.initialAppearance = Appearance.system,
@@ -78,6 +82,8 @@ class MashibiniPrayerApp extends StatefulWidget {
   final Reminders reminders;
   final AppVersion appVersion;
   final Identity identity;
+  final Audio audio;
+  final AudioLibraryRepository library;
   final Photos photos;
   final IdGenerator ids;
 
@@ -136,6 +142,8 @@ class _MashibiniPrayerAppState extends State<MashibiniPrayerApp> {
                 reminders: widget.reminders,
                 appVersion: widget.appVersion,
                 identity: widget.identity,
+                audio: widget.audio,
+                library: widget.library,
                 photos: widget.photos,
                 ids: widget.ids,
               ),

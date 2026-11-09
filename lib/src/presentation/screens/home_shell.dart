@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../data/repositories/audio_library_repository.dart';
+import '../../data/sources/platform/audio.dart';
 import '../../data/repositories/device_settings_repository.dart';
 import '../../data/repositories/family_repository.dart';
 import '../../data/repositories/journal_repository.dart';
@@ -11,7 +13,7 @@ import '../../data/sources/platform/sharing.dart';
 import '../../domain/entities/calendar_date.dart';
 import '../../domain/ids.dart';
 import '../widgets/comb_bar.dart';
-import 'family_tree_screen.dart';
+import 'songbook_screen.dart';
 import 'journal_screen.dart';
 import 'schedule_screen.dart';
 import 'settings_screen.dart';
@@ -44,6 +46,8 @@ class HomeShell extends StatefulWidget {
     required this.reminders,
     required this.appVersion,
     required this.identity,
+    required this.audio,
+    required this.library,
     required this.photos,
     required this.ids,
     this.today,
@@ -57,6 +61,8 @@ class HomeShell extends StatefulWidget {
   final Reminders reminders;
   final AppVersion appVersion;
   final Identity identity;
+  final Audio audio;
+  final AudioLibraryRepository library;
   final Photos photos;
   final IdGenerator ids;
   final CalendarDate Function()? today;
@@ -94,9 +100,9 @@ class HomeShell extends StatefulWidget {
       label: 'This week',
     ),
     CombDestination(
-      icon: Icons.groups_outlined,
-      selectedIcon: Icons.groups,
-      label: 'Family',
+      icon: Icons.library_music_outlined,
+      selectedIcon: Icons.library_music,
+      label: 'Songs',
     ),
     CombDestination(
       icon: Icons.tune_outlined,
@@ -148,9 +154,14 @@ class _HomeShellState extends State<HomeShell> {
             ids: widget.ids,
             today: widget.today,
           ),
-          FamilyTreeScreen(
+          // Songs, with the family tree reachable from inside it: a tree
+          // is set up once and a library is opened often, so the library
+          // takes the tab (#124).
+          SongbookScreen(
             familyRepository: widget.repository,
             settings: widget.settings,
+            audio: widget.audio,
+            library: widget.library,
             photos: widget.photos,
             ids: widget.ids,
             today: widget.today,

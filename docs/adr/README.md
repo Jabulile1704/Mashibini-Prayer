@@ -16,7 +16,7 @@ names it.
 | [006](ADR-006-a-key-value-store-not-a-database.md) | A key-value store for the family, not a database | Accepted |
 | [007](ADR-007-develop-is-default-and-prs-rebase.md) | `develop` is the default branch, and PRs rebase | Partly superseded by 015 |
 | [008](ADR-008-merging-is-a-union-of-append-only-logs.md) | Merging is a union of append-only logs | Accepted |
-| [009](ADR-009-the-verses-are-bundled-webpb.md) | The verses are bundled, and they are the WEBPB | Accepted |
+| [009](ADR-009-the-verses-are-bundled-webpb.md) | The verses are bundled, and they are the WEBPB | Superseded by 025 |
 | [010](ADR-010-the-free-tier-is-a-design-constraint.md) | The free tier is a design constraint, not a billing preference | Accepted |
 | [011](ADR-011-the-firebase-config-is-committed.md) | The Firebase config is committed to a public repository | Accepted |
 | [012](ADR-012-a-skip-is-withdrawn-not-deleted.md) | A skip is withdrawn, never deleted | Accepted |
@@ -31,3 +31,4 @@ names it.
 | [021](ADR-021-the-tree-is-not-the-rota.md) | The tree is not the rota, and photographs stay on the phone | Accepted |
 | [022](ADR-022-the-centre-of-the-bar-is-a-comb-cell.md) | The centre of the bar is a comb cell | Accepted |
 | [023](ADR-023-each-person-signs-in-as-themselves.md) | Each person signs in as themselves (closes Q3) | Accepted |
+| [025](ADR-025-the-daily-reading-is-an-african-saying.md) | The daily reading is an African saying, not a Bible verse | Accepted |

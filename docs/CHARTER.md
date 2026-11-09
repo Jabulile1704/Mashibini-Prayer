@@ -13,7 +13,7 @@ This app holds the cycle so nobody has to.
 
 > One screen that answers "whose week is it?" without anyone having to ask.
 
-Everything else — the daily verse, the prayer journal — sits around that answer.
+Everything else — the daily saying, the prayer journal — sits around that answer.
 If a feature does not serve the rota or the prayer life around it, it is out of
 scope for v1.
 
@@ -63,7 +63,7 @@ Role is recorded on each issue and PR by label (`role:po`, `role:pm`, `role:dev`
 
 - The rota: who leads this week, who is next, when it changes hands
 - Family setup: members, cycle order, the day the week turns over
-- A verse for the day
+- A saying for the day
 - A prayer journal, private to the person who wrote it
 - A reminder before each handover
 - Offline-first: the phone is the source of truth for reading

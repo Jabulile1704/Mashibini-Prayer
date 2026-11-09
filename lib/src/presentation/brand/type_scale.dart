@@ -41,7 +41,7 @@ abstract final class TypeScale {
     height: 1.3,
   );
 
-  /// Reading text set at a size somebody can sit with — the verse, a
+  /// Reading text set at a size somebody can sit with — the saying, a
   /// journal entry.
   static const TextStyle bodyLarge = TextStyle(
     fontSize: 16,
@@ -56,7 +56,7 @@ abstract final class TypeScale {
     height: 1.45,
   );
 
-  /// Supporting detail: a date under a name, a caption under a verse.
+  /// Supporting detail: a date under a name, a caption under a saying.
   static const TextStyle caption = TextStyle(
     fontSize: 12,
     fontWeight: FontWeight.w400,

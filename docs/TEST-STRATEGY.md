@@ -13,7 +13,8 @@ the same testing.
 | The rota engine | The app confidently names **the wrong person**, and someone is embarrassed in front of their family | Exhaustively, by unit tests, including ten years of weeks |
 | Persistence | Setup is lost, or the app opens empty | Unit tests against fakes, plus a real round-trip |
 | A screen's layout | It looks wrong but still says the right name | One widget test per screen, then eyes |
-| The verse of the day | A different verse than intended | Lightly — being wrong here is a disappointment, not a failure |
+| The saying of the day | A different saying than intended | Lightly — being wrong here is a disappointment, not a failure |
+| Whether the wording is vouched for | The app presents unchecked isiXhosa as checked | Firmly — it is a claim about somebody's language, and the failure is silent (R3.3) |
 
 The rota is the only part that can be *confidently wrong*, which is the worst
 failure mode an app like this has. That is where the tests concentrate.

@@ -154,10 +154,10 @@ void main() {
       // with the original.
       expect(
         const Saying(
-          text: 'A person is a person through other people.',
-          original: 'Umntu ngumntu ngabantu',
-          language: 'isiXhosa',
-        ) ==
+              text: 'A person is a person through other people.',
+              original: 'Umntu ngumntu ngabantu',
+              language: 'isiXhosa',
+            ) ==
             const Saying(
               text: 'A person is a person through other people.',
               original: 'Motho ke motho ka batho',
@@ -185,8 +185,10 @@ void main() {
         'Saying(Umntu ngumntu ngabantu, isiXhosa)',
       );
       expect(
-        const Saying(text: 'Hands wash one another.', language: 'isiXhosa')
-            .toString(),
+        const Saying(
+          text: 'Hands wash one another.',
+          language: 'isiXhosa',
+        ).toString(),
         'Saying(Hands wash one another., isiXhosa)',
       );
     });

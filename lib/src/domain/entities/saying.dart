@@ -5,11 +5,7 @@
 /// and no translator, and the honest attribution is **which people and which
 /// language** it comes from (ADR-025, R3.2).
 class Saying {
-  const Saying({
-    required this.text,
-    required this.language,
-    this.original,
-  });
+  const Saying({required this.text, required this.language, this.original});
 
   /// The English.
   final String text;

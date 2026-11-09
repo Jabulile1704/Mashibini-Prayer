@@ -8,7 +8,9 @@ import 'package:mashibini_prayer/src/domain/entities/calendar_date.dart';
 import 'package:mashibini_prayer/src/domain/entities/cycle.dart';
 import 'package:mashibini_prayer/src/domain/entities/family.dart';
 import 'package:mashibini_prayer/src/domain/entities/member.dart';
+import 'package:mashibini_prayer/src/domain/entities/saying.dart';
 import 'package:mashibini_prayer/src/presentation/screens/this_week_screen.dart';
+import 'package:mashibini_prayer/src/presentation/widgets/saying_card.dart';
 
 import '../support/fake_id_generator.dart';
 import '../support/fake_key_value_store.dart';
@@ -321,19 +323,50 @@ void main() {
     });
   });
 
-  group("today's verse (R3.1, R3.2)", () {
-    testWidgets('a verse appears alongside the rota', (
+  group("today's saying (R3.1, R3.2)", () {
+    /// The saying the screen actually chose, read off the card rather than
+    /// guessed from the date. Which one lands on `anchor` is arithmetic over
+    /// a file that changes whenever a proverb is added, and a test that
+    /// hard-codes the answer breaks on every such addition while proving
+    /// nothing about the screen.
+    Saying shown(WidgetTester tester) =>
+        tester.widget<SayingCard>(find.byType(SayingCard)).saying;
+
+    testWidgets('a saying appears alongside the rota', (
       WidgetTester tester,
     ) async {
       await repository.save(familyOfFour());
       await show(tester, on: anchor);
 
-      // Whichever verse today lands on, it is cited and its translation is
-      // named — R3.2 requires the translation wherever a verse is shown.
-      expect(find.textContaining('WEBPB'), findsOneWidget);
+      final Saying saying = shown(tester);
+
+      // Whichever saying today lands on, the English is on the screen and
+      // the language is named beneath it — R3.2 requires the attribution
+      // wherever a saying appears, and for a proverb the language *is* the
+      // attribution (ADR-025).
+      expect(find.text(saying.text), findsOneWidget);
+      expect(find.text(saying.language), findsOneWidget);
     });
 
-    testWidgets('the verse is quieter than the leader', (
+    testWidgets('a saying in its own language leads with it', (
+      WidgetTester tester,
+    ) async {
+      await repository.save(familyOfFour());
+      await show(tester, on: anchor);
+
+      final String? original = shown(tester).original;
+      if (original == null) {
+        // Allowed by `Saying.original`, so not a failure — but every saying
+        // in the shipped file has one today, and this says so out loud
+        // rather than passing silently if that stops being true.
+        return;
+      }
+
+      final Text text = tester.widget<Text>(find.text(original));
+      expect(text.style!.fontStyle, FontStyle.italic);
+    });
+
+    testWidgets('the saying is quieter than the leader', (
       WidgetTester tester,
     ) async {
       await repository.save(familyOfFour());
@@ -343,44 +376,41 @@ void main() {
           .widget<Text>(find.text('Jabulile'))
           .style!
           .fontSize!;
-      final Text citation = tester.widget<Text>(find.textContaining('WEBPB'));
-      expect(citation.style!.fontSize, lessThan(leader));
+      final Text language = tester.widget<Text>(
+        find.text(shown(tester).language),
+      );
+      expect(language.style!.fontSize, lessThan(leader));
     });
 
-    testWidgets('the same date gives the same verse on a rebuild', (
+    testWidgets('the same date gives the same saying on a rebuild', (
       WidgetTester tester,
     ) async {
       await repository.save(familyOfFour());
       await show(tester, on: anchor);
-      final String first = tester
-          .widget<Text>(find.textContaining('WEBPB'))
-          .data!;
+      final Saying first = shown(tester);
 
       await show(tester, on: anchor);
-      expect(tester.widget<Text>(find.textContaining('WEBPB')).data, first);
+      expect(shown(tester), first);
     });
 
-    testWidgets('a different date gives a different verse', (
+    testWidgets('a different date gives a different saying', (
       WidgetTester tester,
     ) async {
       await repository.save(familyOfFour());
       await show(tester, on: anchor);
-      final String today = tester
-          .widget<Text>(find.textContaining('WEBPB'))
-          .data!;
+      final Saying today = shown(tester);
 
       await show(tester, on: anchor.addDays(1));
-      expect(
-        tester.widget<Text>(find.textContaining('WEBPB')).data,
-        isNot(today),
-      );
+      expect(shown(tester), isNot(today));
     });
 
-    testWidgets('the empty state shows no verse', (WidgetTester tester) async {
+    testWidgets('the empty state shows no saying', (
+      WidgetTester tester,
+    ) async {
       await show(tester, on: anchor);
 
       expect(find.text('No rota yet'), findsOneWidget);
-      expect(find.textContaining('WEBPB'), findsNothing);
+      expect(find.byType(SayingCard), findsNothing);
     });
   });
 

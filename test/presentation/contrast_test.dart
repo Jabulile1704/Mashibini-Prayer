@@ -178,13 +178,19 @@ void main() {
       });
 
       test('a faded body colour still clears the bar', () {
-        // The verse is set at 82% of onSurface.
-        expectContrast(
-          '$name verse text',
-          c.onSurface.withValues(alpha: 0.82),
-          c.surfaceContainerHighest,
-          atLeast: 4.5,
-        );
+        // The saying's English is set at 82% of onSurface where it stands
+        // alone, and at 70% where it is a gloss under the saying's own
+        // language — which is the fainter of the two and the one that was
+        // added without being measured. Both are checked, because the card
+        // renders whichever the data gives it.
+        for (final double alpha in <double>[0.82, 0.70]) {
+          expectContrast(
+            '\$name saying text at \${(alpha * 100).round()}%',
+            c.onSurface.withValues(alpha: alpha),
+            c.surfaceContainerHighest,
+            atLeast: 4.5,
+          );
+        }
       });
 
       test('the version line is readable, which it was not', () {

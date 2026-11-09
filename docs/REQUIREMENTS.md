@@ -106,19 +106,44 @@ Top of the v1.1 backlog.
 
 ---
 
-## E3 — Daily verse
+## E3 — A saying for the day
 
-### R3.1 — A verse for the day `SHOULD`
+Scripture until Day 28, when the owner asked for African wisdom instead
+(#108). The substitution did not survive R3.2 as it was written — a proverb
+has no translator to name and no licence to check — so both requirements were
+rewritten around what an oral saying actually has. See
+[ADR-025](adr/ADR-025-the-daily-reading-is-an-african-saying.md).
 
-- **Given** any day, **when** I open the app, **then** one verse is shown for
-  that date, and it is the same verse for every member of the family.
-- **Given** no network, **when** I open the app, **then** a verse is still shown
-  from the bundled set.
+### R3.1 — A saying for the day `SHOULD`
 
-### R3.2 — Attribution and licensing `MUST`
+- **Given** any day, **when** I open the app, **then** one saying is shown for
+  that date, and it is the same saying for every member of the family.
+- **Given** no network, **when** I open the app, **then** a saying is still
+  shown from the bundled set.
 
-- **Given** any verse shown, **when** it is displayed, **then** the translation is
-  named, and only a translation whose licence permits redistribution is bundled.
+### R3.2 — Attribution `MUST`
+
+- **Given** any saying shown, **when** it is displayed, **then** the language
+  it comes from is named — the language is the attribution, because there is
+  no author and no translator to name.
+- **Given** a saying with wording in its own language, **when** it is
+  displayed, **then** that wording leads and the English sits beneath it as a
+  gloss.
+- **Given** the bundled set, **when** it ships, **then** no entry reproduces a
+  published collection's phrasing, and the file states the terms it is
+  carried on.
+
+### R3.3 — The app says whether a speaker has checked the wording `MUST`
+
+- **Given** a bundled set nobody fluent has reviewed, **when** I open About,
+  **then** the app says so plainly and asks me to report anything that reads
+  wrong.
+- **Given** a set that has been reviewed, **when** I open About, **then** that
+  caveat is absent.
+
+> Written as a requirement rather than left to judgement because the failure
+> is silent: unchecked isiXhosa shown without a word looks exactly like
+> checked isiXhosa.
 
 ---
 
@@ -168,7 +193,7 @@ one, and not taken here.
 ### R6.1 — Offline read `MUST`
 
 - **Given** no connection, **when** I open the app, **then** the rota, today's
-  verse and my own journal entries are all readable.
+  saying and my own journal entries are all readable.
 
 ### R6.2 — Converging writes `SHOULD`
 
@@ -204,9 +229,10 @@ one, and not taken here.
 | # | Question | Owner | Needed by |
 |:--|:--|:--|:--|
 | ~~Q1~~ | ~~Which weekday does the family's week actually turn over on?~~ **Closed Day 6: the setup screen asks. The weekday is a required answer and the app stores whichever one the family chooses; the picker merely opens on Sunday as a starting position.** | Stakeholder | — |
-| ~~Q2~~ | ~~Which Bible translation may be bundled and redistributed?~~ **Closed Day 10: the World English Bible, British Edition (WEBPB). Public domain by explicit dedication, no required attribution, one trademark condition — do not call it the WEB if you change the text. See ADR-009.** | PO + Developer | — |
+| ~~Q2~~ | ~~Which Bible translation may be bundled and redistributed?~~ **Closed Day 10: the World English Bible, British Edition (WEBPB), public domain by explicit dedication — see ADR-009. Moot since Day 28: the app carries African sayings and bundles no translation at all (ADR-025). The question it leaves behind is Q5.** | PO + Developer | — |
 | Q3 | Do members sign in individually, or is it one shared family install? | PO | Day 7 (auth) |
 | Q4 | Should the journal ever be shareable with the family by choice? | PO | Post-v1 |
+| Q5 | Who reads the sayings and confirms the spelling in each of the five languages? | PO | Before the wording is called reviewed |
 
 ## Change log
 
@@ -215,3 +241,4 @@ one, and not taken here.
 | 2026-10-19 | Baselined at v1.0 scope | Day 1 inception |
 | 2026-10-23 | Q1 closed without an answer being needed | Day 6: setup asks the family rather than the project assuming |
 | 2026-10-27 | Q2 closed: WEBPB, public domain | Day 10: owner chose the WEB; the edition was chosen for "The LORD" over "Yahweh" and British spelling |
+| 2026-11-09 | E3 rewritten: African sayings, not verses. R3.2 recast as attribution by language; R3.3 added. Q2 moot, Q5 opened | Day 28, #108: the owner asked for African wisdom, and R3.2's licence test had nothing left to test |

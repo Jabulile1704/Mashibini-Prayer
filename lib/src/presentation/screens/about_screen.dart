@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../data/sources/assets/bundled_sayings.dart';
 import '../../data/sources/platform/app_version.dart';
+import '../../domain/entities/saying.dart';
+import '../../domain/saying/saying_for_the_day.dart';
 import '../brand/mark.dart';
 import '../brand/tokens.dart';
 
@@ -15,9 +18,13 @@ import '../brand/tokens.dart';
 /// should not have to go looking in a repository to find out that their
 /// phones do not yet see each other.
 class AboutScreen extends StatelessWidget {
-  const AboutScreen({required this.appVersion, super.key});
+  const AboutScreen({required this.appVersion, this.sayings, super.key});
 
   final AppVersion appVersion;
+
+  /// Only so a test can hand in its own. Null means the ones that ship,
+  /// which is every case that is not a test.
+  final Future<SayingForTheDay>? sayings;
 
   static const Key version = Key('about.version');
 
@@ -83,10 +90,12 @@ class AboutScreen extends StatelessWidget {
               heading: 'It works with no signal',
               body:
                   'Everything it needs is already on the phone, including the '
-                  'verses. Whose week it is is worked out from the calendar '
+                  'sayings. Whose week it is is worked out from the calendar '
                   'rather than fetched, so an aeroplane and a full signal '
                   'give the same answer.',
             ),
+
+            _SayingsSection(sayings: sayings),
 
             const SizedBox(height: Space.sm),
             Text('WHAT IT CANNOT DO YET', style: theme.textTheme.labelLarge),
@@ -118,6 +127,69 @@ class AboutScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// Where the sayings come from, read from the file that holds them.
+///
+/// Read rather than written out here, because the thing worth saying is
+/// whether a speaker has **checked** them, and that is a fact about the data.
+/// Putting the answer in this screen's text would let the two drift: the file
+/// could be reviewed and the app carry on apologising, or the wording could
+/// change and the app carry on vouching for it.
+///
+/// Stateful for one reason: `build` runs again on a theme change, and
+/// `BundledSayings.load()` in a `build` would hand `FutureBuilder` a new
+/// future each time and flash the section away and back.
+class _SayingsSection extends StatefulWidget {
+  const _SayingsSection({required this.sayings});
+
+  final Future<SayingForTheDay>? sayings;
+
+  @override
+  State<_SayingsSection> createState() => _SayingsSectionState();
+}
+
+class _SayingsSectionState extends State<_SayingsSection> {
+  late final Future<SayingForTheDay> _sayings =
+      widget.sayings ?? BundledSayings.load();
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<SayingForTheDay>(
+      future: _sayings,
+      builder: (BuildContext context, AsyncSnapshot<SayingForTheDay> built) {
+        final SayingForTheDay? loaded = built.data;
+        if (loaded == null) {
+          // Same reasoning as the card on This Week: a saying that failed to
+          // load should cost a screen nothing.
+          return const SizedBox.shrink();
+        }
+
+        final SayingSource source = loaded.source;
+        final String languages = _list(source.languages);
+
+        return _Section(
+          heading: 'Where the sayings come from',
+          body:
+              '${loaded.count} ${source.tradition} sayings, in $languages. '
+              '${source.notice}'
+              '${source.reviewed ? '' : '\n\n'
+                  'Nobody who speaks these languages has checked the '
+                  'spelling yet. If something reads wrong to you, it '
+                  'probably is wrong — say so and it will be fixed.'}',
+        );
+      },
+    );
+  }
+
+  /// "isiXhosa, isiZulu and Sesotho" — an Oxford-comma-free list, because it
+  /// is read aloud in a sentence rather than scanned in a table.
+  static String _list(List<String> items) {
+    if (items.length < 2) {
+      return items.join();
+    }
+    return '${items.sublist(0, items.length - 1).join(', ')} and ${items.last}';
   }
 }
 

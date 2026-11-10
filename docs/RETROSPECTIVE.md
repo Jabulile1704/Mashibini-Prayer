@@ -230,7 +230,57 @@ bar, so ADR-016's claim about tabs on a phone was unverifiable from the day it
 was written. A sweep named "every screen" is a sweep nobody re-reads the
 definition of.
 
-### PR hygiene has caught five mistakes, each on a different rule
+### A fourth species, and the first that nothing in the app could have caught
+
+Day 29 found one that none of the three rules above reach, in
+`tool/release.sh`:
+
+| | What it was | How it failed |
+|:--|:--|:--|
+| Day 29 | The check that a release branch holds everything new | Compared the replay against `develop` instead of against what was **released** |
+
+The script found the previous release by looking for the newest
+`chore(release):` commit on `develop`. That marker records where `develop`
+was when somebody remembered to cherry-pick it back — the same thing as the
+release only if the cherry-pick was immediate. v2.0.0's was missed and fixed
+two days later in #126, by which time three commits had already landed. The
+marker came to rest **above** work that had never shipped.
+
+v2.1.0 would have gone out with 9 commits instead of 18: no songbook, no
+sign-in, no Firestore rules fix.
+
+**Nothing would have failed.** And this is the part worth keeping:
+
+- the script's own safety check is `git diff develop` on the finished branch,
+  which compares the replay against `develop` rather than against the last
+  release — it passes whether the list was right or wrong;
+- the changelog is drafted from the same list, so it agrees;
+- every test passes on either set, because **both sets are internally
+  coherent**. The smaller one is a perfectly good app. It is just not this
+  one.
+
+The three earlier species were all checks that could not fail. This one is a
+check that *could* fail and was pointed at the wrong question — and unlike
+#111, which invented a defect and was disproved by looking at the screen,
+**looking at the screen would not have helped**. The release would have run
+beautifully. The only symptom available was a family opening the app in a
+fortnight and finding the songbook gone.
+
+So it extends the rule rather than repeating it: the running app is the
+ground truth **for what the app does**. For what was shipped, the ground
+truth is what is on `main` — not a label, not a commit subject, not anyone's
+memory of when they did the cherry-pick. The fix computes the boundary from
+content, and refuses rather than guesses when it cannot find one.
+
+The deeper pattern across all four: **every one of them was a check that
+agreed with itself.** A tautology agrees with itself by construction, a
+broken instrument agrees with its own silence, a test in a fixed-width font
+agrees with its own apparatus, and a release script agrees with its own
+changelog. None of them had a second, independent source to disagree with.
+That is the thing to look for, and it is not the same question as "can this
+fail?".
+
+### PR hygiene has caught seven mistakes, and two are repeats
 
 | Day | What it caught |
 |:--|:--|
@@ -240,9 +290,16 @@ definition of.
 | 19 | The heading dropped again, in a different section |
 | 23 | A title typed `style`, which is not in the project's vocabulary |
 
-Five catches, five rules, no repeats. That is the shape of a check doing
-real work rather than one everybody has learned to pre-satisfy — and it is
-the cheapest automation in the repository: four shell steps and a regex.
+| 27 | The "How it was verified" heading dropped a third time |
+| 27 | A `spike/` branch prefix, which the model does not include |
+
+Seven catches now, and the claim of "no repeats" above was true when written
+and is not any more: the verification heading has gone missing three times
+and a branch name twice. That changes what the figure means. A rule caught
+once is a rule somebody did not know; a rule caught three times is a rule
+that is easy to forget at exactly the moment it matters — when the work is
+done and the PR is the last thing between you and finishing. It is still the
+cheapest automation in the repository: four shell steps and a regex.
 
 The one on Day 23 is the most interesting, because the type was not a
 careless choice. `style` is a Conventional Commits type in general use; it

@@ -114,6 +114,46 @@ jobs:
             --project demo-mashibini \
             "cd test/rules && npm test"
 
+  # ---------------------------------------------------------------------
+  # Known vulnerabilities in what we depend on.
+  #
+  # Dependabot has raised update PRs since Day 1, but an update PR is a
+  # suggestion and nothing was ever stopped by ignoring one. This is the
+  # gate: a dependency with a published advisory fails the build.
+  #
+  # OSV-Scanner rather than `npm audit`, because `npm audit` cannot see the
+  # one that matters. The app is Dart: `pubspec.lock` is the lockfile a
+  # family's phone actually runs, and npm has no opinion about it. OSV reads
+  # `pubspec.lock` and both `package-lock.json` trees from the same
+  # database, so the gate is one tool and exceptions have one syntax.
+  #
+  # It scans recursively from the root by default and skips anything
+  # `.gitignore`d, which is what keeps the three vendored `node_modules`
+  # trees out of it.
+  #
+  # Exceptions go in an `osv-scanner.toml` **next to the lockfile they are
+  # about** — the config does not reach into subdirectories — and each one
+  # needs an `id`, a `reason` and an `effectiveUntil`, so that "we looked at
+  # it and it cannot reach us" expires and gets looked at again.
+  #
+  # `upload-sarif: false` on purpose: the Security tab would be useful, but
+  # a failed SARIF upload would turn this job red for a reason that is not a
+  # vulnerability, and a gate is worth more when red means exactly one
+  # thing.
+  # ---------------------------------------------------------------------
+  vulnerable-dependencies:
+    name: Known vulnerabilities
+    permissions:
+      contents: read
+    # Pinned, and Dependabot's github-actions ecosystem keeps the pin moving.
+    # v2.7.0 rather than the v2.7.1 every OSV docs page quotes, because that
+    # tag has not been released — the docs are ahead of the repository, and
+    # copying them yields a workflow that cannot resolve.
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.7.0
+    with:
+      upload-sarif: false
+      fail-on-vuln: true
+
   build-android:
     name: Android build
     runs-on: ubuntu-latest

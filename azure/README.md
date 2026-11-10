@@ -41,6 +41,49 @@ trusted, because a token the client supplies is a claim and not evidence —
 and checks the audience is this project, or any Firebase project's token
 would open the container.
 
+### Who may name which blob
+
+**The caller does not choose the owner.** The blob is always
+`<uid>/<key>`, with the uid taken from the token the request actually
+proved and prepended by the Function. There is no string a client can send
+that reaches another person's prefix — authorisation by construction rather
+than by blocklist, which matters because a blocklist has to anticipate the
+input and this does not.
+
+`authz.ts` is the whole of that decision, in a file with no imports so it
+can be tested without an Azure SDK, a Function host or a network.
+`npm test` runs it, and CI runs it in the "Security rules" job.
+
+It was not always so. The first version verified the token, used the uid for
+a log line, and signed for whatever `key` the query string asked for — so
+any holder of a valid token for this project could read, or overwrite, every
+blob in the container. Google sign-in admits any Google account, which makes
+"a valid token for this project" very nearly "anybody". It was never
+deployed and nothing in the app ever called it; it was wrong code rather
+than an exposure.
+
+### What this cannot do yet
+
+**Nobody can read anybody else's files, including their own family's.**
+
+That is narrower than this spike exists for — the point was that
+photographs and audio stop being stuck on one phone — and it is where it
+stops, because **the Function cannot tell who is in which family.** It holds
+a storage key and nothing else; membership lives in Firestore, which it
+never reads.
+
+Widening it is not a change to the rule above but the addition of a second
+one, and it needs membership a caller cannot forge:
+
+- the Firebase Admin SDK reading `families/{id}.memberUids` with service
+  credentials, which means putting a service account into the Function's app
+  settings; or
+- a custom claim minted when somebody joins a family, so the token itself
+  carries the family id.
+
+Until one of those exists, "only your own" is the honest ceiling. It is
+less than was wanted and more than was there.
+
 ## Building it
 
 Costs are the open question. Azure's Blob pricing page renders its

@@ -73,6 +73,7 @@ dist/
 # a laptop, and must never be committed.
 azure/**/node_modules/
 azure/**/dist/
+azure/**/dist-test/
 azure/**/local.settings.json
 
 # Claude Code's per-machine permission rules. Personal to whoever

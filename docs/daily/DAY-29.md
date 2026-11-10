@@ -114,6 +114,23 @@ by design and says to replay by hand, which is what happened.
   and the new boundary logic then reports `0 to replay` — `develop` and
   `main` level, which is the state the whole of today was about restoring.
 
+## The hygiene gate caught this log
+
+The PR carrying this entry was opened on a branch called `docs/day-29`, and
+refused: the allowed prefixes are `feature`, `fix`, `chore`, `release` and
+`hotfix`.
+
+It is the eighth catch, the third on a branch name, and it happened on the
+PR whose purpose was to correct the table recording those catches. The table
+said seven; writing it made it eight.
+
+Worth keeping for what the three branch-name catches have in common —
+`spike/` on Day 27, `docs/` here, and `style` as a commit type on Day 23.
+Every one is **a name that is correct in general use and wrong in this
+repository**. None was carelessness, and none would be prevented by trying
+harder. That is the argument for the check rather than against the
+convention.
+
 ## Open
 
 - **Q5** — nobody fluent has checked the sayings' spelling. Unchanged.

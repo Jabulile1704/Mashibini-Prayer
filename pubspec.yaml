@@ -1,7 +1,7 @@
 name: mashibini_prayer
 description: "Holds the Mashibini family prayer rota: whose week it is to lead family prayer."
 publish_to: 'none'
-version: 2.0.0+10
+version: 2.1.0+11
 
 environment:
   sdk: ^3.13.3

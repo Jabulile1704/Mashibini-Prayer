@@ -87,6 +87,23 @@ jobs:
         working-directory: test/rules
         run: npm ci
 
+      # The SAS Function had no tests at all, and shipped an authorisation
+      # decision that authorised nothing: it verified the caller's token and
+      # then signed for whatever blob name the query string asked for. These
+      # run here rather than in a job of their own because this job is the
+      # one that means "security", and a new required check would have to be
+      # added to branch protection by hand before it could block anything.
+      #
+      # No emulator and no network: `authz.ts` has no imports, which is the
+      # reason it is a separate file.
+      - name: Install the Function
+        working-directory: azure/sas-function
+        run: npm ci
+
+      - name: Run the Function's authorisation tests
+        working-directory: azure/sas-function
+        run: npm test
+
       - name: Run the rules against the emulator
         # A project id beginning with "demo-" keeps the emulator offline: it
         # never looks for a real Firebase project, which is what lets these

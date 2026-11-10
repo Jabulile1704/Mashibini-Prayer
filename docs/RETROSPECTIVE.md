@@ -280,7 +280,7 @@ changelog. None of them had a second, independent source to disagree with.
 That is the thing to look for, and it is not the same question as "can this
 fail?".
 
-### PR hygiene has caught seven mistakes, and two are repeats
+### PR hygiene has caught eight mistakes, and three are repeats
 
 | Day | What it caught |
 |:--|:--|
@@ -292,14 +292,25 @@ fail?".
 
 | 27 | The "How it was verified" heading dropped a third time |
 | 27 | A `spike/` branch prefix, which the model does not include |
+| 29 | A `docs/` branch prefix — on the PR that corrects this table |
 
-Seven catches now, and the claim of "no repeats" above was true when written
-and is not any more: the verification heading has gone missing three times
-and a branch name twice. That changes what the figure means. A rule caught
-once is a rule somebody did not know; a rule caught three times is a rule
-that is easy to forget at exactly the moment it matters — when the work is
-done and the PR is the last thing between you and finishing. It is still the
-cheapest automation in the repository: four shell steps and a regex.
+Eight catches, and the claim of "no repeats" above was true when written and
+is not any more: the verification heading has gone missing three times, and
+a branch prefix three times.
+
+The last row is the useful one. That PR was opened to say the hygiene gate
+had caught seven things — and the gate caught it, for the same class of
+mistake, while it was being written. `docs/` is an obvious name for a branch
+holding nothing but documentation; it simply is not one of the five the
+project allows, exactly as `style` was a real Conventional Commits type that
+is not one of this project's nine, and `spike/` was the natural word for a
+spike.
+
+All three repeats of this rule are the same shape: **a name that is correct
+in general use and wrong in this repository.** That is not carelessness and
+it will not be fixed by trying harder, which is the argument for the check
+rather than against the convention. It remains the cheapest automation
+here: four shell steps and a regex.
 
 The one on Day 23 is the most interesting, because the type was not a
 careless choice. `style` is a Conventional Commits type in general use; it

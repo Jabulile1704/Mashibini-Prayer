@@ -143,8 +143,15 @@ jobs:
   # ---------------------------------------------------------------------
   vulnerable-dependencies:
     name: Known vulnerabilities
+    # All three, because the called workflow's own job declares all three and
+    # a caller granting less is refused *before any job is created* — which
+    # takes the whole CI workflow down with it, not just this job. They are
+    # needed even with `upload-sarif: false`: the permission block is on the
+    # job, not on the step that would have used it.
     permissions:
+      actions: read
       contents: read
+      security-events: write
     # Pinned, and Dependabot's github-actions ecosystem keeps the pin moving.
     # v2.7.0 rather than the v2.7.1 every OSV docs page quotes, because that
     # tag has not been released — the docs are ahead of the repository, and

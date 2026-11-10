@@ -5,6 +5,8 @@ import {
   StorageSharedKeyCredential,
 } from '@azure/storage-blob';
 
+import { blobNameFor, permissionFrom } from './authz';
+
 /**
  * Mints a short-lived SAS URL for one blob, for one operation.
  *
@@ -68,10 +70,18 @@ export async function sas(
     return { status: 401 };
   }
 
-  const key = request.query.get('key');
-  const permission = request.query.get('permission') === 'w' ? 'w' : 'r';
-  if (!key || key.includes('..')) {
-    // No traversal out of the container, and no empty keys.
+  const permission = permissionFrom(request.query.get('permission'));
+
+  // **The caller does not choose the owner.** `blobNameFor` prepends the uid
+  // this request actually proved, so there is no string a client can send
+  // that names somebody else's file.
+  //
+  // Until this line existed, the uid was verified and then used for nothing
+  // but a log entry, and `key` went to the signer as it arrived — which made
+  // every blob in the container readable, and writable, by anybody holding a
+  // token for this project. See `authz.ts` for the whole of it.
+  const blobName = blobNameFor(uid, request.query.get('key'));
+  if (blobName === null) {
     return { status: 400 };
   }
 
@@ -81,7 +91,7 @@ export async function sas(
   const query = generateBlobSASQueryParameters(
     {
       containerName: CONTAINER,
-      blobName: key,
+      blobName,
       permissions: BlobSASPermissions.parse(permission),
       expiresOn,
     },
@@ -89,9 +99,9 @@ export async function sas(
   ).toString();
 
   const url =
-    `https://${ACCOUNT}.blob.core.windows.net/${CONTAINER}/${key}?${query}`;
+    `https://${ACCOUNT}.blob.core.windows.net/${CONTAINER}/${blobName}?${query}`;
 
-  context.log(`sas ${permission} for ${key} to ${uid}`);
+  context.log(`sas ${permission} for ${blobName} to ${uid}`);
   return { jsonBody: { url, expiresOn: expiresOn.toISOString() } };
 }
 

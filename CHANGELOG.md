@@ -4,6 +4,68 @@ What changed, written for the family rather than for whoever wrote it.
 Versions follow [Semantic Versioning](https://semver.org); the process is in
 [docs/RELEASING.md](docs/RELEASING.md).
 
+## [2.1.0] — 2026-11-10
+
+**The app stopped being only about the rota.** There are songs in it now, the
+family's own recordings play from it, and the daily reading is an African
+saying rather than a Bible verse. Each of you can also sign in as yourself,
+which is the first step towards the phones finally seeing each other.
+
+### New
+
+- **An African saying each day**, in place of the Bible verse. Thirty of
+  them, in isiXhosa, isiZulu, Sesotho, Setswana and Sepedi — the saying in
+  its own language first, the English underneath, and the language named so
+  you know whose it is. Everybody sees the same one on the same day.
+  **Nobody who speaks these languages has checked the spelling yet.** The
+  About screen says so, and if something reads wrong to you it probably is
+  wrong — tell us and it will be fixed.
+- **A songbook.** The songs this family loves, and who chose each one. It is
+  on the Family tab, above the tree.
+- **The songs can actually play.** Add the recording from this phone and a
+  play button appears next to the title. The recording stays on the phone
+  that added it — it is never sent anywhere, so a song can play on your phone
+  and not on somebody else's. The screen tells you which is which rather
+  than showing a button that does nothing.
+- **Sign in as yourself**, from Settings, with your Google account. Nothing
+  changes yet if you do: it is there so the phones can tell each other apart
+  when they start syncing, and so your journal stays yours when they do.
+  Everything in the app works without it.
+
+### Better
+
+- **A way out of a family member's card.** It opened and was hard to get back
+  out of; it now has a back arrow and closes the way you expect.
+- **The Family tab is called Family again**, and the family leads it. It was
+  briefly called Songs, which described the first thing on the screen rather
+  than what the tab is for.
+
+### Fixed
+
+- **The app no longer hangs on the opening screen.** On a phone it could sit
+  on the honeycomb for ever with no error — it looked slow, it was stopped.
+  It was trying to reach a service it had never been told to start. That
+  service is now optional: if it cannot start, you lose the ability to sign
+  in and nothing else.
+- **A button on the bottom bar that a screen reader announced but could not
+  press.** It can be pressed now.
+- **The rules protecting the family's data had never been tested against what
+  the app actually sends.** They had been tested against hand-written
+  examples that happened to be shaped differently. They are now checked
+  against the real thing.
+
+### Behind the scenes
+
+- The release process was shipping the wrong set of changes. The step that
+  works out "what is new since last time" was reading a label instead of the
+  code, and the label had drifted — this release would have gone out without
+  the songbook, without sign-in and without the rules fix, and nothing would
+  have complained. It now works it out from the code itself, and refuses
+  rather than guesses when it cannot.
+- Somewhere to put files that are too big for the family's phones is being
+  tried out, built so it can be removed entirely if it turns out not to be
+  worth paying for.
+
 ## [2.0.0] — 2026-11-06
 
 **The app stopped being something you set up once.** Nearly everything the

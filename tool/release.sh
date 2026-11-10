@@ -33,20 +33,55 @@ fi
 CURRENT=$(grep -E '^version:' pubspec.yaml | awk '{print $2}')
 BUILD=$((${CURRENT##*+} + 1))
 
+# `main` has to be current before the boundary can be worked out from it.
+# This used to happen further down, just before the branch was cut.
+git fetch -q origin main
+
 # Where the last release ended, *on this branch*.
 #
 # Not the tag. Pull requests rebase onto `main`, so a tag on `main` shares no
 # commits with the ones on `develop` — they are copies with different hashes,
 # and `git log v1.0.0..develop` lists the entire project.
 #
-# `--first-parent` is what makes this exact. It walks only `develop`'s own
-# line, so it finds the cherry-picked release commit (ADR-015) and, for
-# releases made before that decision, the old back-merge — without being
-# confused by the copies those merges dragged in.
-PREVIOUS=$(git log --first-parent -1 --pretty=%H \
-  --grep='^chore(release): v' --grep='back into develop' 2>/dev/null || echo '')
+# And **not** the last `chore(release):` commit either, which is what this
+# used until v2.1.0. That marker records where `develop` was when somebody
+# remembered to cherry-pick it back — the same thing as the release only if
+# the cherry-pick was immediate. v2.0.0's was not. Three commits had already
+# landed on `develop` (sign-in, its settings row, and the artefact cleanup),
+# so the marker came to rest *above* work that had never been released.
+#
+# The next release would have replayed 9 commits instead of 18 and shipped
+# without the songbook, without sign-in and without a Firestore rules fix.
+# Nothing would have failed: the tests pass on either set, `git diff develop`
+# was never consulted against the right baseline, and the changelog is drafted
+# from the same wrong list. It would have been found by a family noticing a
+# feature had vanished.
+#
+# So the boundary is computed from **content**, which cannot drift out of
+# step with itself: walk `develop`'s own line and find the newest commit whose
+# tree `main` already has. CHANGELOG.md and pubspec.yaml are excluded because
+# the release commit is precisely the thing that may differ between the two at
+# that point.
+MAIN=$(git rev-parse origin/main)
+PREVIOUS=''
+for candidate in $(git log --first-parent develop --pretty=%H -500); do
+  if [ -z "$(git diff --name-only "$candidate" "$MAIN" -- . \
+      ':(exclude)CHANGELOG.md' ':(exclude)pubspec.yaml')" ]; then
+    PREVIOUS="$candidate"
+    break
+  fi
+done
+
+# No match means `main` holds something `develop` does not — a hotfix that
+# never came back, most likely. Refusing is the whole point: the old code
+# guessed here, and the guess is how nine commits nearly went missing without
+# a word being said about it.
 if [ -z "$PREVIOUS" ]; then
-  PREVIOUS=$(git describe --tags --abbrev=0 2>/dev/null || echo '')
+  echo "error: nothing on develop has the content main already holds." >&2
+  echo "       main carries work develop does not. Look for a hotfix that" >&2
+  echo "       landed on main and was never brought back, cherry-pick it to" >&2
+  echo "       develop, and run this again." >&2
+  exit 1
 fi
 
 # The work to ship: everything on develop since the last release, merges
@@ -62,8 +97,6 @@ echo "    to $VERSION+$BUILD"
 echo "  since $(git log -1 --pretty=%s "$PREVIOUS" 2>/dev/null || echo "the first commit")"
 echo "  $(printf '%s\n' "$WORK" | wc -l | tr -d ' ') commits to replay"
 echo
-
-git fetch -q origin main
 
 # **Cut from main, not develop** (ADR-018).
 #

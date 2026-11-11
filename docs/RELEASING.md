@@ -125,6 +125,12 @@ A free Apple account signs the build for **seven days**, after which the app
 stops opening until it is installed again. That is Apple's limit on free
 provisioning, not a problem with the build — see ADR-013.
 
+Android **7.0 or newer** — `minSdk` is 24, which is Flutter's own floor
+rather than a choice made here. On an older phone Android refuses with
+*App not installed* and says nothing about why, which is indistinguishable
+from a corrupt download, a signature clash or a full disk. Say the version
+requirement wherever the file is handed over.
+
 Android: the APKs are attached to the GitHub Release, and there are two.
 
 | File | Who it is for |

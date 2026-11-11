@@ -159,10 +159,41 @@ The journal is plain JSON in `shared_preferences`. The OS sandbox and disk
 encryption protect it on a normal phone, and it is not separately encrypted
 — worth knowing, given the app tells the family "neither can we".
 
+## A push that should not have worked
+
+The correction above — removing the unmeasured "roughly 17 MB" from this
+log — went **straight to `develop`**. No branch, no pull request, no review
+of any kind. It worked.
+
+`develop` requires six status checks and has done since Day 1. It also has
+`enforce_admins: false`, which means the owner's account is exempt from all
+of them. The checks apply to pull requests; a direct push is not a pull
+request.
+
+So the protection that this project has leaned on for thirty days protects
+`develop` from everybody except the one person who commits to it.
+
+CI did run afterwards, on the push, and the change was documentation. The
+damage here is nil and the finding is not: **for thirty days, "every merge
+to `develop` is analysed, tested and built by CI" (N6) has been a
+convention rather than a constraint.** Every merge *was* — because every
+change happened to go through a PR, not because anything required it.
+
+It is the same shape as the morning's work, which is why it belongs in the
+same log. The SAS Function checked who you were and not what you could
+reach. Branch protection checks what a pull request contains and not
+whether one was used.
+
+Turning `enforce_admins` on is the owner's call, because it binds him too
+— that being exactly the point — and it is listed below rather than done.
+
 ## Open
 
 - **Whether the gate blocks.** A new job is not a required check until
   branch protection says so, and that is the owner's call.
+- **Whether branch protection binds its owner.** `enforce_admins` is off on
+  both `develop` and `main`. Until it is on, the six required checks are a
+  convention.
 - **Q5** — nobody fluent has checked the sayings' spelling. Unchanged.
 - **The APK size is fixed but not yet measured.** Releases now publish an
   `arm64-v8a` build as the unsuffixed name, with the universal one kept as

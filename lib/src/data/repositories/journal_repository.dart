@@ -8,9 +8,6 @@ import '../serialization/journal_json.dart';
 import '../sources/local/key_value_store.dart';
 
 /// Where journal entries live.
-///
-/// Expressed in domain types, like every other repository here, so the
-/// screens never learn where an entry is kept.
 abstract interface class JournalRepository {
   /// Every entry, newest first.
   Future<List<JournalEntry>> all();
@@ -18,10 +15,6 @@ abstract interface class JournalRepository {
   Future<JournalEntry?> forDate(CalendarDate date);
 
   /// Writes [text] against [date], creating or replacing that day's entry.
-  ///
-  /// Empty text deletes the entry rather than storing a blank one: somebody
-  /// clearing the box means they want it gone, not that they want a day with
-  /// nothing in it.
   Future<void> write({
     required CalendarDate date,
     required String text,
@@ -33,14 +26,6 @@ abstract interface class JournalRepository {
   Stream<List<JournalEntry>> watch();
 
   /// Keeps text that has been typed but not saved (N7).
-  ///
-  /// The OS can kill the app at any moment and gives no promise of warning.
-  /// Everything else in this app already survives that because it is written
-  /// when it changes; a half-written entry was the one thing that did not,
-  /// and it is the one nobody would forgive losing.
-  ///
-  /// A draft is not an entry. It never appears in [all] or [watch], it has no
-  /// id, and saving the entry clears it.
   Future<void> saveDraft({required CalendarDate date, required String text});
 
   /// Unsaved text for [date], or null if there is none.
@@ -52,18 +37,6 @@ abstract interface class JournalRepository {
 }
 
 /// Journal entries on this device, one key per entry plus an index.
-///
-/// **Not one key for the whole journal**, which is how the family is stored
-/// (ADR-006). The family is a handful of records that change a few times a
-/// year; a journal is the first thing in this app that grows without limit —
-/// a person writing daily for ten years is thousands of entries. Holding them
-/// in one value would mean rewriting the entire journal on every save, and
-/// loading all of it to read one day.
-///
-/// The index is a list of ids. It can, in principle, drift from the entries
-/// if a write half-fails; a missing entry is skipped on read and dropped from
-/// the index, which is a smaller problem than the whole journal being one
-/// value.
 class LocalJournalRepository implements JournalRepository {
   LocalJournalRepository({required this._store, required this._ids});
 
@@ -157,8 +130,6 @@ class LocalJournalRepository implements JournalRepository {
     if (existing == null) {
       await _writeIndex(<String>[...await _readIndex(), entry.id]);
     }
-    // The draft has become the entry; leaving it would restore the same text
-    // over the top next time the day is opened.
     await clearDraft(date);
     await _announce();
   }
@@ -187,8 +158,6 @@ class LocalJournalRepository implements JournalRepository {
     required String text,
   }) async {
     _assertUsable();
-    // An empty draft is no draft. Somebody who clears the box and leaves
-    // meant to abandon it, and should not be handed a blank one back.
     if (text.trim().isEmpty) {
       await clearDraft(date);
       return;
@@ -228,9 +197,6 @@ class LocalJournalRepository implements JournalRepository {
           if (id is String) id,
       ];
     } on FormatException {
-      // A corrupt index loses the list, not the entries — but with no way to
-      // enumerate keys they are unreachable, so this is the one failure that
-      // costs a journal. Treated as empty rather than fatal.
       return <String>[];
     }
   }

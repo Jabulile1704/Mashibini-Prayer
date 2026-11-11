@@ -3,19 +3,6 @@ import 'dart:math' as math;
 import 'package:flutter/widgets.dart';
 
 /// The Mashibini Prayer mark: a cluster of comb cells, one of them filled.
-///
-/// The family's totem is the bee, and a comb cell is the one bee shape that
-/// is not a cartoon — no face, no wings, no antennae, none of which survive
-/// at icon size. A hexagon does.
-///
-/// It is also the only mark considered that **does work**. One cell per
-/// person, the filled one is whose week it is, so the logo is the app's
-/// actual state rather than a picture beside it. A family of four reads as
-/// four cells; a family of six reads as six.
-///
-/// Supersedes the ring of arcs from Day 8 (ADR-017). The idea is unchanged —
-/// equal parts, one of them current, a cycle that comes round — and only the
-/// geometry is different.
 class RotaMark extends StatelessWidget {
   const RotaMark({
     required this.size,
@@ -57,10 +44,6 @@ class RotaMark extends StatelessWidget {
 }
 
 /// Draws the comb.
-///
-/// Cells are laid out on a ring rather than in a honeycomb lattice. A true
-/// lattice packs tightly and is lovely at poster size; at 20 pixels it turns
-/// to mud, and the one thing this mark has to survive is being small.
 class CombMarkPainter extends CustomPainter {
   const CombMarkPainter({
     required this.ringColour,
@@ -75,10 +58,6 @@ class CombMarkPainter extends CustomPainter {
   final int current;
 
   /// A flat-topped hexagon's path, centred on [centre].
-  ///
-  /// Flat-topped rather than pointy-topped because a row of flat-tops sits
-  /// level with the type beside it; pointy-tops look like they are falling
-  /// over.
   static Path cell(Offset centre, double radius) {
     final Path path = Path();
     for (int corner = 0; corner < 6; corner++) {
@@ -106,20 +85,6 @@ class CombMarkPainter extends CustomPainter {
       return;
     }
 
-    // Solved rather than guessed, because guessing was wrong.
-    //
-    // Adjacent centres on the ring are `2 · orbit · sin(π/n)` apart, and two
-    // cells clear each other when that is at least `2 · radius`. With
-    // `orbit + radius` fixed at half the width, the largest radius that
-    // still clears is:
-    //
-    //   radius = (size / 2) / (1 + 1 / sin(π / n))
-    //
-    // The first version used a flat 0.24 of the width with a comment saying
-    // the cells did not touch. At four cells they overlapped by a third —
-    // visible the moment the mark was drawn at 112px on a splash screen and
-    // invisible in every test, because nothing measures whether a picture
-    // is a tangle.
     final double share = math.sin(math.pi / parts);
     // The 0.94 is the visible gap. Touching exactly is still unreadable.
     final double cellRadius = (size.width / 2) / (1 + 1 / share) * 0.94;

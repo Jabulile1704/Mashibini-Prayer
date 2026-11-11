@@ -8,15 +8,6 @@ import '../brand/mark.dart';
 import '../brand/tokens.dart';
 
 /// What the app does, what it does not, and which build this is.
-///
-/// The version used to sit at the foot of This Week, in the smallest type in
-/// the app, where it was the only thing on the screen nobody needed. It is
-/// here now, with the three things worth saying next to it.
-///
-/// The limits are stated rather than omitted. Every one of them is already
-/// in the release notes and in the requirements; a family reading the app
-/// should not have to go looking in a repository to find out that their
-/// phones do not yet see each other.
 class AboutScreen extends StatelessWidget {
   const AboutScreen({required this.appVersion, this.sayings, super.key});
 
@@ -131,16 +122,6 @@ class AboutScreen extends StatelessWidget {
 }
 
 /// Where the sayings come from, read from the file that holds them.
-///
-/// Read rather than written out here, because the thing worth saying is
-/// whether a speaker has **checked** them, and that is a fact about the data.
-/// Putting the answer in this screen's text would let the two drift: the file
-/// could be reviewed and the app carry on apologising, or the wording could
-/// change and the app carry on vouching for it.
-///
-/// Stateful for one reason: `build` runs again on a theme change, and
-/// `BundledSayings.load()` in a `build` would hand `FutureBuilder` a new
-/// future each time and flash the section away and back.
 class _SayingsSection extends StatefulWidget {
   const _SayingsSection({required this.sayings});
 
@@ -161,8 +142,6 @@ class _SayingsSectionState extends State<_SayingsSection> {
       builder: (BuildContext context, AsyncSnapshot<SayingForTheDay> built) {
         final SayingForTheDay? loaded = built.data;
         if (loaded == null) {
-          // Same reasoning as the card on This Week: a saying that failed to
-          // load should cost a screen nothing.
           return const SizedBox.shrink();
         }
 

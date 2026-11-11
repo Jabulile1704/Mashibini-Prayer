@@ -20,8 +20,6 @@ abstract final class JournalJson {
     'id': entry.id,
     'date': entry.date.toString(),
     'text': entry.text,
-    // An instant, not a calendar date: this one really is a moment, and it
-    // exists to order edits rather than to name a day.
     'updatedAt': entry.updatedAt.toUtc().toIso8601String(),
   };
 

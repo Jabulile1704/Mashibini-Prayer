@@ -4,17 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 /// Who this phone's owner is, to Firebase (#76).
-///
-/// Behind a seam for the usual reason — a widget test cannot open Google's
-/// sign-in sheet — and because **the decision about what signing in means
-/// is not this class's**. It returns a uid and a display name; whether that
-/// uid gets attached to a member of the family is the app's business
-/// (ADR-023).
-///
-/// Google rather than email and password, and never an email link: ADR-010
-/// records that the free tier allows five link emails a day across the whole
-/// project, which is one person retrying on a bad evening and then nobody
-/// being able to sign in at all.
 abstract interface class Identity {
   /// The person signed in on this phone, or null.
   SignedIn? get current;
@@ -23,10 +12,6 @@ abstract interface class Identity {
   Stream<SignedIn?> watch();
 
   /// Opens the sign-in sheet.
-  ///
-  /// Returns null if it was dismissed, which is an ordinary answer rather
-  /// than a failure — somebody opening Settings to look is not somebody who
-  /// has decided to sign in.
   Future<SignedIn?> signIn();
 
   Future<void> signOut();
@@ -56,12 +41,6 @@ class SignedIn {
 }
 
 /// Nobody is signed in, and nobody can be.
-///
-/// Used when Firebase could not start. Signing in is the one thing in this
-/// app that genuinely needs the network and a configured project; the rota,
-/// the journal, the tree and the songbook do not. So a Firebase that will
-/// not initialise costs the sign-in row and nothing else, rather than the
-/// whole app.
 class NoIdentity implements Identity {
   const NoIdentity();
 
@@ -86,17 +65,6 @@ class FirebaseIdentity implements Identity {
   final FirebaseAuth? _given;
 
   /// **Resolved on first use, not in the constructor.**
-  ///
-  /// `FirebaseAuth.instance` throws `[core/no-app]` until
-  /// `Firebase.initializeApp()` has run. This class is built in `main()`,
-  /// so touching it there killed `main()` before `runApp` — and the app sat
-  /// on the native launch screen for ever, which looks exactly like being
-  /// slow to start rather than like a crash.
-  ///
-  /// Nothing caught it. Every test injects a fake, so the only code that
-  /// ever constructs the real one is `main()` — the one file with no test.
-  /// The seam that makes the app testable is the same seam that hid the
-  /// wiring.
   late final FirebaseAuth _auth = _given ?? FirebaseAuth.instance;
 
   @override
@@ -107,9 +75,6 @@ class FirebaseIdentity implements Identity {
 
   @override
   Future<SignedIn?> signIn() async {
-    // `google_sign_in` 7 requires initialising before authenticating, and
-    // calling it twice is harmless — which is what lets this stay a plain
-    // method rather than something the caller has to sequence.
     final GoogleSignIn google = GoogleSignIn.instance;
     await google.initialize();
 

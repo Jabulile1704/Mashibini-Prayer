@@ -6,21 +6,12 @@ import '../brand/tokens.dart';
 import 'date_text.dart';
 
 /// Whose week it is — the one thing this app exists to say.
-///
-/// The ring above the name is the app's own mark, drawn live: as many arcs as
-/// there are people, with this week's filled. So the icon on the home screen
-/// is a generic cycle, and the same shape inside the app is *your* cycle,
-/// showing where the family has got to. It answers "who is next after next"
-/// without anybody reading a list.
 class LeadingCard extends StatelessWidget {
   const LeadingCard({required this.turn, required this.isYou, super.key});
 
   final Turn turn;
 
   /// Whether the leader is the person holding the phone.
-  ///
-  /// When it is, the card speaks in the second person: being told your own
-  /// name is a strange way to be reminded of your own turn.
   final bool isYou;
 
   @override
@@ -58,14 +49,6 @@ class LeadingCard extends StatelessWidget {
               const SizedBox(height: Space.xl),
               Text('This week', style: theme.textTheme.labelLarge),
               const SizedBox(height: Space.sm),
-              // Shrinks only when it would otherwise break mid-word.
-              //
-              // At the largest accessibility text size a long name is wider
-              // than the card, and Flutter's only recourse is to split the
-              // word: "Jabuli / le". A name is the one word on this screen
-              // that must not be cut in half, so scaleDown gives back just
-              // enough size to keep it whole. Below AX sizes nothing shrinks
-              // at all, and the person's chosen size is honoured in full.
               FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(

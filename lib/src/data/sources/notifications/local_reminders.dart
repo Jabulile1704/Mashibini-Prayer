@@ -6,12 +6,6 @@ import '../../../domain/reminders/reminder_plan.dart';
 import 'reminders.dart';
 
 /// Reminders delivered by the phone itself.
-///
-/// Local notifications rather than push, and not by preference: the free
-/// Firebase plan cannot send a push at all without a server, and this project
-/// has decided it will never have one (ADR-010). So each phone reminds the
-/// person holding it, and the app has no way to notify anybody else —
-/// a real limit, recorded rather than worked around.
 class LocalReminders implements Reminders {
   LocalReminders({FlutterLocalNotificationsPlugin? plugin})
     : _plugin = plugin ?? FlutterLocalNotificationsPlugin();

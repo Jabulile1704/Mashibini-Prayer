@@ -43,23 +43,8 @@ class Reminder {
 }
 
 /// Works out which reminders this phone should be holding.
-///
-/// Pure: it takes the family, who this phone belongs to, and the time, and
-/// returns a list. Nothing here schedules anything, so every rule about
-/// *when* a person is reminded can be tested without a notification plugin
-/// and without waiting for Saturday evening.
-///
-/// The app cannot notify anybody else's phone — the free plan has no way to
-/// send a push (ADR-010) — so a reminder is only ever for the person holding
-/// the device. That is why [youAre] is required rather than optional: without
-/// it there is nobody to remind.
 abstract final class ReminderPlan {
   /// How many turnovers ahead to plan for.
-  ///
-  /// iOS caps how many notifications an app may have pending, and a rota of
-  /// four means eight reminders is roughly eight months of warning. Planning
-  /// further would be scheduling for a family that may not look the same by
-  /// then.
   static const int horizon = 8;
 
   /// The evening before, by default. Late enough to be the last thing in a
@@ -77,15 +62,11 @@ abstract final class ReminderPlan {
     final RotaEngine engine = RotaEngine.forFamily(family);
     final Member? me = family.membersById[youAre];
     if (me == null) {
-      // This phone belongs to somebody who is no longer in the family. Not an
-      // error — a removed member's phone should simply stop being reminded.
       return const <Reminder>[];
     }
 
     final List<Reminder> reminders = <Reminder>[];
 
-    // Look far enough ahead to find `horizon` of *this person's* turns, not
-    // the next `horizon` turns of anybody's.
     for (final Turn turn in engine.turnsFrom(today, count: horizon * 12)) {
       if (turn.leader.id != youAre) {
         continue;
@@ -94,9 +75,6 @@ abstract final class ReminderPlan {
       final CalendarDate eveningBefore = turn.weekStart.subtractDays(1);
       final DateTime at = _at(eveningBefore, timeOfDay);
 
-      // A reminder whose moment has passed is not worth scheduling: the week
-      // it warns about has already started, and the screen says so better
-      // than a notification would.
       if (!at.isAfter(now)) {
         continue;
       }
@@ -123,10 +101,6 @@ abstract final class ReminderPlan {
       DateTime(date.year, date.month, date.day).add(timeOfDay);
 
   /// A small, stable number for a date.
-  ///
-  /// The notification plugin keys pending notifications by int, and the same
-  /// turnover must produce the same id every time the plan is recomputed —
-  /// otherwise re-planning stacks duplicates instead of replacing them.
   static int _idFor(CalendarDate weekStart) =>
       weekStart.year * 10000 + weekStart.month * 100 + weekStart.day;
 }

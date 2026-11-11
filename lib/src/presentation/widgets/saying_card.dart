@@ -4,17 +4,6 @@ import '../../domain/entities/saying.dart';
 import '../brand/tokens.dart';
 
 /// The saying for today.
-///
-/// Set quieter than the rota deliberately. The app answers one question and
-/// this is not it — a saying that competed with the name would make the
-/// screen about two things, and the whole point of Day 8's layout was that
-/// it is about one.
-///
-/// The language is named beneath because R3.2 requires the attribution
-/// wherever a saying appears, and because a proverb without its language is
-/// a sentence nobody can place. It replaced naming a translation: a
-/// traditional saying has no translator, and pretending otherwise would be
-/// the sort of tidy falsehood this app has no use for (ADR-025).
 class SayingCard extends StatelessWidget {
   const SayingCard({required this.saying, super.key});
 
@@ -34,8 +23,6 @@ class SayingCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            // A rule, not a gap: 28 wide and 2 high is a drawn line whose
-            // dimensions are what it looks like.
             Container(
               width: 28,
               height: 2,
@@ -43,9 +30,6 @@ class SayingCard extends StatelessWidget {
             ),
             const SizedBox(height: Space.lg),
 
-            // The saying's own language leads, where there is one. It is
-            // the family's tongue and the English is the gloss, not the
-            // other way round.
             if (original != null) ...<Widget>[
               Text(
                 original,

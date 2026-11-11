@@ -15,32 +15,6 @@ import '../brand/tokens.dart';
 import '../widgets/date_text.dart';
 
 /// Who takes a week (#74, R2.3).
-///
-/// `FamilyEditor` has been finished and tested since Day 7 and unreachable
-/// for fourteen days. Somebody joined or left the family and the app's only
-/// answer was "start the rota again", which throws away the order, the
-/// turnover day and every skip. This screen is the route it never had.
-///
-/// **It re-implements none of the rules.** Not the refusal to go below two
-/// people, not the deferral to the next turnover, not the rotation that keeps
-/// the next week's leader. All of that is in the domain, where it is tested
-/// without a widget, and the job here is to show what it decided.
-///
-/// The pattern this screen uses for that is worth naming, because it is the
-/// reason the confirmations cannot lie:
-///
-/// **Build the change, describe the result, then save the thing described.**
-///
-/// A dialog saying "Cousin will lead last, from Sunday 8 November" could be
-/// written from a rule somebody remembered. Instead it is read off a real
-/// [Family] that `FamilyEditor` produced, and on confirmation *that* family is
-/// saved — not a second one computed again afterwards. The sentence and the
-/// outcome are the same object, so the sentence cannot drift away from what
-/// happens.
-///
-/// A later day may want roles and portraits here, and a hierarchy that is not
-/// the rota's flat cycle (#109). None of that is this screen; it is noted
-/// because this is where it would land.
 class FamilyMembersScreen extends StatefulWidget {
   const FamilyMembersScreen({
     required this.familyRepository,
@@ -91,11 +65,6 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
   // ──────────────────────────── adding somebody ────────────────────────────
 
   /// Asks for a name, then adds them from the next turnover.
-  ///
-  /// One dialog, not two. The date a person joins does not depend on their
-  /// name, so it can be stated in the same dialog that asks for it — and a
-  /// second "are you sure" over an addition that takes effect next week and
-  /// can be undone by removing them again would be ceremony.
   Future<void> _add(Family family) async {
     final CalendarDate from = FamilyEditor.changesTakeEffect(family, _today);
     final String? name = await showDialog<String>(
@@ -122,9 +91,6 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
       );
       await _reschedule(today: _today, now: _now);
     } on ArgumentError catch (error) {
-      // The domain refuses an empty name. The dialog refuses one too, so
-      // this is the belt to that braces — but the rule lives in one place
-      // and this is what honouring that costs.
       _say(error.message.toString());
     }
 
@@ -136,11 +102,6 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
   // ─────────────────────────── removing somebody ───────────────────────────
 
   /// Takes somebody out of the rota from the next turnover, after asking.
-  ///
-  /// Builds the change first so the dialog can name the date, say who leads
-  /// that week instead, and promise that past weeks keep this person's name —
-  /// which is true because removal does not touch earlier epochs (R2.3), not
-  /// because the dialog says so.
   Future<void> _remove(Family family, Member member) async {
     final Family after;
     try {
@@ -240,22 +201,8 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
     final RotaEngine engine = RotaEngine.forFamily(family);
     final CalendarDate from = FamilyEditor.changesTakeEffect(family, _today);
 
-    // **The roster from the next turnover, not this week's.**
-    //
-    // Those differ for a few days after every edit, because an edit lands at
-    // the next turnover (R2.3). Showing this week's was the first version
-    // and it read as broken: take somebody out, confirm, and their row is
-    // still sitting there — accurate, since they really are in the rota
-    // until Sunday, and indistinguishable from nothing having happened.
-    //
-    // This screen is where the rota is *edited*, so it shows what the edits
-    // have produced, and the paragraph above it says when that starts. The
-    // other reading — a list of who is leading now — is This Week's job.
     final List<Member> members = FamilyEditor.activeMembers(family, from);
 
-    // Two is the floor the domain enforces. Said here as a sentence rather
-    // than left for somebody to discover by tapping a remove button and
-    // reading an error, which is the same information delivered rudely.
     final bool atTheFloor = members.length <= 2;
 
     return ListView(
@@ -322,10 +269,6 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
   }
 
   /// When this person's next turn is, as a sentence.
-  ///
-  /// Read off the engine rather than from their position in the list, because
-  /// a skip standing against a week ahead moves everybody and the list would
-  /// not know.
   String _whenTheyLead(RotaEngine engine, Member member) {
     for (final Turn turn in engine.turnsFrom(_today, count: 24)) {
       if (turn.leader.id == member.id) {
@@ -339,9 +282,6 @@ class _FamilyMembersScreenState extends State<FamilyMembersScreen> {
 }
 
 /// Asks for a name, and will not return an empty one.
-///
-/// Its own widget because it holds a controller, and a dialog built inside a
-/// `showDialog` closure cannot without leaking it.
 class _AddMemberDialog extends StatefulWidget {
   const _AddMemberDialog({required this.from});
 
@@ -398,9 +338,6 @@ class _AddMemberDialogState extends State<_AddMemberDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancel'),
         ),
-        // Listens to the field so it is only enabled once there is a name.
-        // An "Add" that does nothing when tapped is worse than one that is
-        // visibly not ready.
         ValueListenableBuilder<TextEditingValue>(
           valueListenable: _name,
           builder: (BuildContext context, TextEditingValue value, _) =>

@@ -212,7 +212,7 @@ one, and not taken here.
 | N3 | Journal entries are readable only by their author, enforced in the database, not only the UI | Firestore rules unit tests |
 | N4 | Only data the app needs is collected: names, cycle positions, journal text. No contacts, no location, no analytics on individuals | Data model review, documented in DATA-MODEL.md |
 | N5 | Text scales with the OS setting without clipping, and every control has a label a screen reader can read | Accessibility pass before release |
-| N6 | Every merge to `develop` is analysed, tested and built by CI from a clean checkout | GitHub Actions, required status check |
+| N6 | Every merge to `develop` is analysed, tested and built by CI from a clean checkout | GitHub Actions, required status checks — **which bind pull requests only**: `enforce_admins` is off, so a direct push by an administrator bypasses all of them (Day 30) |
 | N7 | The app's state survives being killed by the OS mid-session | Manual test case in the release checklist |
 | N8 | **Anything that signs, grants or hands out access decides *what* the caller may reach, not only *whether* they are who they say** | A test per decision, run in CI, that an authenticated caller cannot name a resource belonging to somebody else |
 | N9 | No dependency with a published advisory ships | OSV-Scanner over every lockfile in CI; exceptions carry a reason and an expiry |

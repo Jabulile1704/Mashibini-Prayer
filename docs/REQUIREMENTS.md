@@ -214,6 +214,23 @@ one, and not taken here.
 | N5 | Text scales with the OS setting without clipping, and every control has a label a screen reader can read | Accessibility pass before release |
 | N6 | Every merge to `develop` is analysed, tested and built by CI from a clean checkout | GitHub Actions, required status check |
 | N7 | The app's state survives being killed by the OS mid-session | Manual test case in the release checklist |
+| N8 | **Anything that signs, grants or hands out access decides *what* the caller may reach, not only *whether* they are who they say** | A test per decision, run in CI, that an authenticated caller cannot name a resource belonging to somebody else |
+| N9 | No dependency with a published advisory ships | OSV-Scanner over every lockfile in CI; exceptions carry a reason and an expiry |
+
+> **N8 exists because N3 was too specific.** N3 says journal entries are
+> readable only by their author, and names Firestore rules as the way to
+> check it. It is satisfied — 28 tests, in CI, since Day 9. The SAS Function
+> then shipped an endpoint that verified a caller's identity perfectly and
+> never asked what they were allowed to reach, and **no requirement was
+> violated**: N3 is about journals in Firestore, and this was files in Blob
+> Storage. Nothing asked for a test, so there was not one.
+>
+> A requirement that names the mechanism covers only that mechanism. N8
+> names the **decision**, so it reaches the next place one gets made.
+>
+> **N9 is the same shape.** N6 says every merge is analysed, tested and
+> built, and every merge was. The advisories in the test harness had been
+> there for weeks, passing all of it, because none of it was looking.
 
 ---
 
@@ -242,3 +259,4 @@ one, and not taken here.
 | 2026-10-23 | Q1 closed without an answer being needed | Day 6: setup asks the family rather than the project assuming |
 | 2026-10-27 | Q2 closed: WEBPB, public domain | Day 10: owner chose the WEB; the edition was chosen for "The LORD" over "Yahweh" and British spelling |
 | 2026-11-09 | E3 rewritten: African sayings, not verses. R3.2 recast as attribution by language; R3.3 added. Q2 moot, Q5 opened | Day 28, #108: the owner asked for African wisdom, and R3.2's licence test had nothing left to test |
+| 2026-11-11 | N8 and N9 added | Day 30: the SAS Function authenticated a caller and then authorised nothing, and no requirement had been broken — which is a gap in the requirements rather than only in the code |

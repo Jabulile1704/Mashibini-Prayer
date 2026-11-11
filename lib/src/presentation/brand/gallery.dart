@@ -6,14 +6,6 @@ import 'type_scale.dart';
 
 /// Every token and component on one screen, so the design system can be
 /// looked at rather than reasoned about.
-///
-/// Reached by building with `--dart-define=GALLERY=true`, which costs
-/// nothing in a normal build and means reviewing the system never requires
-/// editing `main.dart` and remembering to put it back.
-///
-/// It exists for Day 21, when every screen is restyled: the question "is
-/// this spacing right?" is answerable here, once, instead of five times in
-/// five screens.
 class BrandGallery extends StatelessWidget {
   const BrandGallery({super.key});
 
@@ -70,9 +62,6 @@ class BrandGallery extends StatelessWidget {
             colours.onSurface,
           ),
           _Swatch('primary', colours.primary, colours.onPrimary),
-          // Shown with its container rather than with `onSecondary`: the
-          // accent is a graphics colour, and a swatch that renders a word on
-          // it would be advertising a pair that fails AA for text.
           _Swatch(
             'secondary (graphics only)',
             colours.secondary,

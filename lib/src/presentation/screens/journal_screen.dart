@@ -9,9 +9,6 @@ import '../widgets/date_text.dart';
 import 'write_entry_screen.dart';
 
 /// What you prayed about, looking back.
-///
-/// Grouped by month and newest first (R4.3), because a journal is read from
-/// the near end: the entry somebody wants is almost always a recent one.
 class JournalScreen extends StatefulWidget {
   const JournalScreen({required this.journal, this.today, super.key});
 
@@ -78,12 +75,6 @@ class _JournalScreenState extends State<JournalScreen> {
 }
 
 /// Nothing written yet — and a way to change that.
-///
-/// The button is not a duplicate of the floating one. An empty state that
-/// only describes its own emptiness leaves somebody to work out that the
-/// thing which fills it is the button floating over the sentence they are
-/// reading. Day 22's rule for every empty state in the app: say what would
-/// be here, and offer the next step rather than stopping.
 class _NothingWritten extends StatelessWidget {
   const _NothingWritten({required this.theme, required this.onWrite});
 
@@ -94,8 +85,6 @@ class _NothingWritten extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => CentredMessage(
-    // Clears the Write button, which floats over the bottom of this screen.
-    // The empty state, with room under it for the button that fills it.
     padding: const EdgeInsets.fromLTRB(
       Space.xxl,
       Space.xxl,

@@ -19,17 +19,6 @@ import '../widgets/centred_message.dart';
 import '../widgets/date_text.dart';
 
 /// The weeks ahead, and the one control that changes them (R1.5, R1.4).
-///
-/// Two requirements share a screen because they are the same question asked
-/// twice. Seeing the cycle ahead is only useful if you can act on what you
-/// see — "Mama is away that week" is a thought you have *while* reading the
-/// list, and making somebody remember it until they find a settings page
-/// elsewhere is how it gets forgotten.
-///
-/// A skipped week keeps its row rather than vanishing. The rota moves on, so
-/// the row shows whoever leads now — but it also says whose turn was passed
-/// over, because otherwise a skip becomes invisible the moment it is made and
-/// there is nothing left to undo.
 class ScheduleScreen extends StatefulWidget {
   const ScheduleScreen({
     required this.familyRepository,
@@ -69,17 +58,6 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       widget.today?.call() ?? CalendarDate.from(DateTime.now());
 
   /// Applies [change] and says what happened — out loud and on screen.
-  ///
-  /// [announcement] is used for **both**, which is the point of there being
-  /// one argument. Day 19 shipped a share sheet whose subject said
-  /// "2026-11-04" over a body saying "Wednesday, 4 November": two strings,
-  /// each correct, disagreeing with each other. Two ways of telling somebody
-  /// their week changed hands is the same trap, so there is one string.
-  ///
-  /// [onUndo] turns the snack bar into an undo. Offered rather than asked:
-  /// skipping a week is reversible, and a confirmation dialog in front of
-  /// every skip is a toll paid on each correct tap to catch the rare wrong
-  /// one. Undo charges nothing until somebody needs it.
   Future<void> _edit(
     Family Function(Family) change,
     String announcement, {
@@ -99,12 +77,6 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       if (family != null) {
         await widget.familyRepository.save(change(family));
 
-        // Before this, a sighted person tapped Skip and the list simply
-        // rearranged: no statement of what had happened, and the only route
-        // back was noticing that the row now carried an Undo button. The
-        // announcement below it has been spoken to screen readers since Day
-        // 13, so the app told somebody who could not see the list and said
-        // nothing to somebody who could.
         messenger.hideCurrentSnackBar();
         messenger.showSnackBar(
           SnackBar(
@@ -116,16 +88,6 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 : SnackBarAction(label: 'Undo', onPressed: onUndo),
           ),
         );
-        // Spoken aloud, because a screen reader would otherwise be told only
-        // that one button vanished and another appeared somewhere in a list —
-        // which is not the same as being told whose week changed hands.
-        //
-        // **Deliberately not awaited.** The accessibility channel has no
-        // listener when no screen reader is running, so the send never
-        // completes — and awaiting it left every button on this screen
-        // disabled forever, because the `finally` below never ran. Found on
-        // the simulator; the widget tests pass either way, since the test
-        // binding answers the channel immediately.
         unawaited(
           SemanticsService.sendAnnouncement(view, announcement, direction),
         );
@@ -138,9 +100,6 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
   }
 
   /// Gives the week back.
-  ///
-  /// One method behind both routes — the snack bar's action and the row's own
-  /// button — so they cannot come to mean different things.
   Future<void> _undo(CalendarDate weekStart, String name) => _edit(
     (Family f) => FamilyEditor.unskipTurn(f, weekStart: weekStart),
     '$name has their turn back',
@@ -213,10 +172,6 @@ class _Weeks extends StatelessWidget {
         .turnsFrom(today, count: ScheduleScreen.weeksAhead);
 
     if (turns.isEmpty) {
-      // It used to say only "the rota has not started yet", which is the
-      // kind of empty state Day 22 went looking for: true, and it leaves
-      // the one useful fact out. This Week has named the start date since
-      // Day 14; this screen knew it and did not say it.
       final CalendarDate startsOn = RotaEngine.forFamily(family).startedOn;
       return CentredMessage(
         padding: const EdgeInsets.all(Space.xxl),
@@ -293,8 +248,6 @@ class _WeekRow extends StatelessWidget {
     final String when = DateLabels.full(context, turn.weekStart);
     final Member? passedOver = this.passedOver;
 
-    // Read as one thing: three separate lines would be three stops, and
-    // "Sisi" on its own tells somebody nothing about which week it is.
     final String rowLabel = <String>[
       isThisWeek ? 'This week' : when,
       who,
@@ -341,8 +294,6 @@ class _WeekRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: Space.md),
-          // The buttons carry the week in their label. A list of seven
-          // buttons all announcing "Skip" is a list nobody can use by ear.
           if (passedOver != null)
             TextButton(
               key: ScheduleScreen.undoButton(turn.weekStart),

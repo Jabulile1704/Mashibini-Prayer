@@ -6,20 +6,8 @@ import 'package:file_selector/file_selector.dart';
 import 'package:path_provider/path_provider.dart';
 
 /// Choosing a recording and playing it (#124).
-///
-/// Behind a seam because a widget test cannot open a file browser or make a
-/// noise, and because what the app does with audio is worth testing
-/// separately from whether this phone can decode an MP3.
-///
-/// **Nothing here uploads.** The file is copied into the app's own
-/// directory and its path is stored by `AudioLibraryRepository`, which
-/// keeps it out of the shared family document on purpose — a path means
-/// nothing on anybody else's phone.
 abstract interface class Audio {
   /// Asks for a recording and copies it into the app's own storage.
-  ///
-  /// Returns the stored path, or null if nothing was chosen — which is an
-  /// ordinary answer rather than a failure.
   Future<String?> pickFor(String songId);
 
   /// Starts playing [path], stopping whatever was playing before.
@@ -36,9 +24,6 @@ abstract interface class Audio {
 
 class PlatformAudio implements Audio {
   PlatformAudio({AudioPlayer? player}) : _player = player ?? AudioPlayer() {
-    // The player reaching the end of a track is the app's cue to stop
-    // showing a pause button. Without this, a finished song looks like it
-    // is still going.
     _player.onPlayerComplete.listen((void _) {
       _nowPlaying = null;
       _playing.add(null);
@@ -49,9 +34,6 @@ class PlatformAudio implements Audio {
   static const String folder = 'family-audio';
 
   /// What the file browser will offer.
-  ///
-  /// Narrow on purpose: this is a songbook, and a picker that accepts a
-  /// PDF is a picker that will one day be handed one.
   static const List<String> extensions = <String>[
     'mp3',
     'm4a',
@@ -82,8 +64,6 @@ class PlatformAudio implements Audio {
       await destination.create(recursive: true);
     }
 
-    // The song's id plus the moment, so replacing a recording writes a new
-    // file rather than overwriting one the player may still be reading.
     final String extension = chosen.path.split('.').last.toLowerCase();
     final String name =
         '$songId-${DateTime.now().millisecondsSinceEpoch}.$extension';

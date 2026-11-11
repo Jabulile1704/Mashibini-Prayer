@@ -19,17 +19,6 @@ import '../widgets/saying_card.dart';
 import 'setup_screen.dart';
 
 /// The home screen: whose week it is, who is next, and when it changes hands.
-///
-/// There are four things this screen can be looking at, and they are different
-/// enough that conflating any two would mislead someone:
-///
-/// 1. still reading storage — briefly, on a cold start
-/// 2. no family stored at all — first run, nothing set up yet
-/// 3. a family whose rota has not started by today — set up, but ahead of time
-/// 4. a turn to show
-///
-/// Two of those are a null, from different layers, and they mean opposite
-/// things: "you have not set this up" versus "you set it up, it starts later".
 class ThisWeekScreen extends StatefulWidget {
   const ThisWeekScreen({
     required this.repository,
@@ -43,19 +32,12 @@ class ThisWeekScreen extends StatefulWidget {
 
   /// Which member is holding this phone — recorded during setup, absent
   /// until somebody says.
-  ///
-  /// When it is absent the screen uses names. It never guesses, because being
-  /// told someone else's turn is yours is worse than being told a name.
   final DeviceSettingsRepository settings;
 
   /// Passed through to setup, which mints ids for new members and cycles.
   final IdGenerator ids;
 
   /// The clock, injectable so a test can stand on any date.
-  ///
-  /// The domain refuses to read a clock (ADR-002); this is the boundary where
-  /// one is finally read, and it is a parameter rather than a call so the
-  /// screen is testable on any week of the next decade.
   final CalendarDate Function()? today;
 
   @override
@@ -196,20 +178,12 @@ class _Rota extends StatelessWidget {
       count: 1,
     );
 
-    // The card sits in the upper middle rather than at the top, and the
-    // space below it is left on purpose: this screen answers one question,
-    // and crowding it with a second thing would make the first harder to
-    // find. The saying and the journal arrive on days 10 and 11 and have a
-    // place waiting.
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) =>
           SingleChildScrollView(
             child: ConstrainedBox(
               constraints: BoxConstraints(minHeight: constraints.maxHeight),
               child: Padding(
-                // The gutter, not 20. Every screen used a slightly
-                // different horizontal inset — 8, 18, 20 — so nothing
-                // lined up between tabs, which is exactly where it shows.
                 padding: Space.gutter,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -217,18 +191,12 @@ class _Rota extends StatelessWidget {
                     const SizedBox(height: Space.xl),
                     LeadingCard(turn: current, isYou: _isYou(current)),
                     if (ahead.isNotEmpty) ...<Widget>[
-                      // Same section as the card above: who is next is part
-                      // of whose week it is.
                       const SizedBox(height: Space.xl),
                       NextTurnTile(
                         turn: ahead.single,
                         isYou: _isYou(ahead.single),
                       ),
                     ],
-                    // The largest gap on the screen, and the only one that
-                    // is doing an argument rather than a rhythm: the saying
-                    // is a different thing from the rota, and Day 8's point
-                    // was that this screen answers one question.
                     const SizedBox(height: Space.xxxl),
                     _TodaysSaying(sayings: sayings, today: today),
                     const SizedBox(height: Space.xxl),
@@ -244,11 +212,6 @@ class _Rota extends StatelessWidget {
 }
 
 /// Today's saying, or nothing at all.
-///
-/// A saying that failed to load is not worth an error: the rota is the app,
-/// and a missing saying should cost the screen nothing. So this renders empty
-/// rather than apologising — the one place in this app where silence is the
-/// right answer.
 class _TodaysSaying extends StatelessWidget {
   const _TodaysSaying({required this.sayings, required this.today});
 
@@ -265,8 +228,6 @@ class _TodaysSaying extends StatelessWidget {
           return const SizedBox.shrink();
         }
         return Padding(
-          // Nothing. It was inset a further 8 inside the gutter, which left
-          // the saying's rule not quite aligned with the card above it.
           padding: EdgeInsets.zero,
           child: SayingCard(saying: loaded.on(today)),
         );

@@ -164,5 +164,15 @@ encryption protect it on a normal phone, and it is not separately encrypted
 - **Whether the gate blocks.** A new job is not a required check until
   branch protection says so, and that is the owner's call.
 - **Q5** — nobody fluent has checked the sayings' spelling. Unchanged.
-- The APK is 54 MB because it carries every ABI; a split takes it to
-  roughly 17 MB.
+- **The APK size is fixed but not yet measured.** Releases now publish an
+  `arm64-v8a` build as the unsuffixed name, with the universal one kept as
+  `-any-phone` for the "App not installed" case, and both are checked
+  against the release key rather than only the one that used to exist.
+  `--split-per-abi` is exercised on every pull request so a release is never
+  its first run.
+
+  No figure is claimed anywhere, because none has been measured. This
+  machine has no JDK; CI's debug build proved the flag works and produced
+  three APKs, but a debug build's 91 MB says nothing about a release. The
+  real number arrives with the next tag, and belongs in that release's
+  changelog rather than in a prediction written today.

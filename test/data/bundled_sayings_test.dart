@@ -29,10 +29,6 @@ void main() {
     test('parses, and holds a useful number of sayings', () async {
       final SayingForTheDay sayings = await loadShipped();
 
-      // Twenty, not the sixty the verses had. A proverb is meant to come
-      // round: a family that meets the same twenty over a month is being
-      // taught them, which is what a proverb is for. The floor is here to
-      // catch the file being emptied, not to chase a number.
       expect(sayings.count, greaterThanOrEqualTo(20));
       expect(sayings.daysUntilRepeat, sayings.count);
     });
@@ -64,9 +60,6 @@ void main() {
 
       for (final Saying saying in all(sayings)) {
         expect(saying.text.trim(), isNotEmpty);
-        // The original is optional by design — see `Saying.original`. Where
-        // one is given it must not be blank, which is the honest failure
-        // mode: a key present and empty would render a gap on the card.
         expect(saying.original?.trim() ?? 'given', isNotEmpty);
       }
     });
@@ -86,11 +79,6 @@ void main() {
     test('no two entries are the same saying in the same language', () async {
       final SayingForTheDay sayings = await loadShipped();
 
-      // Keyed on the saying **and** its language, because the same wisdom
-      // genuinely appears in several of them: `Umntu ngumntu ngabantu` and
-      // `Motho ke motho ka batho` share an English gloss and are not
-      // duplicates. The card leads with the original, so they do not read
-      // as a repeat.
       final Set<String> keys = <String>{
         for (final Saying saying in all(sayings))
           '${saying.original ?? saying.text}|${saying.language}',
@@ -102,11 +90,6 @@ void main() {
     test('says whether a speaker has checked the wording', () async {
       final SayingForTheDay sayings = await loadShipped();
 
-      // Not an assertion that it **is** reviewed — at the time of writing it
-      // is not, and the flag is how the app says so rather than how it
-      // hides it. This asserts the field survives the round trip, so that
-      // flipping it to true is a one-line change that the About screen
-      // picks up. Day 28 is where this is explained.
       expect(sayings.source.reviewed, isA<bool>());
     });
 
@@ -171,8 +154,6 @@ void main() {
     });
 
     test('a missing review flag reads as not reviewed', () {
-      // The direction matters. A file that forgets the field must not be
-      // taken to have a speaker's approval nobody gave.
       final SayingForTheDay parsed = BundledSayings.parse(
         document(
           sayings: <Object?>[

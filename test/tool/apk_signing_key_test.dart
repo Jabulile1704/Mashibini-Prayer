@@ -7,13 +7,6 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../tool/apk_signing_key.dart';
 
 /// The parser behind the check that #103 found doing nothing.
-///
-/// These build APK-shaped bytes rather than committing a 52MB fixture. An
-/// APK is a ZIP with a signing block wedged in between the entries and the
-/// central directory, and all three parts are small enough to write out by
-/// hand — which also means the malformed cases can be written, and those are
-/// the ones that matter. The bug being fixed was not a wrong answer; it was
-/// a missing one being read as success.
 void main() {
   /// A DER certificate, as far as this parser is concerned: opaque bytes.
   Uint8List certificateBytes(String seed) =>
@@ -123,9 +116,6 @@ void main() {
     });
 
     test('past blocks it does not understand', () {
-      // Real APKs carry padding and source-stamp blocks alongside the
-      // signatures. Walking past them is the whole reason pairs are
-      // length-prefixed.
       final Uint8List apk = apkWith(
         signingBlock(<Uint8List>[
           pair(0x42726577, Uint8List.fromList(<int>[9, 9, 9])),
@@ -137,8 +127,6 @@ void main() {
     });
 
     test('the fingerprint is SHA-256 of the DER bytes', () {
-      // The same value `apksigner verify --print-certs` prints, so the two
-      // can be compared without converting anything.
       final Uint8List certificate = certificateBytes('one');
       final Uint8List apk = apkWith(
         signingBlock(<Uint8List>[
@@ -154,12 +142,7 @@ void main() {
   });
 
   group('refuses rather than reporting nothing', () {
-    // The defect in #103 was not a wrong answer. It was no answer, read as
-    // success, on every release for four releases.
-
     test('a ZIP with no signing block at all', () {
-      // Exactly what `keytool -printcert -jarfile` was being pointed at: an
-      // APK with only a v1 JAR signature, or none.
       expect(
         () => signersOf(apkWith(null)),
         throwsA(
@@ -204,8 +187,6 @@ void main() {
           pair(schemeV2Id, signerValue(<Uint8List>[certificateBytes('one')])),
         ]),
       );
-      // Overstate the first pair's length. A parser that trusted it would
-      // read past the block.
       final Uint8List corrupt = Uint8List.fromList(good);
       ByteData.sublistView(corrupt).setUint64(8, 1 << 40, Endian.little);
 
@@ -214,9 +195,6 @@ void main() {
   });
 
   test('two releases signed with one key share a fingerprint', () {
-    // The property the release workflow actually checks, and the one #67
-    // was filed about: a changed key means Android will not install the new
-    // version over the old one.
     final Uint8List certificate = certificateBytes('the release key');
     Uint8List release() => apkWith(
       signingBlock(<Uint8List>[

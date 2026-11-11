@@ -360,16 +360,6 @@ void main() {
     });
   });
 
-  // The turnover day belongs to the epoch, not the family (ADR-019, #100).
-  // These are the dates: a Sunday rota from 18 October 2026 that moves to
-  // Wednesday, decided on Tuesday 3 November.
-  //
-  //   c1  Sun 18 Oct →   Sun 18–Sat 24  Jabulile
-  //                      Sun 25–Sat 31  Sisi
-  //                      Sun  1–Sat  7  Mama      ← the week it is decided in
-  //                      Sun  8–Tue 10  Tata      ← three days, not seven
-  //   c2  Wed 11 Nov →   Wed 11–Tue 17  Jabulile
-  //                      Wed 18–Tue 24  Sisi
   group('a family that moved the day it hands over', () {
     final CalendarDate shortWeek = CalendarDate(2026, 11, 8); // a Sunday
     final CalendarDate newEpoch = CalendarDate(2026, 11, 11); // a Wednesday
@@ -395,9 +385,6 @@ void main() {
     });
 
     test('every week before the change answers exactly as it did', () {
-      // R2.3, stated as a comparison rather than as a promise. A date in a
-      // week that has already happened must not notice that the family
-      // changed anything.
       final RotaEngine before = engineOf(cycles: <Cycle>[sundays]);
       final RotaEngine after = moved();
       for (
@@ -433,9 +420,6 @@ void main() {
     });
 
     test('no day belongs to two turns, and none to nobody', () {
-      // The property the short week exists to protect. Before the week was
-      // cut short, Tuesday 10 November was both the last day of Tata's
-      // Sunday week and inside Jabulile's Wednesday one.
       final RotaEngine engine = moved();
       for (
         CalendarDate date = start;
@@ -453,9 +437,6 @@ void main() {
     });
 
     test('walking forwards lands on the short week, not over it', () {
-      // `turnsFrom` used to step seven days at a time, which from Sunday 8
-      // November would have landed on Sunday 15 — inside the new epoch's
-      // first week, skipping the short one and listing Jabulile twice.
       final List<Turn> turns = moved().turnsFrom(shortWeek, count: 3);
       expect(turns.map((Turn t) => t.weekStart).toList(), <CalendarDate>[
         shortWeek,
@@ -500,9 +481,6 @@ void main() {
     });
 
     test('a skip in the short week moves the new epoch along with it', () {
-      // The skip is recorded against the old epoch, which is where it is
-      // counted; the new epoch's own count starts from its own date and must
-      // not inherit it.
       final RotaEngine engine = engineOf(
         cycles: <Cycle>[sundays, wednesdays],
         skips: <SkippedTurn>[
@@ -515,14 +493,6 @@ void main() {
   });
 
   group('invalid construction is refused', () {
-    // Two refusals used to live here and no longer can. The engine checked
-    // that every cycle began on the family's turnover weekday, and that the
-    // weekday was an ISO one. A cycle now derives its weekday from the date
-    // it begins on (#100), so neither can be false: the first compares a
-    // value with itself, and the second asks whether a `DateTime.weekday` is
-    // between 1 and 7. Deleted rather than kept as decoration — see
-    // `entities_test.dart` for what replaced the first.
-
     test('there must be at least one cycle', () {
       expect(
         () => RotaEngine(members: familyOfFour(), cycles: const <Cycle>[]),

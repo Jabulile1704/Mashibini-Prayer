@@ -16,11 +16,6 @@ import '../support/fake_photos.dart';
 import '../support/family_fixtures.dart';
 
 /// The songbook (#110).
-///
-/// The thing this screen has to get right is not the list — it is saying
-/// **everyone sees this**. It sits two tabs from a journal that is private
-/// by requirement (R4.2), and somebody who has learned that about this app
-/// will assume it here unless told otherwise.
 void main() {
   late LocalFamilyRepository family;
   late LocalDeviceSettingsRepository settings;
@@ -192,8 +187,6 @@ void main() {
     testWidgets('confirming marks it rather than deleting it', (
       WidgetTester tester,
     ) async {
-      // Marked, so the removal survives meeting a phone that still has it
-      // (ADR-012).
       await family.save(familyOfFour());
       await settings.saveYouAre(jabulile.id);
       await open(tester);
@@ -217,9 +210,6 @@ void main() {
     testWidgets('it explains instead of offering a dead button', (
       WidgetTester tester,
     ) async {
-      // A song records who chose it, so this phone has to know which person
-      // it belongs to. Disabling the button without saying why would be the
-      // same information delivered rudely.
       await family.save(familyOfFour());
       await open(tester);
 
@@ -278,9 +268,6 @@ void main() {
     testWidgets('the path is kept out of the shared document', (
       WidgetTester tester,
     ) async {
-      // The decision this feature turns on. A path means nothing on
-      // anybody else's phone, and syncing it would show the family a play
-      // button that does nothing.
       await withOneSong(tester);
       final Song song = FamilyEditor.songbook((await family.load())!).single;
 
@@ -318,8 +305,6 @@ void main() {
     testWidgets('a track reaching its end stops looking like it is playing', (
       WidgetTester tester,
     ) async {
-      // Without this the pause button stays after the song has finished,
-      // and tapping it does nothing anybody can see.
       await withOneSong(tester);
       final Song song = FamilyEditor.songbook((await family.load())!).single;
       audio.next = '/tmp/siyahamba.mp3';

@@ -15,11 +15,6 @@ import '../support/fake_photos.dart';
 import '../support/family_fixtures.dart';
 
 /// The Family tab (#109).
-///
-/// The rule under nearly all of this: **the tree is not the rota.** The
-/// family is the larger set, a grandchild belongs in it without being handed
-/// a week of prayer, and a screen that blurred the two would break the one
-/// thing the app is for.
 void main() {
   late LocalFamilyRepository family;
   late LocalDeviceSettingsRepository settings;
@@ -84,8 +79,6 @@ void main() {
     testWidgets('somebody outside the rota is said to be outside it', (
       WidgetTester tester,
     ) async {
-      // The fact most likely to be misread on a screen showing more people
-      // than the rota does.
       await saveWith(<Member>[
         jabulile,
         sisi,
@@ -134,9 +127,6 @@ void main() {
     testWidgets('it says photographs do not leave the phone', (
       WidgetTester tester,
     ) async {
-      // ADR-010's clause is intact because nothing is uploaded, and the
-      // cost of that — no sync, lost on reinstall — is said on the screen
-      // rather than discovered.
       await family.save(familyOfFour());
       await open(tester);
 
@@ -158,8 +148,6 @@ void main() {
     testWidgets('they appear, and they are not given a week', (
       WidgetTester tester,
     ) async {
-      // The whole distinction. Adding a grandchild must not reorder who
-      // leads prayer.
       await family.save(familyOfFour());
       final Family before = (await family.load())!;
       await open(tester);
@@ -285,11 +273,6 @@ void main() {
     testWidgets('there is a way out that is not a gesture', (
       WidgetTester tester,
     ) async {
-      // The sheet's body scrolls, which swallows the drag that would
-      // dismiss it — so pulling down moved the list and the owner reported
-      // it as hard to get back out of. A handle and a close button now do
-      // it, and the button is the one you can find without knowing it is
-      // there.
       await family.save(familyOfFour());
       await open(tester);
       await openSheetFor(tester, 'm3');
@@ -380,8 +363,6 @@ void main() {
     testWidgets('one picked and then replaced is not left behind', (
       WidgetTester tester,
     ) async {
-      // Copied into the app's storage the moment it is picked, so changing
-      // your mind twice would otherwise leave files nothing references.
       await family.save(familyOfFour());
       await open(tester);
       await openSheetFor(tester, 'm3');

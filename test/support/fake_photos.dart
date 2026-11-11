@@ -1,10 +1,6 @@
 import 'package:mashibini_prayer/src/data/sources/platform/photos.dart';
 
 /// A photo library that never opens one.
-///
-/// [next] is what the picker "returns" — null for somebody tapping Cancel,
-/// which is an ordinary answer rather than a failure and is the case most
-/// worth testing. [throws] is a picker that will not open at all.
 class FakePhotos implements Photos {
   FakePhotos({this.next, this.throws});
 

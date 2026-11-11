@@ -10,15 +10,6 @@ import '../support/fake_key_value_store.dart';
 import '../support/family_fixtures.dart';
 
 /// N7: the app's state survives being killed by the OS mid-session.
-///
-/// Everything else in this app already survived that, because everything
-/// else is written the moment it changes. A half-written journal entry was
-/// the exception — it lived in a TextEditingController and nowhere else —
-/// and it is the one thing nobody would forgive losing.
-///
-/// A kill is simulated the only honest way a widget test can: throw the
-/// whole widget tree away and build a new screen against the same store,
-/// which is exactly what a relaunch does.
 void main() {
   late FakeKeyValueStore store;
   late LocalJournalRepository journal;

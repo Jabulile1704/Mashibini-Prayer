@@ -8,10 +8,6 @@ import '../support/fake_id_generator.dart';
 import '../support/family_fixtures.dart';
 
 /// The family songbook (#110).
-///
-/// Two things to keep straight, and the tests are mostly about them: a song
-/// is **not a turn**, so nothing here touches the rota; and the book is
-/// append-only, so removing is marking rather than deleting.
 void main() {
   Family withSongs() {
     Family family = familyOfFour();
@@ -45,8 +41,6 @@ void main() {
     });
 
     test('nothing about the rota changes', () {
-      // A song is not a turn. If adding one wrote an epoch, everybody's
-      // week would move because somebody wrote down what they like.
       final Family before = familyOfFour();
       final Family after = withSongs();
 
@@ -105,8 +99,6 @@ void main() {
 
   group('taking one out', () {
     test('it leaves the book but stays in the record', () {
-      // Marked, not deleted. Two phones merge by union, so a deletion on
-      // one would come back from the other (ADR-012).
       final Family after = withSongs();
       final String id = FamilyEditor.songbook(after).first.id;
       final Family removed = FamilyEditor.removeSong(after, songId: id);
@@ -124,9 +116,6 @@ void main() {
     });
 
     test('the same song can be added again afterwards', () {
-      // `removed` never goes back to false, so adding again appends a new
-      // record — which keeps the one-way rule without costing anybody the
-      // ability to change their mind twice.
       Family family = withSongs();
       final String id = FamilyEditor.songbook(family).last.id;
       family = FamilyEditor.removeSong(family, songId: id);
@@ -195,8 +184,6 @@ void main() {
     });
 
     test('a removal survives meeting the copy that still has it', () {
-      // The reason `removed` is a flag. A deletion would lose this race
-      // every time.
       final Family both = withSongs();
       final String id = FamilyEditor.songbook(both).first.id;
       final Family removed = FamilyEditor.removeSong(both, songId: id);

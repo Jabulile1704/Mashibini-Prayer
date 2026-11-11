@@ -15,17 +15,6 @@ import '../support/fake_reminders.dart';
 import '../support/family_fixtures.dart';
 
 /// #74 — the gap this screen closes.
-///
-/// `FamilyEditor` could add and remove people from Day 7 and nothing called
-/// it for fourteen days. Somebody joined or left and the app's only answer
-/// was "start the rota again", which throws away the order, the turnover day
-/// and every skip the family had recorded.
-///
-/// These tests are mostly about one thing: **the screen must not invent
-/// rules, and must not hide the ones it has.** The domain defers changes to
-/// the next turnover and refuses to go below two people; a screen that
-/// re-implemented either would be a second opinion, and a screen that stayed
-/// quiet about them would be a surprise.
 void main() {
   late LocalFamilyRepository family;
   late LocalDeviceSettingsRepository settings;
@@ -92,9 +81,6 @@ void main() {
       await family.save(familyOfFour());
       await open(tester);
 
-      // Today is inside Jabulile's week. The list is the roster from next
-      // Sunday, but the turns under each name are read off the engine from
-      // today, so the person currently leading still says so.
       expect(find.text('Leading this week'), findsOneWidget);
       expect(
         find.textContaining('Next: Sun'),
@@ -105,10 +91,6 @@ void main() {
 
     testWidgets('it says when a change would start, before anything is '
         'changed', (WidgetTester tester) async {
-      // The whole reason this screen can be trusted. Every edit here lands
-      // at the next turnover, not now, and a screen that did not say so
-      // would look broken to somebody who added a name and saw this week
-      // unchanged.
       await family.save(familyOfFour());
       await open(tester);
 
@@ -169,8 +151,6 @@ void main() {
     testWidgets('Add does nothing until there is a name to add', (
       WidgetTester tester,
     ) async {
-      // Disabled rather than tappable-and-silent. A button that accepts a
-      // tap and does nothing is a button somebody taps again harder.
       await family.save(familyOfFour());
       await open(tester);
 
@@ -265,8 +245,6 @@ void main() {
         ).map((Member m) => m.displayName),
         isNot(contains('Mama')),
       );
-      // Still in `members`, because a week she led in October keeps her name
-      // (R2.3). The screen must not have "cleaned up" after the domain.
       expect(after.members.map((Member m) => m.displayName), contains('Mama'));
       expect(
         RotaEngine.forFamily(after).turnOn(anchor.addDays(2))!.leader,
@@ -302,9 +280,6 @@ void main() {
     testWidgets('neither of two can be taken out, and the row says why', (
       WidgetTester tester,
     ) async {
-      // The domain throws on this. A screen that let somebody tap and then
-      // showed them the exception would be delivering the same information
-      // rudely, so the reason is on the screen and the buttons are off.
       await saveTwo();
       await open(tester);
 
@@ -336,10 +311,6 @@ void main() {
     testWidgets('adding somebody re-plans what this phone holds', (
       WidgetTester tester,
     ) async {
-      // Adding a person pushes everybody else's turns later. A phone that
-      // kept its old plan would ring on an evening that is no longer the
-      // night before anybody's week — the silent kind of wrong, which is
-      // why every write on this screen reschedules.
       await family.save(familyOfFour());
       await settings.saveYouAre(tata.id);
       await settings.saveRemindersEnabled(enabled: true);

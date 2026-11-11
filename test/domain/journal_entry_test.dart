@@ -65,8 +65,6 @@ void main() {
     });
 
     test('describes itself without spilling what was written', () {
-      // A journal entry's text is the one thing that should not turn up in a
-      // log line or a test failure message.
       final String described = entry(text: 'Something private').toString();
 
       expect(described, contains('j1'));

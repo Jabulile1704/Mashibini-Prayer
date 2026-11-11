@@ -51,8 +51,6 @@ void main() {
     ) async {
       await open(tester);
 
-      // Nothing signs in yet, so "private to you" would be a promise this
-      // build cannot keep. The phone is the boundary, and the words say so.
       expect(find.textContaining('not sent anywhere'), findsOneWidget);
       expect(find.textContaining('private to you'), findsNothing);
     });
@@ -199,9 +197,6 @@ void main() {
     testWidgets('it carries a button, not only a description of emptiness', (
       WidgetTester tester,
     ) async {
-      // It said "Nothing written yet" and then stopped, leaving somebody to
-      // work out that the thing which fills it is the button floating over
-      // the sentence they are reading.
       await open(tester);
 
       expect(find.text('Nothing written yet'), findsOneWidget);

@@ -1,30 +1,8 @@
 import 'package:flutter/material.dart';
 
 /// The app's colours, taken from the family's totem.
-///
-/// The Mashibini totem is the bee, so the palette is a bee's: honey against
-/// something close to black, on a ground the colour of wax. Chosen rather
-/// than generated — `ColorScheme.fromSeed` is a good default and it is a
-/// default, and this is one screen a family looks at for four seconds a week.
-///
-/// ## Honey is only ever seen against dark
-///
-/// The constraint that shaped everything here was measured, not guessed.
-/// Bright honey on cream is **2.07:1** — below even the 3:1 bar for a
-/// graphic, let alone the 4.5:1 for a word. On the dark ground it is
-/// **8.41:1**.
-///
-/// That is not a limitation to design around. It is how a bee reads: the
-/// yellow is only ever seen against black, never against something pale. So
-/// honey keeps its full strength on dark grounds and deepens to [amber] on
-/// cream. The totem's colours are never dropped — they change register.
-///
-/// Every pair below is asserted in `test/presentation/contrast_test.dart`.
-/// Supersedes the indigo and rust of ADR-008; see ADR-017.
 abstract final class Palette {
   /// Honey. The accent, at full strength — on dark grounds only.
-  ///
-  /// 8.41:1 on [ink], which is enough to carry text as well as graphics.
   static const Color honey = Color(0xFFE8A317);
 
   /// Honey deepened until it can be seen on wax: 4.20:1, which clears the
@@ -62,18 +40,11 @@ abstract final class Palette {
   static const Color combLine = Color(0xFFE6D7B8);
 
   /// The comb line on a dark ground.
-  ///
-  /// Started at `#332819`, which measured **1.27:1** — a divider nobody can
-  /// see is a divider that is not there. The contrast test caught it on the
-  /// first run of the new palette, which is exactly the job it was written
-  /// for on Day 17. `#423524` is 1.53:1 and still quiet.
   static const Color combLineNight = Color(0xFF423524);
 
   static const ColorScheme light = ColorScheme.light(
     primary: ink,
     onPrimary: wax,
-    // Honey is the accent on every surface the app has, but on wax it must
-    // deepen to be visible at all. Same colour, different register.
     secondary: amber,
     onSecondary: wax,
     surface: wax,
@@ -86,8 +57,6 @@ abstract final class Palette {
   );
 
   static const ColorScheme dark = ColorScheme.dark(
-    // Honey leads on dark, where it is strongest — this is the register the
-    // palette actually wants, and why the design is dark-first.
     primary: honey,
     onPrimary: ink,
     secondary: honey,

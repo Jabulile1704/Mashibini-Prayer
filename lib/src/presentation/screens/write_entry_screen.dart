@@ -9,9 +9,6 @@ import '../brand/tokens.dart';
 import '../widgets/date_text.dart';
 
 /// Writing or changing one day's entry.
-///
-/// One box and a date. A journal that asks for a title, a mood and three tags
-/// before it will take a sentence is a journal nobody writes in.
 class WriteEntryScreen extends StatefulWidget {
   const WriteEntryScreen({
     required this.journal,
@@ -44,9 +41,6 @@ class _WriteEntryScreenState extends State<WriteEntryScreen>
   Timer? _draftTimer;
 
   /// How long to wait after the last keystroke before writing the draft.
-  ///
-  /// Short enough that almost nothing is lost, long enough that a sentence
-  /// is not one store write per letter.
   static const Duration _draftDelay = Duration(milliseconds: 600);
 
   @override
@@ -68,8 +62,6 @@ class _WriteEntryScreenState extends State<WriteEntryScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Going to the background is the last moment the OS reliably gives us.
-    // Whatever the debounce was still holding is written now.
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive) {
       _draftTimer?.cancel();
@@ -83,9 +75,6 @@ class _WriteEntryScreenState extends State<WriteEntryScreen>
     if (draft == null || !mounted || draft == _text.text) {
       return;
     }
-    // Only ever restores *more* than is on screen in the sense that the
-    // draft is newer than the saved entry: a draft is only ever written by
-    // this screen, and cleared the moment the entry is saved.
     _text.value = TextEditingValue(
       text: draft,
       selection: TextSelection.collapsed(offset: draft.length),
@@ -153,9 +142,6 @@ class _WriteEntryScreenState extends State<WriteEntryScreen>
               ),
               const SizedBox(height: Space.md),
               Text(
-                // True today, and only today. Saying "private to you" would
-                // be a promise this build cannot keep: nothing signs in yet,
-                // so privacy here means the phone, not an account.
                 'Stays on this phone. Not sent anywhere.',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,

@@ -3,14 +3,6 @@ import 'dart:async';
 import '../sources/local/key_value_store.dart';
 
 /// Which of the three the person asked for.
-///
-/// Stored as a word rather than an index: an index is only meaningful
-/// against the order these happen to be declared in, and reordering an enum
-/// would then silently change what every phone had chosen.
-///
-/// This is not `ThemeMode`. The data layer does not import Flutter — the
-/// mapping to Flutter's type happens in `app.dart`, which is the only place
-/// that needs it.
 enum Appearance {
   /// Follow the phone. The default, and what every build before this did.
   system,
@@ -19,15 +11,6 @@ enum Appearance {
 }
 
 /// Settings that belong to *this phone*, not to the family.
-///
-/// Which member is holding the device is the only one so far, and it is
-/// deliberately not part of [Family]: the family is shared data, and "who am
-/// I" is different on every phone that reads it. Putting it in the shared
-/// aggregate would make four devices fight over one field.
-///
-/// This is independent of **Q3** — whether members sign in individually or
-/// share one install. Either way, a device can know which name to speak in the
-/// second person.
 abstract interface class DeviceSettingsRepository {
   /// The member this device belongs to, or null if nobody has said.
   Future<String?> loadYouAre();
@@ -37,11 +20,6 @@ abstract interface class DeviceSettingsRepository {
   Stream<String?> watchYouAre();
 
   /// Whether this phone should remind its owner before their week.
-  ///
-  /// Absent means never asked, which is different from "off" only in what
-  /// the app may do about it: R5.1 says an install that has never been asked
-  /// sends nothing, so absent and off behave identically and the distinction
-  /// is not worth storing.
   Future<bool> loadRemindersEnabled();
 
   Future<void> saveRemindersEnabled({required bool enabled});
@@ -49,10 +27,6 @@ abstract interface class DeviceSettingsRepository {
   Stream<bool> watchRemindersEnabled();
 
   /// Light, dark, or whatever the phone is set to.
-  ///
-  /// A phone preference rather than a family one for the obvious reason:
-  /// four people reading the same rota do not have to read it the same
-  /// colour. Absent means [Appearance.system].
   Future<Appearance> loadAppearance();
 
   Future<void> saveAppearance(Appearance appearance);
@@ -120,11 +94,6 @@ class LocalDeviceSettingsRepository implements DeviceSettingsRepository {
   }
 
   /// Reads the stored word, falling back to following the phone.
-  ///
-  /// An unrecognised value falls back too. That is not defensive padding: a
-  /// build that adds a fourth option writes a word this build has never
-  /// heard of, and an older install reading it should follow the phone
-  /// rather than throw on the first frame.
   @override
   Future<Appearance> loadAppearance() async {
     final String? stored = await store.read(appearanceKey);

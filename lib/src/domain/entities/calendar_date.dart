@@ -1,36 +1,16 @@
 /// A date on a calendar, with no time of day and no timezone.
-///
-/// The rota turns over on a *day*, not at an instant. Dart's [DateTime] always
-/// carries a time and an offset, and arithmetic on it can move a value across
-/// a day boundary when a timezone changes under it. Rather than remember to
-/// normalise everywhere, the domain uses a type that cannot represent a time
-/// at all.
-///
-/// Internally this is a `DateTime` pinned to midnight UTC, because UTC has no
-/// daylight saving and so day arithmetic on it is exact. The UTC instant is an
-/// implementation detail — nothing outside this class should see it.
 class CalendarDate implements Comparable<CalendarDate> {
   /// The date of [year], [month] and [day].
-  ///
-  /// Out-of-range values roll over the way [DateTime] rolls them over, so
-  /// `CalendarDate(2026, 1, 32)` is 1 February 2026.
   CalendarDate(int year, int month, int day)
     : _at = DateTime.utc(year, month, day);
 
   CalendarDate._(this._at);
 
   /// The calendar date [moment] falls on, in the local timezone.
-  ///
-  /// This is the only place the domain touches a real clock's output, and it
-  /// is a caller's decision: the engine never calls it.
   factory CalendarDate.from(DateTime moment) =>
       CalendarDate(moment.year, moment.month, moment.day);
 
   /// Parses an ISO `yyyy-mm-dd` string, the form the database stores.
-  ///
-  /// Throws [FormatException] on anything else, including a full timestamp —
-  /// accepting one would quietly reintroduce the time this type exists to
-  /// remove.
   factory CalendarDate.parse(String iso) {
     final RegExp shape = RegExp(r'^(\d{4})-(\d{2})-(\d{2})$');
     final RegExpMatch? match = shape.firstMatch(iso);
@@ -74,13 +54,6 @@ class CalendarDate implements Comparable<CalendarDate> {
   bool isOnOrAfter(CalendarDate other) => !isBefore(other);
 
   /// This date as a local [DateTime] at midnight, **for display only**.
-  ///
-  /// The counterpart to [CalendarDate.from]. Formatting is the one job that
-  /// genuinely needs a `DateTime` — `MaterialLocalizations` speaks it — and a
-  /// date being rendered has already stopped being arithmetic.
-  ///
-  /// Nothing in the domain calls this. If something starts to, the thing it
-  /// wants is probably a method on this class instead.
   DateTime toLocalDateTime() => DateTime(year, month, day);
 
   @override

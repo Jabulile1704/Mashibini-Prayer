@@ -6,23 +6,6 @@ import 'remote_files.dart';
 
 /// Azure Blob Storage, reached through a Function that mints the key
 /// (ADR-024).
-///
-/// The phone never holds an Azure credential. It asks a Function for a
-/// short-lived SAS URL, proving who it is with the Firebase ID token it
-/// already has from signing in (#76), and then `PUT`s the bytes straight at
-/// Blob. The Function is the only thing that knows the storage account key.
-///
-/// ```text
-///   phone ──(Firebase ID token)──► Function ──► SAS URL
-///   phone ──────────(PUT bytes)─────────────► Blob
-/// ```
-///
-/// **Nothing here throws.** ADR-024's third term is that the app behaves
-/// exactly as it does today if any of this is unavailable, and the file is
-/// already on the phone by the time any of these methods are called. So a
-/// failure returns false and the caller carries on — which is also what
-/// happens on the thirty-first day of a thirty-day credit, deliberately
-/// and without a code change.
 class AzureFiles implements RemoteFiles {
   AzureFiles({
     required this.functionBaseUrl,
@@ -53,8 +36,6 @@ class AzureFiles implements RemoteFiles {
       }
 
       final HttpClientRequest request = await _client.putUrl(target);
-      // Required by Blob for a block blob; without it the PUT is refused
-      // with a 400 that reads like an auth problem and is not one.
       request.headers.set('x-ms-blob-type', 'BlockBlob');
       request.headers.contentType = ContentType.binary;
       request.add(await file.readAsBytes());
@@ -63,8 +44,6 @@ class AzureFiles implements RemoteFiles {
       await response.drain<void>();
       return response.statusCode >= 200 && response.statusCode < 300;
     } on Object {
-      // Deliberately swallowed. See the class comment: a file that did not
-      // reach Azure is the behaviour this app shipped with.
       return false;
     }
   }
@@ -99,10 +78,6 @@ class AzureFiles implements RemoteFiles {
   }
 
   /// Asks the Function for a URL that grants one operation on one blob.
-  ///
-  /// Returns null when nobody is signed in, which is not a failure: the
-  /// rules require an identity (ADR-023) and a phone that has not signed in
-  /// simply keeps its files to itself.
   Future<Uri?> _sasFor(String key, {required bool write}) async {
     final SignedIn? who = identity.current;
     if (who == null) {

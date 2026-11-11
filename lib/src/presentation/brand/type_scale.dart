@@ -1,23 +1,8 @@
 import 'package:flutter/material.dart';
 
 /// The type scale, declared rather than inherited.
-///
-/// Most of these sizes are Material's own, and that is deliberate: inventing
-/// different numbers so the scale looks bespoke would be change without
-/// improvement. What was missing was the **declaration** — three roles were
-/// customised in `theme.dart` and the other nine were whatever Material
-/// happened to provide, so nobody could say what `titleMedium` was for or
-/// why `bodySmall` looked the way it did.
-///
-/// Every size here is a logical pixel at a text scale of 1.0. Flutter
-/// multiplies them by the reader's chosen scale, so a phone at the largest
-/// accessibility setting renders these at a little over three times the size
-/// — which is what Day 13's sweep and Day 22's re-pass exist to check.
 abstract final class TypeScale {
   /// The leader's name, and nothing else.
-  ///
-  /// Tight tracking and a tight line, because at this size Material's
-  /// defaults leave a name looking like a headline in a newspaper.
   static const TextStyle display = TextStyle(
     fontSize: 36,
     fontWeight: FontWeight.w700,
@@ -64,10 +49,6 @@ abstract final class TypeScale {
   );
 
   /// Small, spaced and quiet — "This week", "Coming up", the app bar title.
-  ///
-  /// The wide tracking is what makes it read as a label rather than as a
-  /// short sentence. It labels the thing below it and must not compete
-  /// with it.
   static const TextStyle label = TextStyle(
     fontSize: 13,
     fontWeight: FontWeight.w600,
@@ -76,10 +57,6 @@ abstract final class TypeScale {
   );
 
   /// Builds a Material text theme from the scale, in one colour scheme.
-  ///
-  /// Colour is applied here rather than in each style, so that a style is
-  /// never carrying a colour from the wrong theme — the commonest way a
-  /// dark mode ends up with one unreadable line in it.
   static TextTheme themed(ColorScheme colours) {
     final Color on = colours.onSurface;
     final Color muted = colours.onSurfaceVariant;

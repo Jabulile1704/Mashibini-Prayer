@@ -1,15 +1,6 @@
 import 'calendar_date.dart';
 
 /// Something somebody prayed about, on a day.
-///
-/// Deliberately thin. A journal entry is a date and some words; everything
-/// else — tags, moods, titles, who it is shared with — is a feature nobody
-/// asked for, and each one is a thing to migrate later.
-///
-/// There is no author on this class **yet**. Which phone wrote an entry is
-/// not a question that can be answered until Q3 is — whether each member
-/// signs in as themselves, or the family shares one install. Until then
-/// entries live on the device that wrote them, and the device is the author.
 class JournalEntry {
   const JournalEntry({
     required this.id,
@@ -37,9 +28,6 @@ class JournalEntry {
   );
 
   /// The month this entry belongs to, as `yyyy-mm`.
-  ///
-  /// R4.3 groups a look back by month, and doing it here keeps the grouping
-  /// out of the widget that displays it.
   String get month => '${date.year}-${date.month.toString().padLeft(2, '0')}';
 
   @override

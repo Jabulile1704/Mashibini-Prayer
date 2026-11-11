@@ -19,17 +19,6 @@ import '../widgets/date_text.dart';
 import 'family_tree_screen.dart';
 
 /// The songs this family loves, and who chose them (#110, R7.1).
-///
-/// **The first screen in the app that is deliberately shared.** The rota is
-/// shared because it must be; the journal is private by requirement (R4.2)
-/// and says so on itself. This is neither — it is shared because that is the
-/// point of it, and sitting two tabs from the journal it has to say so
-/// plainly or somebody will write something here thinking it is private.
-///
-/// It stores **text**: a title, who it is by, who chose it, and a link. That
-/// is why it could be built now and photographs could not — fifty songs are
-/// smaller than one photograph, so it rides the family document and touches
-/// no clause of ADR-010.
 class SongbookScreen extends StatefulWidget {
   const SongbookScreen({
     required this.familyRepository,
@@ -260,9 +249,6 @@ class _SongbookScreenState extends State<SongbookScreen> {
             Space.md,
           ),
           child: Text(
-            // Said at the top, not the bottom. The journal one tab away is
-            // private by requirement, and somebody who has learned that
-            // about this app will assume it here unless told otherwise.
             'Everyone in the family sees this book. Your journal is the '
             'private one.',
             style: theme.textTheme.bodyMedium,
@@ -288,10 +274,6 @@ class _SongbookScreenState extends State<SongbookScreen> {
               key: SongbookScreen.rowFor(song.id),
               title: Text(song.title),
               subtitle: Text(_who(byId, song)),
-              // The recording lives on this phone and the song does not,
-              // so the leading control differs per device: a play button
-              // where the file is, an invitation to add one where it is
-              // not. Both are honest; neither pretends.
               leading: _recordings.containsKey(song.id)
                   ? IconButton(
                       key: SongbookScreen.playFor(song.id),
@@ -354,9 +336,6 @@ class _SongbookScreenState extends State<SongbookScreen> {
         Padding(
           padding: Space.gutter,
           child: youAre == null
-              // A song records who chose it, so the app has to know which
-              // person this phone belongs to. Said rather than disabled
-              // without explanation.
               ? Text(
                   'Say which one you are in Settings, and you can add a '
                   'song — the book records who chose each one.',

@@ -1,9 +1,4 @@
 /// Typed reads out of decoded JSON.
-///
-/// `jsonDecode` hands back `Object?`, and the analyser is set to strict casts,
-/// so every field has to be checked rather than assumed. These helpers make
-/// that one line each and — more usefully — make a bad field say *which*
-/// field it was, instead of throwing a type error from somewhere in a stack.
 library;
 
 Never _bad(String key, Object? value, String expected) =>
@@ -67,9 +62,6 @@ List<String> readStringList(Map<String, Object?> json, String key) {
 }
 
 /// Reads a list of objects, each parsed by [parse].
-///
-/// An absent key is an empty list: a family with no skips has nothing to
-/// write, and should not need a `"skips": []` to be readable.
 List<T> readObjectList<T>(
   Map<String, Object?> json,
   String key,

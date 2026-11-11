@@ -20,6 +20,13 @@ This app holds the cycle, so nobody has to.
 
 The rota is the product. The saying and the journal sit around it.
 
+## Installing it
+
+Android 7.0 or newer. The APKs are on the
+[latest release](https://github.com/Jabulile1704/Mashibini-Prayer/releases/latest);
+take the one without a suffix unless your phone says *App not installed*,
+in which case take `-any-phone`.
+
 ## How this project is run
 
 It is a small app built as though it were a production system, because the

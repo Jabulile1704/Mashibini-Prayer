@@ -280,6 +280,60 @@ changelog. None of them had a second, independent source to disagree with.
 That is the thing to look for, and it is not the same question as "can this
 fail?".
 
+### And a fifth that was not a check at all
+
+Day 30, in `azure/sas-function`. The owner asked a plain question — "is my
+application secure?" — and reading the code to answer it found this:
+
+> The Function verified the caller's Firebase ID token against Google, with
+> the audience checked against this project, and then signed a SAS URL for
+> whatever blob name the query string asked for. The uid was used for one
+> thing: a log line.
+
+Any holder of a valid token could read, or overwrite, every file in the
+container. Google sign-in admits any Google account, so that is very nearly
+anybody.
+
+The four above are all *failures of a check that existed*. This is the
+other kind, and it needs saying separately because the defences built for
+the first kind do not point at it:
+
+| | What existed | What was missing |
+|:--|:--|:--|
+| Days 20–29 | A check that could not do its job | — |
+| Day 30 | **Nothing** | Any check at all |
+
+`test/data/remote_files_test.dart` is a careful suite. It covers the server
+being unreachable, returning 500, and answering with a sign-in page — which
+is ADR-024's third term, that the app survives Azure vanishing. It asks what
+happens when the server **fails**. Nothing anywhere asked what happens when
+it **succeeds**.
+
+And no requirement had been broken. N3 names journal entries, in Firestore,
+enforced by rules — satisfied, 28 tests, since Day 9. This was files, in
+Blob Storage, reached through a Function. The requirement named a mechanism,
+so it covered that mechanism and stopped there.
+
+So the lesson is not another way to interrogate a check. It is where to look
+for the absence of one:
+
+- **Authentication is not authorisation.** Every place that proves who
+  somebody is must separately decide what they may reach, and the second
+  decision is the one that gets left out, because the first one is harder
+  and feels like the work.
+- **Ask what a test asks.** A thorough suite about failure modes reads like
+  coverage and says nothing about the success path, which is where the
+  authorisation lives.
+- **A requirement that names a mechanism covers that mechanism.** N8 was
+  added to name the decision instead, so it reaches the next place one gets
+  made rather than only the one that existed when it was written.
+
+It also reinforces the oldest entry here, from the opposite direction
+again: **a person reading the code found it.** Not CI, not the suite, and
+not the running app — the Function was never deployed and nothing in the app
+ever called it, so there was no behaviour to observe. Some defects have no
+symptom until the day they do.
+
 ### PR hygiene has caught eight mistakes, and three are repeats
 
 | Day | What it caught |

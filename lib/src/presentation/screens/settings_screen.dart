@@ -27,26 +27,6 @@ import 'family_members_screen.dart';
 import 'setup_screen.dart';
 
 /// Where everything that has no other home now lives (ADR-016).
-///
-/// Day 18 created this screen and moved three things into it. Day 19 gives it
-/// its actual contents, and the point of all four sections is the same one:
-/// **a thing you can be asked once is a thing you can get wrong forever.**
-///
-/// - *Which one are you* was asked optionally during setup and then again on
-///   the Reminders screen — but only while the answer was still missing. Pick
-///   the wrong name and there was no screen in the app that would let you
-///   change it. That is the defect this screen exists to fix.
-/// - *Reminders* was a whole screen holding one switch, behind a chevron,
-///   behind an unlabelled bell before that. It is two rows now.
-/// - *Appearance* could not be chosen at all; the app followed the phone and
-///   that was that.
-/// - *The turnover day* could not be changed without rebuilding the rota.
-///   Day 19 shipped it as a read-only row with the reason written down
-///   rather than shrugged at (ADR-019); Day 20 built the epoch machinery it
-///   needed; it is a real row now (#100).
-/// - *Who takes a week* had no route at all. `FamilyEditor` could add and
-///   remove people and nothing called it, so the only way to change the
-///   family was to throw the rota away (#74).
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({
     required this.familyRepository,
@@ -91,11 +71,6 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  // Watched, not loaded once. This screen is a tab inside an `IndexedStack`,
-  // so it is built on first use and never disposed — and one of its own rows
-  // replaces the family outright. A `Future` taken at construction would go
-  // stale the moment somebody started the rota again, and the row above it
-  // would keep offering names from a family that no longer exists.
   late final Stream<Family?> _families = widget.familyRepository.watch();
   late final Stream<String?> _youAre = widget.settings.watchYouAre();
   late final Stream<bool> _remindersOn = widget.settings
@@ -118,10 +93,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // ───────────────────────── which one are you ─────────────────────────
 
   /// Says which member is holding this phone.
-  ///
-  /// Reminders are the reason this has to be changeable. A phone that thinks
-  /// it belongs to Mama rings for Mama's weeks, and until this row existed
-  /// the only way to correct that was to rebuild the rota.
   Future<void> _chooseYouAre(Family family) async {
     final List<Member> members = FamilyEditor.activeMembers(family, _today);
     final String? current = await widget.settings.loadYouAre();
@@ -149,9 +120,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _message = null;
     });
     await widget.settings.saveYouAre(chosen);
-    // Changing who you are changes which weeks ring. Saving without
-    // re-planning would leave this phone holding somebody else's reminders,
-    // which is the quiet kind of wrong that nobody reports as a bug.
     await _reschedule();
     if (mounted) {
       setState(() => _busy = false);
@@ -161,15 +129,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // ──────────────────────────────── signing in ────────────────────────────
 
   /// Signs in and ties the account to whoever this phone belongs to (#76).
-  ///
-  /// The two have to happen together. An account with no member attached
-  /// puts nobody in `Family.memberUids`, which is the field every rule in
-  /// `firestore.rules` reads — so signing in without linking would look
-  /// like it worked and sync nothing.
-  ///
-  /// Which is why this refuses to start before "which one are you" has an
-  /// answer, and says so rather than signing somebody in and leaving them
-  /// to wonder why nothing happened.
   Future<void> _signIn(Family? family, String? youAre) async {
     if (family == null || youAre == null) {
       setState(() {
@@ -188,8 +147,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try {
       final SignedIn? who = await widget.identity.signIn();
       if (who != null) {
-        // Re-read rather than closing over the family above: the sheet is
-        // somebody else's code and anything may have changed behind it.
         final Family? latest = await widget.familyRepository.load();
         if (latest != null) {
           await widget.familyRepository.save(
@@ -198,8 +155,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         }
       }
     } on ArgumentError catch (error) {
-      // The uid already belongs to somebody else. The domain says whose,
-      // which is the thing that makes it fixable.
       _say(error.message.toString());
     } on Object catch (error) {
       _say('Signing in did not work: $error');
@@ -235,10 +190,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (!(confirmed ?? false)) {
       return;
     }
-    // Deliberately **not** unlinking. Signing out says this phone is not
-    // holding the account; unlinking would drop the person out of
-    // `memberUids` and stop every *other* phone syncing their changes
-    // (ADR-023).
     await widget.identity.signOut();
   }
 
@@ -299,10 +250,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   /// Re-plans this phone's reminders from whatever is stored now.
-  ///
-  /// Moved into `application/` once a second screen needed it (#74). It used
-  /// to be a method here, which was fine while there was one screen that
-  /// could change the rota and is the usual way two copies start to differ.
   Future<void> _reschedule() => RescheduleReminders(
     families: widget.familyRepository,
     settings: widget.settings,
@@ -310,10 +257,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   )(today: _today, now: _now);
 
   /// The next reminder this phone is holding, as a sentence.
-  ///
-  /// The Reminders screen listed three. One is enough to answer the question
-  /// it was really there to answer — *does it agree with me about whose week
-  /// is next* — and it fits under the switch instead of needing a screen.
   String _nextReminder(Family? family, String? youAre) {
     if (youAre == null) {
       return 'Say which one you are first';
@@ -363,14 +306,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // ─────────────────────────────── the journal ─────────────────────────────
 
   /// Hands the whole journal to the phone's share sheet, as plain text.
-  ///
-  /// This exists because a reinstall takes the journal with it (#104), and
-  /// on iOS a reinstall happens roughly weekly whether anybody wants one or
-  /// not. Sync would not help: journal entries are deliberately outside the
-  /// family tree (ADR-004), so they are not what #75 would be syncing.
-  ///
-  /// Everything about *what the document says* lives in `JournalExport` and
-  /// is tested without a share sheet. This is the part that cannot be.
   Future<void> _exportJournal() async {
     setState(() {
       _busy = true;
@@ -394,9 +329,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         subject: JournalExport.subject(DateLabels.full(context, _today)),
       );
     } on Object catch (error) {
-      // A share sheet that will not open is not a reason to lose the
-      // screen. Said out loud rather than swallowed, because somebody
-      // exporting a journal is doing it for a reason.
       if (mounted) {
         setState(() => _message = 'Your phone could not share it: $error');
       }
@@ -410,18 +342,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // ───────────────────────────── the turnover day ──────────────────────────
 
   /// Moves the day the week turns over on (#100).
-  ///
-  /// The confirmation is built from the change itself rather than from a
-  /// description of it. `changeTurnoverDay` returns the family that would be
-  /// saved; this reads the date, the short week and its leader off *that*,
-  /// and saves the same object if the family agrees. So the dialog cannot
-  /// promise one thing and the store do another.
-  ///
-  /// It has three sentences and needs all three. Moving the day is the only
-  /// edit in the app with a consequence nobody would guess: the week before
-  /// the change is one to six days short, because the calendar does not
-  /// divide (ADR-019). Hiding that would be a pleasant dialog and a confusing
-  /// Sunday.
   Future<void> _chooseTurnoverDay(Family family) async {
     final int? chosen = await _pick<int>(
       title: 'The week turns over on',
@@ -522,9 +442,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // ─────────────────────────────── the rota ────────────────────────────────
 
   /// Starts the rota over, after asking.
-  ///
-  /// It replaces the family, so it asks. The journal is kept and the dialog
-  /// says so: it is stored separately and has nothing to do with the cycle.
   Future<void> _startAgain() async {
     final bool? confirmed = await showDialog<bool>(
       context: context,
@@ -562,18 +479,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ),
     );
-    // A new rota means new weeks, and this phone may now be holding
-    // reminders for dates that belong to somebody else.
     await _reschedule();
   }
 
   // ──────────────────────────────── the list ───────────────────────────────
 
   /// One choice from a list, or null if it was dismissed.
-  ///
-  /// Deliberately not `RadioListTile`: a tick on the chosen row says the same
-  /// thing, closes on one tap rather than two, and has no fixed-width control
-  /// to collide with a long name at the largest text size.
   Future<T?> _pick<T extends Object>({
     required String title,
     required String explanation,
@@ -694,9 +605,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         title: const Text('Which one are you?'),
         subtitle: Text(_youAreName(family, youAre)),
         trailing: const Icon(Icons.chevron_right),
-        // Nothing to choose from until a rota exists. Disabled rather than
-        // hidden: a row that appears later is harder to find than one that
-        // was always there.
         onTap: family == null || _busy ? null : () => _chooseYouAre(family),
       ),
       ListTile(
@@ -781,10 +689,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         title: const Text('The week turns over on'),
         subtitle: Text(_turnoverName(family)),
         trailing: const Icon(Icons.chevron_right),
-        // Read-only on Day 19, for a reason that was written down rather
-        // than shrugged at: the day was one field on the family, and moving
-        // it re-cut every week the rota had ever had (ADR-019). Day 20 made
-        // it an epoch, so there is a route now.
         onTap: family == null || _busy
             ? null
             : () => _chooseTurnoverDay(family),
@@ -837,8 +741,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       return 'Nobody has said yet';
     }
     final Member? member = family.membersById[youAre];
-    // A name that is stored but no longer in the family: possible after a
-    // member is removed, and better said plainly than rendered as a blank.
     return member?.displayName ?? 'Somebody who has left the rota';
   }
 
@@ -858,11 +760,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   /// What day the week turns over on — and, if that is about to change, both
   /// answers.
-  ///
-  /// A change takes effect at a future turnover, so for a few days there are
-  /// two true answers and `Family.turnoverWeekday` is the later one. A row
-  /// showing only that would be telling somebody their week ends on a
-  /// Wednesday while the app, correctly, ends it on the Sunday.
   String _turnoverName(Family? family) {
     if (family == null) {
       return 'Set the rota up first';

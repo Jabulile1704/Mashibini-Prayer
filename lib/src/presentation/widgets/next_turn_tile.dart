@@ -5,9 +5,6 @@ import '../brand/tokens.dart';
 import 'date_text.dart';
 
 /// Who takes the next turn, and the day it starts.
-///
-/// The date matters as much as the name: "Tata, from Sunday" is a reminder;
-/// "Tata next" is trivia.
 class NextTurnTile extends StatelessWidget {
   const NextTurnTile({required this.turn, required this.isYou, super.key});
 
@@ -50,9 +47,6 @@ class NextTurnTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(who, style: theme.textTheme.titleMedium),
-                  // Was 2. A hairline gap is not a step on the scale, and
-                  // between a name and the date under it `xs` is what the
-                  // scale says a label gap is.
                   const SizedBox(height: Space.xs),
                   Text('from $when', style: theme.textTheme.bodySmall),
                 ],

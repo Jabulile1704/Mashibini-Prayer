@@ -1,14 +1,6 @@
 import 'package:flutter/widgets.dart';
 
 /// The spacing scale.
-///
-/// Before this there were **thirteen** distinct `SizedBox` heights across the
-/// app — 2, 4, 8, 10, 12, 14, 16, 20, 24, 28, 32, 36 and 44. Most sat on a
-/// 4pt grid, so the problem was never the grid: it was that every gap was a
-/// fresh decision, and two gaps meant to look the same often did not.
-///
-/// Seven steps. Anything that does not fit one of them is a layout that has
-/// not been thought about yet, which is useful information.
 abstract final class Space {
   /// 4 — between a label and the thing it labels.
   static const double xs = 4;
@@ -38,21 +30,10 @@ abstract final class Space {
   static const EdgeInsets screen = EdgeInsets.fromLTRB(lg, lg, lg, xxl);
 
   /// 96 — bottom room for a floating action button to sit over a list.
-  ///
-  /// Not a step on the scale, and deliberately named rather than snapped to
-  /// one. It is the height of a thing — a 56pt button plus its margin and
-  /// then some — not a decision about rhythm, and rounding it to 48 would
-  /// put the last journal entry under the button that writes the next one.
-  ///
-  /// The scale's own rule is that an off-scale number means a layout nobody
-  /// has thought about. This one has been, which is what the name is for.
   static const double fabClearance = 96;
 }
 
 /// Corner radii.
-///
-/// Was 14, 16, 18 and 28 — four radii for five components, with no rule
-/// saying which to use. Three, each tied to a size of thing.
 abstract final class Radii {
   /// 12 — inputs and small controls.
   static const double sm = 12;
@@ -65,8 +46,6 @@ abstract final class Radii {
 }
 
 /// How long things take.
-///
-/// Two durations. A third would be a decision nobody can make consistently.
 abstract final class Motion {
   /// 150ms — a control responding to a touch.
   static const Duration quick = Duration(milliseconds: 150);
@@ -76,9 +55,6 @@ abstract final class Motion {
 }
 
 /// The smallest a touch target may be.
-///
-/// 48 is the figure both Material and Apple's guidance land near, and it is
-/// the one Day 22's accessibility pass will measure against.
 abstract final class Touch {
   static const double minimum = 48;
 }

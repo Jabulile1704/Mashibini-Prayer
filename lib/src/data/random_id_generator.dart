@@ -3,14 +3,6 @@ import 'dart:math';
 import '../domain/ids.dart';
 
 /// Ids unique enough that two phones offline will not collide.
-///
-/// Eleven random characters from a 32-character alphabet is 55 bits. A family
-/// creating an id every day for a century would have a collision chance far
-/// below the odds of the phone itself failing — which is the standard that
-/// matters here, not cryptographic uniqueness.
-///
-/// Lives in the data layer because `dart:math` is not `dart:core`, and the
-/// architecture's one hard rule is that the domain imports nothing else.
 class RandomIdGenerator implements IdGenerator {
   RandomIdGenerator({Random? random}) : _random = random ?? Random.secure();
 

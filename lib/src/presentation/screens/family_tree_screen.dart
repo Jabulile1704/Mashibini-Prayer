@@ -20,20 +20,6 @@ import '../widgets/date_text.dart';
 import 'family_member_sheet.dart';
 
 /// The family, as a comb (#109).
-///
-/// Asked for as "a hierarchy of the family … a pic of each person, name,
-/// role … all within this bee-comb like branch tree hierarchy".
-///
-/// **The tree is not the rota.** `cycle.order` says who takes a week;
-/// `Family.members` says who the family is, and that is the larger set — a
-/// grandchild belongs here without being handed a turn at leading prayer.
-/// Everyone drawn here comes from `members`, and whether they lead is a
-/// question this screen *answers* under their name rather than decides.
-///
-/// Generations come from [FamilyTree], which is pure: every awkward family —
-/// a parent recorded after their child, a grandparent added later, two
-/// people who ended up as each other's parent through a merge — is a unit
-/// test rather than something to reproduce by tapping.
 class FamilyTreeScreen extends StatefulWidget {
   const FamilyTreeScreen({
     required this.familyRepository,
@@ -73,10 +59,6 @@ class _FamilyTreeScreenState extends State<FamilyTreeScreen> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      // A sheet whose body scrolls swallows the drag that would dismiss
-      // it: pulling down moves the list, and only a pull that starts at
-      // the very top closes anything. The handle is a target that always
-      // dismisses, wherever the list happens to be scrolled to.
       showDragHandle: true,
       builder: (BuildContext context) => FamilyMemberSheet(
         family: family,
@@ -157,8 +139,6 @@ class _FamilyTreeScreenState extends State<FamilyTreeScreen> {
           if (row > 0) const _Branch(),
           _CombRow(
             key: row == 0 ? FamilyTreeScreen.comb : null,
-            // Alternate rows sit half a cell across, so they nest the way a
-            // comb does rather than stacking into a grid.
             inset: row.isOdd,
             children: <Widget>[
               for (final Member member in rows[row])
@@ -209,11 +189,6 @@ class _FamilyTreeScreenState extends State<FamilyTreeScreen> {
   }
 
   /// The line under a name.
-  ///
-  /// Their role if the family has given them one, because that is what they
-  /// chose to say. Otherwise the rota answers: when they next lead, or that
-  /// they are not in it — which is the fact most likely to be misread about
-  /// a screen that shows more people than the rota does.
   String _noteFor(RotaEngine engine, Member member, Set<String> inTheRota) {
     final String? role = member.role;
     if (role != null && role.isNotEmpty) {
@@ -242,18 +217,7 @@ class _CombRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    // Half a cell on alternate rows, so generations nest the way a comb
-    // does. **Only on the inset rows.** The first version balanced it with
-    // the same padding on the right of every other row, which cost 38pt of
-    // width and made a four-person family wrap after three — and a wrapped
-    // run looks exactly like a generation below, which is the one thing
-    // this screen must not say by accident.
     padding: EdgeInsets.only(left: inset ? _Cell.diameter / 2 : 0),
-    // Wrap rather than Row: a generation can be larger than a phone, and a
-    // family that outgrows one line should flow onto the next rather than
-    // overflow off the side. What distinguishes a wrapped run from the next
-    // generation is the stem drawn between generations and not between
-    // runs.
     child: Wrap(
       alignment: WrapAlignment.center,
       spacing: Space.xs,
@@ -264,11 +228,6 @@ class _CombRow extends StatelessWidget {
 }
 
 /// The join between one generation and the next.
-///
-/// A single stem, not a line per parent. Drawing every edge needs the cells'
-/// painted positions, which a `Wrap` settles at layout time and does not
-/// report — and a line drawn between the wrong two people would be worse
-/// than an honest one saying only "these came from those".
 class _Branch extends StatelessWidget {
   const _Branch();
 
@@ -283,11 +242,6 @@ class _Branch extends StatelessWidget {
 }
 
 /// One person: a hexagon, their name, and a line about them.
-///
-/// The name sits **outside** the hexagon on purpose. Text inside a clipped
-/// shape has nowhere to go when somebody turns the font size up, and the
-/// largest text size is where this app's accessibility defects have been
-/// found.
 class _Cell extends StatelessWidget {
   const _Cell({required this.member, required this.note, required this.onTap});
 
@@ -356,9 +310,6 @@ class _Cell extends StatelessWidget {
     return Image.file(
       File(path),
       fit: BoxFit.cover,
-      // A photograph whose file has gone — deleted from the phone, or a
-      // restore that did not carry it — falls back rather than showing a
-      // broken-image glyph. Paths outlive files.
       errorBuilder: (BuildContext context, Object error, StackTrace? stack) =>
           _initial(theme, initial),
     );
@@ -443,10 +394,6 @@ class _AddRelativeDialogState extends State<_AddRelativeDialog> {
 }
 
 /// The same hexagon the app's mark is drawn from, as a clip.
-///
-/// Reusing `CombMarkPainter.cell` rather than writing a second hexagon: two
-/// shapes drawn from two bits of trigonometry are two shapes that can stop
-/// matching.
 class _HexagonClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) => CombMarkPainter.cell(

@@ -6,11 +6,6 @@ import 'family_repository.dart';
 import '../sources/local/key_value_store.dart';
 
 /// Reads and writes the family on the device.
-///
-/// This is the read path (ADR-003). It touches no network, which is not a
-/// promise in a comment but a property of the code: there is nothing in this
-/// class or anything it imports that could make a request. That is what makes
-/// R6.1 — the rota reads with no connection — structural rather than hopeful.
 class LocalFamilyRepository implements FamilyRepository {
   LocalFamilyRepository({required this._store, this._onCorruptData});
 
@@ -19,11 +14,6 @@ class LocalFamilyRepository implements FamilyRepository {
   final KeyValueStore _store;
 
   /// Called when what is stored cannot be parsed.
-  ///
-  /// The repository cannot decide what to do about corruption — whether to
-  /// report it, prompt, or stay quiet — so it hands it outward and carries on
-  /// as if nothing were stored. The one thing it must not do is crash the app
-  /// on open.
   final void Function(Object error, StackTrace stack)? _onCorruptData;
 
   final StreamController<Family?> _changes =
@@ -53,13 +43,6 @@ class LocalFamilyRepository implements FamilyRepository {
   }
 
   /// Emits what is stored now, then every change after it.
-  ///
-  /// Each listener gets the current value first, so a screen opening after a
-  /// change does not sit empty waiting for the next one.
-  ///
-  /// Written as `async*` rather than by seeding the controller: the stream is
-  /// broadcast, and `asBroadcastStream(onListen:)` is silently ignored when
-  /// the source is already broadcast — the seed would never have fired.
   @override
   Stream<Family?> watch() async* {
     _assertUsable();

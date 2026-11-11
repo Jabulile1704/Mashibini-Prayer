@@ -11,16 +11,6 @@ import '../brand/tokens.dart';
 
 /// Editing one person in the family tree (#109): a photograph, a role, and
 /// who their parents are.
-///
-/// Returns the edited [Member], or null if nothing was kept. It does **not**
-/// save: the screen that opened it does, through `FamilyEditor.updateMember`,
-/// which is where the rule about not becoming your own ancestor lives. A
-/// sheet that wrote to a repository would be a second place that knows how a
-/// family may change.
-///
-/// Nothing here touches the rota. A role is a word, a parent is an edge, and
-/// neither hands anybody a week of prayer — which is the distinction the
-/// whole tab exists to keep.
 class FamilyMemberSheet extends StatefulWidget {
   const FamilyMemberSheet({
     required this.family,
@@ -53,9 +43,6 @@ class _FamilyMemberSheetState extends State<FamilyMemberSheet> {
   late final Set<String> _parents = <String>{...widget.member.parentIds};
 
   /// A photograph chosen in this sheet and then abandoned.
-  ///
-  /// Copied into the app's storage the moment it is picked, so dismissing
-  /// the sheet would otherwise leave an orphan file nobody references.
   final List<String> _copiedHere = <String>[];
 
   bool _busy = false;
@@ -81,8 +68,6 @@ class _FamilyMemberSheetState extends State<FamilyMemberSheet> {
         }
       }
     } on Object catch (error) {
-      // A picker that will not open, or a copy that fails on a full phone.
-      // Said out loud rather than swallowed.
       if (mounted) {
         setState(() => _message = 'That photograph could not be used: $error');
       }
@@ -102,9 +87,6 @@ class _FamilyMemberSheetState extends State<FamilyMemberSheet> {
       parentIds: _parents.toList(),
     );
 
-    // Any photograph picked here and then replaced by another is now
-    // referenced by nothing. Tidied on the way out rather than left to
-    // accumulate every time somebody changes their mind.
     for (final String path in _copiedHere) {
       if (path != _photoPath) {
         unawaited(widget.photos.remove(path));
@@ -126,12 +108,6 @@ class _FamilyMemberSheetState extends State<FamilyMemberSheet> {
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
-      // A column with the scroll inside it, so **Keep stays put**. It used
-      // to be the last item of the list, which meant that adding a
-      // photograph grew the content and pushed the only way to save below
-      // the fold — a tap aimed at it landed on the scrim and dismissed the
-      // sheet instead. Found by a test that had been passing while the
-      // sheet happened to be short enough.
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
@@ -145,11 +121,6 @@ class _FamilyMemberSheetState extends State<FamilyMemberSheet> {
                 Space.lg,
               ),
               children: <Widget>[
-                // A way out that is a button rather than a gesture. The drag
-                // handle above dismisses too, but a handle is a thing you have to
-                // know about — and this sheet is reached by tapping a face, which
-                // is the kind of tap somebody makes to *look* rather than to
-                // edit.
                 Row(
                   children: <Widget>[
                     Expanded(
@@ -249,8 +220,6 @@ class _FamilyMemberSheetState extends State<FamilyMemberSheet> {
                     style: theme.textTheme.bodySmall,
                   )
                 else
-                  // Only names that cannot close a loop are offered, so the
-                  // refusal is an absence rather than an error afterwards.
                   for (final Member candidate in possible)
                     CheckboxListTile(
                       key: FamilyMemberSheet.parentToggle(candidate.id),
@@ -272,10 +241,6 @@ class _FamilyMemberSheetState extends State<FamilyMemberSheet> {
               ],
             ),
           ),
-          // Outside the scroll too. It was the last item of the list, which
-          // meant a picker that would not open reported itself somewhere
-          // below the fold — an error nobody can see is the same defect as
-          // a button nobody can reach.
           if (_message != null)
             Padding(
               padding: const EdgeInsets.fromLTRB(

@@ -7,11 +7,6 @@ import '../../../domain/saying/saying_for_the_day.dart';
 import '../../serialization/json_reads.dart';
 
 /// Loads the sayings that ship with the app.
-///
-/// Bundled rather than fetched, for three reasons that all point the same
-/// way: they are the same for everybody, they never change, and R3.1 says a
-/// saying must be readable with no connection. An asset satisfies all three
-/// and costs one file.
 abstract final class BundledSayings {
   static const String assetPath = 'assets/sayings.json';
 
@@ -47,8 +42,6 @@ abstract final class BundledSayings {
         tradition: readString(source, 'tradition'),
         languages: readStringList(source, 'languages'),
         notice: readString(source, 'notice'),
-        // Absent means not reviewed. Defaulting the other way would make a
-        // missing field read as a speaker's approval nobody gave.
         reviewed: readBoolOr(source, 'reviewed', false),
       ),
       sayings: readObjectList(

@@ -7,26 +7,8 @@ import 'week.dart';
 
 /// Turns the answers a person can actually give into the data the engine
 /// needs.
-///
-/// Nobody should have to understand what an anchor date is to set up a rota
-/// (R2.2). The three answerable questions are:
-///
-/// - who takes a week, and in what order
-/// - which day the week turns over
-/// - whose week it is *right now*
-///
-/// From those, the anchor falls out. This is the only place that derivation
-/// happens, and it is pure, so it is tested without a screen.
 abstract final class RotaSetup {
   /// Builds a family whose rota already says what the person just told us.
-  ///
-  /// The order is **rotated** so that the current leader sits first and the
-  /// cycle's anchor is this week. The alternative — keeping the typed order
-  /// and pushing the anchor back into the past — would make `startedOn` claim
-  /// the rota began before the family had ever opened the app.
-  ///
-  /// Rotating costs nothing: a cycle has no first member, only an order, and
-  /// the sequence after the current leader is unchanged.
   static Family build({
     required String familyId,
     required String familyName,

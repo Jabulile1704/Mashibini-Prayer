@@ -220,7 +220,7 @@ jobs:
         if: steps.scope.outputs.needed == 'true'
         run: |
           for attempt in 1 2 3; do
-            if flutter build apk --debug; then
+            if flutter build apk --debug --split-per-abi; then
               exit 0
             fi
             if [ "$attempt" -lt 3 ]; then
@@ -232,11 +232,20 @@ jobs:
           echo "::error::Android build failed three times. This is not a rate limit."
           exit 1
 
-      - name: Upload APK
+      # `--split-per-abi` above is not for this job's benefit — a debug
+      # build's size is nobody's problem. It is here so that the flag is
+      # exercised on every pull request rather than for the first time
+      # during a release, where the output is what a family installs and
+      # the only way to find out it did not work is that it did not work.
+      - name: How big is each one?
+        if: steps.scope.outputs.needed == 'true'
+        run: ls -lh build/app/outputs/flutter-apk/
+
+      - name: Upload APKs
         if: steps.scope.outputs.needed == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-apk
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          path: build/app/outputs/flutter-apk/*.apk
           if-no-files-found: error
           retention-days: 14

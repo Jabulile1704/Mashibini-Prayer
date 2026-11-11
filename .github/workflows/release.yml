@@ -181,6 +181,10 @@ jobs:
           echo "" >> notes.md
           echo "---" >> notes.md
           echo "" >> notes.md
+          echo "**It needs Android 7.0 or newer.**" >> notes.md
+          echo "" >> notes.md
+          echo "On anything older, Android refuses with *App not installed* and does not say why. Check under Settings → About phone → Android version." >> notes.md
+          echo "" >> notes.md
           echo "**Which file do I want?**" >> notes.md
           echo "" >> notes.md
           echo "Take \`mashibini-prayer-${{ needs.verify.outputs.version }}.apk\`. It is the right one for virtually every Android phone." >> notes.md

@@ -5,9 +5,6 @@ import 'package:mashibini_prayer/src/domain/journal/journal_export.dart';
 
 /// The document a person keeps so that a reinstall cannot take their journal
 /// (#104).
-///
-/// Pure, so every rule about what it says is tested here rather than against
-/// a share sheet somebody has to dismiss by hand.
 void main() {
   /// Unambiguous and sortable, which is what a test wants. The app passes
   /// `DateLabels.full`, so the real file reads "Sunday 18 October 2026".
@@ -34,8 +31,6 @@ void main() {
   });
 
   test('runs oldest first, unlike the screen', () {
-    // The journal screen shows newest first, because that is what somebody
-    // opening the app wants. A kept copy is read end to end.
     final String document = JournalExport.asText(
       <JournalEntry>[
         entry(20, 'Third.'),
@@ -90,8 +85,6 @@ void main() {
   });
 
   test('words are kept exactly as they were typed', () {
-    // An export that tidied somebody's writing would be a worse copy than
-    // the original, which defeats the point of having one.
     const String written = 'Line one.\nLine two.\n\n   Indented, trailing.   ';
 
     final String document = JournalExport.asText(
@@ -111,9 +104,6 @@ void main() {
   });
 
   test('an empty journal is still a document', () {
-    // Not an empty string. Somebody who exports before writing anything
-    // should get a file that says so, rather than a share sheet holding
-    // nothing.
     final String document = JournalExport.asText(
       const <JournalEntry>[],
       formatDate: iso,
@@ -126,9 +116,6 @@ void main() {
   });
 
   test('the subject line is dated the same way the document is', () {
-    // It read "My prayer journal — 2026-11-04" over a document saying
-    // "Wednesday, 4 November 2026" — two voices for one date, in the one
-    // line somebody sees before they open anything.
     expect(
       JournalExport.subject(iso(savedOn)),
       'My prayer journal — 2026-11-04',
@@ -140,8 +127,6 @@ void main() {
   });
 
   test('the entries it was given are not reordered underneath the caller', () {
-    // `all()` hands back the repository's own list in a release build; this
-    // sorts a copy.
     final List<JournalEntry> given = <JournalEntry>[
       entry(20, 'later'),
       entry(18, 'earlier'),

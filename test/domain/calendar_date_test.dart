@@ -59,9 +59,6 @@ void main() {
     });
 
     test('day arithmetic is unaffected by a southern-hemisphere DST date', () {
-      // South Africa has no DST, but the type must not depend on that: these
-      // are dates where many timezones shift. A date type that secretly held
-      // a local instant could lose or gain a day here.
       final CalendarDate beforeShift = CalendarDate(2026, 3, 29);
       expect(beforeShift.addDays(1), CalendarDate(2026, 3, 30));
       expect(CalendarDate(2026, 10, 25).addDays(1), CalendarDate(2026, 10, 26));

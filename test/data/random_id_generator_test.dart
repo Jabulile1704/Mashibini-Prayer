@@ -51,8 +51,6 @@ void main() {
     });
 
     test('two generators do not agree, which is the whole point', () {
-      // Two phones, each with their own source of randomness. If these
-      // collided, a merge would lose somebody — see ADR-008.
       final RandomIdGenerator phoneA = RandomIdGenerator(random: Random(1));
       final RandomIdGenerator phoneB = RandomIdGenerator(random: Random(2));
 

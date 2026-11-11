@@ -29,15 +29,6 @@ import '../support/family_fixtures.dart';
 
 /// N5: text scales with the OS setting without clipping, and every control
 /// has a label a screen reader can read.
-///
-/// The clipping half is checked by pumping every screen at the largest text
-/// setting either platform offers. Flutter reports an overflow as a thrown
-/// error, so a laid-out-wrong screen fails here rather than being noticed by
-/// somebody holding the phone.
-///
-/// iOS goes to roughly 3.1x at AX5 and Android to 2.0x. Both are tested: a
-/// layout that survives 2.0 can still break at 3.1, and a family member who
-/// needs AX5 is exactly who this requirement is for.
 void main() {
   late LocalFamilyRepository family;
   late LocalDeviceSettingsRepository settings;
@@ -107,12 +98,6 @@ void main() {
       ids: FakeIdGenerator(),
       today: () => anchor,
     ),
-    // The shell rather than a screen, because the thing being measured here
-    // is the **navigation bar**: five destinations, five visible labels,
-    // across 360pt. ADR-016 put the ceiling at four on the judgement that
-    // five is where a bottom bar stops working on a phone, and ADR-020
-    // reversed it — so the claim had to stop being a judgement and start
-    // being a test. Nothing else in this sweep built the bar at all.
     'The shell, with its five tabs': HomeShell(
       repository: family,
       settings: settings,
@@ -165,8 +150,6 @@ void main() {
     // A small phone, because a narrow screen is where large text breaks.
     const Size phone = Size(360, 760);
 
-    // Named here rather than read from screens(), which cannot be called
-    // until setUp has built the repositories.
     const List<String> everyScreen = <String>[
       'This week',
       'The weeks ahead',
@@ -194,18 +177,9 @@ void main() {
 
           await pump(tester, screens()[name]!, scale: scale, size: phone);
 
-          // Reaching here without a thrown overflow is the assertion; this
-          // only proves the screen actually built something. `findsWidgets`
-          // rather than `findsOneWidget` because the shell nests a Scaffold
-          // inside its tabs' own — the count was never the point.
           expect(find.byType(Scaffold), findsWidgets);
         });
 
-        // The empty states are tested separately because they are a
-        // different layout, not a smaller one: a centred column with nothing
-        // to scroll. The first version of this sweep seeded data before
-        // pumping and therefore never rendered one — and the overflow it
-        // missed was found by hand, on a simulator at AX5.
         testWidgets('$name at ${scale}x with nothing stored', (
           WidgetTester tester,
         ) async {
@@ -216,32 +190,9 @@ void main() {
       }
     }
 
-    // Tab-label *width* is not measured here, and that is deliberate.
-    //
-    // Day 22 filed #111 claiming the labels were cut off on most phones,
-    // with a table of widths from `RenderParagraph.getMinIntrinsicWidth`.
-    // The numbers were real and meant nothing: **Flutter's widget tests
-    // render with a fixed-width placeholder font**, every glyph a 1em
-    // square, so the figures described this test environment. `iiiiiiii`
-    // and `MMMMMMMM` both measure 98.0 in here. The tell was in the table
-    // and went unread — exactly 13.4 per character, which no proportional
-    // font does. A walk up the render tree also found no clipper above the
-    // label, so an over-wide one would overdraw into the gap rather than be
-    // cut off at all.
-    //
-    // Running the app settled it in one screenshot: nothing is clipped.
-    //
-    // Whether text fits a box is a question about a typeface, and this
-    // suite has no typeface. It needs a golden test with real fonts loaded,
-    // or eyes on a device. A number here would be the third wrong thing
-    // that issue produced.
-
     testWidgets('every destination announces its name', (
       WidgetTester tester,
     ) async {
-      // Still worth asserting, whatever the width turns out to be: the bar
-      // replaced three unlabelled icon buttons in an app bar (ADR-016), and
-      // losing those names again is the regression that matters.
       await family.save(familyOfFour());
       final SemanticsHandle handle = tester.ensureSemantics();
 
@@ -253,9 +204,6 @@ void main() {
       );
 
       for (final String label in HomeShell.labels) {
-        // A pattern, not the whole string: a destination announces itself as
-        // "This week, Tab 1 of 5", so an exact match finds nothing and would
-        // read as "no label" when the label is there.
         expect(
           find.bySemanticsLabel(RegExp(label)),
           findsWidgets,
@@ -269,8 +217,6 @@ void main() {
     testWidgets('a rota that has not started yet, at 3.1x', (
       WidgetTester tester,
     ) async {
-      // Stored, but ahead of time: a third state, and the only one that
-      // renders "The rota starts on".
       await family.save(familyOfFour());
 
       await pump(
@@ -303,12 +249,6 @@ void main() {
         size: const Size(390, 844),
       );
 
-      // There are none left to check. Day 18 moved every destination into
-      // the bottom navigation bar, whose labels are *visible* rather than
-      // only announced — which is the better fix for the problem this test
-      // was written about, so the test now asserts their absence.
-      //
-      // The tabs themselves are covered in home_shell_test.dart.
       expect(
         find.byType(IconButton),
         findsNothing,

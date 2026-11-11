@@ -1,9 +1,6 @@
 import 'package:mashibini_prayer/src/data/sources/platform/sharing.dart';
 
 /// A share sheet that does not open.
-///
-/// Keeps what it was handed, so a test can assert on the document rather
-/// than on the fact that something happened.
 class FakeSharing implements Sharing {
   String? sharedText;
   String? sharedSubject;

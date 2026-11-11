@@ -3,22 +3,6 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Day 22's restyle, kept.
-///
-/// `Space` was written on Day 17 and the screens went on using their own
-/// numbers for five days, because nothing stopped them. There were **28** raw
-/// `SizedBox` heights against 19 tokenised ones, and seven files on
-/// hand-picked `EdgeInsets` — thirteen distinct gaps across the app, two of
-/// which were meant to look the same and did not.
-///
-/// A design system nothing enforces is a suggestion. This reads the source
-/// and fails on a gap that is a number, which is the only way the scale stays
-/// the scale after the day that introduced it.
-///
-/// It deliberately does **not** police every number in the layer. A hexagon's
-/// radius, an icon's size, the 28×2 rule under the saying — those are the
-/// dimensions of things, and `Space` is about rhythm between them. The two
-/// patterns below are the ones that are always rhythm: a `SizedBox` with one
-/// axis set is a gap, and padding is padding.
 void main() {
   /// Every Dart file in the presentation layer, except the one that defines
   /// the numbers.
@@ -38,43 +22,16 @@ void main() {
   }
 
   /// A `SizedBox` standing in for a gap: **one** axis, a bare number.
-  ///
-  /// Two axes is a shape — a photograph's placeholder, a swatch — and `Space`
-  /// is about the rhythm between things rather than how big they are. The
-  /// first version of this said exactly that in its doc comment, matched on
-  /// the opening of the call and so caught both, and had a self-test
-  /// asserting the wrong one of the two. It was found by the guard flagging
-  /// a legitimate `SizedBox(width: 64, height: 64)` the next day.
-  ///
-  /// The closing bracket is the whole fix: one argument, then `)`.
   final RegExp gap = RegExp(
     r'SizedBox\(\s*(?:height|width):\s*\d+(?:\.\d+)?\s*,?\s*\)',
   );
 
   /// Padding given a number instead of a token.
-  ///
-  /// `Space.fabClearance + Space.md` passes, which is the point of naming
-  /// that one: the rule is against anonymous numbers, not arithmetic.
-  ///
-  /// **Zero is allowed.** `fromLTRB(Space.lg, 0, Space.lg, Space.sm)` means
-  /// *no padding on that side*, which is not an unnamed design decision —
-  /// there is no token for nothing, and inventing `Space.none` would be a
-  /// word for a thing that already has one. The first version of this check
-  /// flagged four such lines, which is how the exception got written down
-  /// rather than assumed.
   final RegExp edgeInsets = RegExp(r'EdgeInsets\.\w+\(([^)]*)\)');
   final RegExp number = RegExp(r'(?<![\w.])(\d+(?:\.\d+)?)');
   final RegExp anyName = RegExp(r'[A-Za-z_]');
 
   /// Whether any argument is a number and nothing else.
-  ///
-  /// Per argument rather than per call, and the label is dropped first, so
-  /// `bottom: 12` is judged on `12`. An argument that names anything —
-  /// `Space.lg`, `Space.fabClearance + Space.md`, `inset ? _Cell.diameter /
-  /// 2 : 0` — is somebody's decision with a name on it, which is all this
-  /// guard has ever been asking for. The second of those was allowed from
-  /// the start; the third was not, and was a false positive on the day the
-  /// family tree landed.
   bool isPaddingByNumber(String line) {
     for (final RegExpMatch call in edgeInsets.allMatches(line)) {
       for (final String argument in call.group(1)!.split(',')) {
@@ -141,11 +98,6 @@ void main() {
   });
 
   test('and this test can actually fail', () {
-    // The rule from Day 21, applied on the way in rather than afterwards:
-    // two of the three assertions written for #111 could not fail, and the
-    // only thing that caught them was breaking them on purpose. A guard
-    // whose regex has quietly stopped matching is a guard that reports a
-    // clean codebase forever.
     expect(gap.hasMatch('const SizedBox(height: 24),'), isTrue);
     expect(gap.hasMatch('const SizedBox(height: Space.xl),'), isFalse);
     expect(

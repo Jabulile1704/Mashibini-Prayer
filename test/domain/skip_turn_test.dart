@@ -53,8 +53,6 @@ void main() {
     });
 
     test('the skipped member is not owed a double turn', () {
-      // Sisi loses week two. When the cycle comes round, Sisi leads once —
-      // in week five — not twice. A skip is forgiveness, not debt.
       final Family after = skip(familyOfFour(), anchor.addDays(7));
       final List<String> year = leaders(after, anchor, 12);
 
@@ -76,21 +74,11 @@ void main() {
     test('the record names who lost the turn, not who gained it', () {
       final Family after = skip(familyOfFour(), anchor.addDays(7));
 
-      // Needed to tell somebody *whose* week was skipped once it no longer
-      // shows in the rota. Recording the replacement instead would lose the
-      // only fact the skip is about.
       expect(after.skips.single.memberId, sisi.id);
       expect(after.skips.single.weekStart, anchor.addDays(7));
     });
 
     test('a second skip passes over whoever holds that week by then', () {
-      // The subtle one. Skipping week two hands it to Mama and pushes
-      // everyone after along, so week three now belongs to **Tata** — not
-      // Mama, who it belonged to before the first skip. Skipping week three
-      // therefore passes over Tata.
-      //
-      // Getting this wrong is invisible in the rota and only shows up in the
-      // record, which is why the ids are asserted as well as the names.
       Family family = familyOfFour();
       final FakeIdGenerator ids = FakeIdGenerator();
       family = skip(family, anchor.addDays(7), ids: ids);
@@ -173,8 +161,6 @@ void main() {
     });
 
     test('the record stays, marked withdrawn, rather than disappearing', () {
-      // It has to survive: two phones merge skips by union, so a deleted
-      // record would simply come back from the other device.
       final Family restored = FamilyEditor.unskipTurn(
         skip(familyOfFour(), anchor.addDays(7)),
         weekStart: anchor.addDays(7),
@@ -203,8 +189,6 @@ void main() {
 
       expect(again.skips, hasLength(2));
       expect(leaders(again, anchor.addDays(7), 1).single, 'Mama');
-      // Two records, two ids: the withdrawn one is never revived, which is
-      // what keeps `withdrawn` one-way and the merge safe.
       expect(again.skips.map((SkippedTurn s) => s.id).toSet(), hasLength(2));
     });
 

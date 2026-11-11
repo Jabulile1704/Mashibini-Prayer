@@ -12,11 +12,6 @@ import '../support/family_fixtures.dart';
 /// own abstraction, so it is the one place where a wiring mistake — a wrong
 /// key, a value written but never read back — would pass every other test in
 /// the suite and still lose the family's rota.
-///
-/// Tested against `InMemorySharedPreferencesAsync`, which is the package's own
-/// implementation of its own interface. That is deliberately different from
-/// mocking a vendor SDK into a shape we invented: nothing here encodes a guess
-/// about how `shared_preferences` behaves.
 void main() {
   setUp(() {
     SharedPreferencesAsyncPlatform.instance =

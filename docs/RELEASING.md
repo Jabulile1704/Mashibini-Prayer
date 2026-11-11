@@ -125,7 +125,27 @@ A free Apple account signs the build for **seven days**, after which the app
 stops opening until it is installed again. That is Apple's limit on free
 provisioning, not a problem with the build — see ADR-013.
 
-Android: the APK is attached to the GitHub Release.
+Android: the APKs are attached to the GitHub Release, and there are two.
+
+| File | Who it is for |
+|:--|:--|
+| `mashibini-prayer-<version>.apk` | Virtually every Android phone. `arm64-v8a` only, so roughly a third of the size |
+| `mashibini-prayer-<version>-any-phone.apk` | The fallback, carrying every architecture. Take this one if the other says *App not installed* |
+
+The unsuffixed name is the small one deliberately. `arm64-v8a` has been all
+but universal on Android phones since 2017, and Assumption 1 already says
+every member has a phone capable of running a current Flutter app. The
+universal build stays because the failure it guards against — *App not
+installed*, with no explanation — is one a family member cannot debug,
+while a larger download is a much smaller problem.
+
+**Both are checked against `android/release-key.sha256` before publishing.**
+An unchecked artefact on a release page is #103 in a different costume: the
+check still passes, and it is no longer checking what the family installs.
+
+`--split-per-abi` also runs in the CI debug build, on every pull request. A
+debug APK's size is nobody's problem; it is there so the flag is never
+exercised for the first time during a release.
 
 ## The Android signing key
 

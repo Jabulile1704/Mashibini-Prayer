@@ -43,8 +43,6 @@ void main() {
     });
 
     test('a withdrawn skip is still withdrawn after a round trip', () {
-      // It has to be. The flag is the only thing standing between "we took
-      // that skip back" and the rota quietly shifting again on next launch.
       final Family original = familyOfFour(
         skips: <SkippedTurn>[
           SkippedTurn(id: 's1', weekStart: anchor, memberId: 'm1').withdraw(),
@@ -57,8 +55,6 @@ void main() {
     });
 
     test('a skip written before the flag existed reads as a live skip', () {
-      // Forward compatibility the cheap way: absent means false, which is
-      // what every document written before today means.
       final String encoded = FamilyJson.encode(
         familyOfFour(
           skips: <SkippedTurn>[
@@ -138,8 +134,6 @@ void main() {
     });
 
     test('the turnover day is written, for a person reading the file', () {
-      // Derived from the cycles now, so nothing reads it back. It is in the
-      // document because DATA-MODEL.md promises a legible one.
       expect(
         FamilyJson.encode(familyOfFour()),
         contains('"turnoverWeekday":7'),
@@ -165,9 +159,6 @@ void main() {
     });
 
     test('a document with no cycles is not a family', () {
-      // It would have no turnover day either, that being read off the
-      // cycles. Refused here so it surfaces as an unreadable store rather
-      // than as a StateError out of the domain.
       final Map<String, Object?> json = validMap()..['cycles'] = <Object?>[];
       expect(
         () => FamilyJson.fromMap(json),
@@ -230,9 +221,6 @@ void main() {
     });
 
     test('a document with no version at all is the oldest shape', () {
-      // Not "whatever this build happens to be". A document written before
-      // the field existed is v1, and reading it as v2 would wave the next
-      // migration past its own check as well.
       final Map<String, Object?> json = FamilyJson.toMap(familyOfFour())
         ..remove('schemaVersion');
       expect(FamilyJson.fromMap(json).schemaVersion, 4);
@@ -256,13 +244,6 @@ void main() {
     });
   });
 
-  // v1 to v2 — the first migration this app has had (#100, ADR-019).
-  //
-  // The document below is a literal copy of what v1.4.0 wrote: the shape is
-  // unchanged, and so the migration does nothing. What changed is the
-  // *meaning* — the turnover day is read off each cycle now instead of off
-  // the family — and these tests are what make "does nothing" a measured
-  // claim rather than a hopeful one.
   group('reading a family written by v1.4.0', () {
     const String v1 = '''
 {
@@ -299,17 +280,12 @@ void main() {
     });
 
     test('the turnover day it carried is the one it still reports', () {
-      // Derived from the cycle's anchor now. They agree because in v1 the
-      // engine refused to run unless they did.
       final Family restored = FamilyJson.decode(v1);
       expect(restored.turnoverWeekday, DateTime.sunday);
       expect(restored.cycles.single.turnoverWeekday, DateTime.sunday);
     });
 
     test('it answers every week of the next year identically', () {
-      // The migration's whole claim, as a comparison against the same
-      // family built in the new shape rather than as an assertion about one
-      // date.
       final RotaEngine migrated = RotaEngine.forFamily(FamilyJson.decode(v1));
       final RotaEngine native = RotaEngine.forFamily(
         familyOfFour(
@@ -336,19 +312,12 @@ void main() {
     });
 
     test('and is written back as v4, so an older build refuses it', () {
-      // The reason the version moved at all. An older build reading a family
-      // whose epochs sit on different weekdays would hand it to its own
-      // engine and throw on every frame of the home screen; the marker makes
-      // it decline instead.
       final String rewritten = FamilyJson.encode(FamilyJson.decode(v1));
       expect(rewritten, contains('"schemaVersion":4'));
     });
 
     test('a v1 document whose turnover day disagreed with its cycles now '
         'reads', () {
-      // v1 never checked the two against each other; the engine did, at
-      // every call. Such a document was unopenable. Deriving the day from
-      // the cycle makes the stale field irrelevant rather than fatal.
       final String inconsistent = v1.replaceFirst(
         '"turnoverWeekday": 7',
         '"turnoverWeekday": 1',
@@ -426,10 +395,6 @@ void main() {
     });
 
     test('two epochs on the same day are broken by id, as the engine does', () {
-      // Two phones editing while offline can both write an epoch effective
-      // from the same turnover. If `latestCycle` and `RotaEngine` broke that
-      // tie differently, the two would disagree about which day the family
-      // hands over on (R6.2).
       final CalendarDate sameDay = CalendarDate(2026, 11, 15); // a Sunday
       final Family family = Family(
         id: 'f1',

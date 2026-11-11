@@ -51,10 +51,6 @@ void main() {
   }
 
   /// Picks [value] in the dropdown identified by [field].
-  ///
-  /// Addressed by key rather than by the text showing in it: tapping the
-  /// label's centre lands on an ancestor, which happens to work and would
-  /// stop working the first time the layout moved.
   Future<void> choose(
     WidgetTester tester, {
     required Key field,
@@ -65,8 +61,6 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    // scrollUntilVisible stops as soon as the widget is built, which can
-    // still leave it below the viewport.
     await tester.ensureVisible(find.byKey(field));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(field));
@@ -93,9 +87,6 @@ void main() {
     testWidgets('two questions now, and never the word anchor', (
       WidgetTester tester,
     ) async {
-      // It used to be three. "Who takes a week" and "whose week is it at the
-      // moment" were one question asked twice, and the second silently
-      // rotated the answer to the first.
       await open(tester);
 
       expect(find.text('Whose week is it?'), findsOneWidget);
@@ -108,13 +99,9 @@ void main() {
     testWidgets('the list says which week each position covers', (
       WidgetTester tester,
     ) async {
-      // The fix for "the app has to assume": every row states the week it
-      // is, so nothing is inferred from the order somebody typed in.
       await open(tester);
 
       expect(find.text('THIS WEEK'), findsOneWidget);
-      // The second row carries the date its turn begins on, so the sequence
-      // is readable rather than implied.
       expect(find.textContaining('FROM '), findsOneWidget);
     });
 
@@ -162,10 +149,6 @@ void main() {
     testWidgets('whose week it is cannot be left unanswered any more', (
       WidgetTester tester,
     ) async {
-      // It used to be a second question, in a dropdown, that somebody could
-      // skip — and the screen then refused with "Say whose week it is at the
-      // moment." The list is now the rota: position one *is* this week, so
-      // there is nothing left to forget.
       await open(tester);
       await typeName(tester, 0, 'Jabulile');
       await typeName(tester, 1, 'Sisi');
@@ -221,9 +204,6 @@ void main() {
     testWidgets('removing someone does not strand the rota', (
       WidgetTester tester,
     ) async {
-      // This used to clear a dropdown that pointed at a row index which had
-      // just shifted under it. There is no such dropdown now — the order is
-      // the answer — so removing the last person simply leaves two.
       await open(tester);
       await typeName(tester, 0, 'Jabulile');
       await typeName(tester, 1, 'Sisi');
@@ -271,14 +251,8 @@ void main() {
         'Mama',
         'Tata',
       ]);
-      // Monday by default: a week that ends on Sunday starts on Monday.
-      // Sunday is the last day somebody leads and the next person begins
-      // the following morning, which is what a family means by "next week".
       expect(saved.turnoverWeekday, DateTime.monday);
 
-      // The list is the rota: whoever is first is leading this week, and
-      // the sequence follows from there. No second question, no silent
-      // rotation of the order somebody typed.
       final RotaEngine engine = RotaEngine.forFamily(saved);
       expect(engine.turnOn(anchor)!.leader.displayName, 'Jabulile');
       expect(engine.turnOn(anchor.addDays(7))!.leader.displayName, 'Sisi');
@@ -342,9 +316,6 @@ void main() {
     testWidgets('setting up mid-week carries on from the week in progress', (
       WidgetTester tester,
     ) async {
-      // Wednesday 21 October. With the default Monday turnover that week
-      // began on Monday 19 October — `anchor` is the Sunday before it, so
-      // the rota starts the day after.
       await open(tester, on: anchor.addDays(3));
       await fillInTheMashibinis(tester);
 
@@ -365,17 +336,9 @@ void main() {
     testWidgets('dragging somebody to the top makes it their week', (
       WidgetTester tester,
     ) async {
-      // The whole point of the change. Changing who is leading is now the
-      // same gesture as changing the order, because they were never two
-      // different facts.
       await open(tester);
       await fillInTheMashibinis(tester);
 
-      // Move the third row (Mama) to the top.
-      // An explicit gesture with pumps between the moves. A single
-      // `tester.drag` does not drive a reorder: the list needs frames in
-      // between to run its own animation and work out where the row has
-      // landed.
       final Offset handle = tester.getCenter(
         find.byIcon(Icons.drag_handle).at(2),
       );

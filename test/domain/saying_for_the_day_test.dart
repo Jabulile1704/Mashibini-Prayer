@@ -34,8 +34,6 @@ void main() {
     });
 
     test('two phones with the same date agree, having never spoken', () {
-      // Separate instances stand in for separate devices: nothing is shared
-      // between them but the date.
       final SayingForTheDay phoneA = withSayings(30);
       final SayingForTheDay phoneB = withSayings(30);
 
@@ -98,8 +96,6 @@ void main() {
     test('dates before 1970 do not produce a negative index', () {
       final SayingForTheDay sayings = withSayings(30);
 
-      // Dart's % is non-negative for a positive divisor, but this is the one
-      // place that would crash the home screen if it were not.
       expect(() => sayings.on(CalendarDate(1900, 1, 1)), returnsNormally);
       expect(() => sayings.on(CalendarDate(1969, 12, 31)), returnsNormally);
     });
@@ -149,9 +145,6 @@ void main() {
     });
 
     test('the same wisdom in two languages is two sayings', () {
-      // Deliberate, and the reason the shipped file can hold both. The
-      // English gloss is the same; the saying is not, and the card leads
-      // with the original.
       expect(
         const Saying(
               text: 'A person is a person through other people.',

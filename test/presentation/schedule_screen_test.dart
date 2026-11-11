@@ -31,9 +31,6 @@ void main() {
   });
 
   Future<void> open(WidgetTester tester, {CalendarDate? today}) async {
-    // Tall enough for all eight rows. R1.5 is about seeing eight turns, and
-    // the default 800x600 test window cuts the last one off — which would
-    // make the counts below quietly measure the viewport instead of the rota.
     await tester.binding.setSurfaceSize(const Size(800, 1400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -70,8 +67,6 @@ void main() {
       await family.save(familyOfFour());
       await open(tester);
 
-      // The week in progress is labelled rather than dated — "This week" is
-      // what somebody standing in it wants to read.
       expect(find.text('This week'), findsOneWidget);
       expect(find.textContaining('25 October 2026'), findsOneWidget);
       expect(find.textContaining('1 November 2026'), findsOneWidget);
@@ -80,10 +75,6 @@ void main() {
     testWidgets('says when it does start, not just that it has not', (
       WidgetTester tester,
     ) async {
-      // It used to say only "the rota has not started yet" — true, and it
-      // left out the one fact worth knowing. This Week has named the start
-      // date since Day 14 and this screen knew it without saying it (Day
-      // 22's empty-state pass).
       await family.save(familyOfFour());
       await open(tester, today: anchor.subtractDays(28));
 
@@ -116,8 +107,6 @@ void main() {
     testWidgets('the row stays, saying whose turn was passed over', (
       WidgetTester tester,
     ) async {
-      // Without this the skip is invisible the moment it is made, and there
-      // is nothing left to undo.
       await family.save(familyOfFour());
       await open(tester);
 
@@ -126,10 +115,6 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Scoped to the list. The same sentence is now also in a snack bar —
-      // transient confirmation beside persistent state, which is what the
-      // snack bar is for — so an unscoped finder sees two and reports the
-      // wrong thing.
       expect(
         find.descendant(
           of: find.byType(ListView),
@@ -163,11 +148,6 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Everyone after the skipped week moves up one, so the eight weeks
-      // read J, M, T, J, S, M, T, J instead of J, S, M, T, J, S, M, T.
-      // Sisi loses one of her two turns and does not get it back later —
-      // the whole point of R1.4's "forgiveness, not debt", visible here as
-      // a count.
       expect(find.text('Jabulile'), findsNWidgets(3));
       expect(find.text('Mama'), findsNWidgets(2));
       expect(find.text('Tata'), findsNWidgets(2));
@@ -179,10 +159,6 @@ void main() {
     testWidgets('skipping says so on screen, not only out loud', (
       WidgetTester tester,
     ) async {
-      // The announcement under this has gone to screen readers since Day 13.
-      // A sighted person tapped Skip and the list simply rearranged — so the
-      // app told somebody who could not see the list and said nothing to
-      // somebody who could.
       await family.save(familyOfFour());
       await open(tester);
 
@@ -220,8 +196,6 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Withdrawn, not deleted — the record stays so two phones can agree it
-      // was taken back (ADR-012).
       final Family stored = (await family.load())!;
       expect(stored.skips.single.withdrawn, isTrue);
       expect(
@@ -234,9 +208,6 @@ void main() {
     testWidgets('the snack bar and the spoken words are one string', (
       WidgetTester tester,
     ) async {
-      // Two ways of saying the same thing is how Day 19 shipped a share
-      // sheet whose subject read "2026-11-04" over a body reading
-      // "Wednesday, 4 November". Both correct, disagreeing.
       await family.save(familyOfFour());
       await open(tester);
 
@@ -346,11 +317,6 @@ void main() {
   group('the screen stays usable (found on the simulator)', () {
     testWidgets('an edit re-enables the controls even if nothing is '
         'listening for announcements', (WidgetTester tester) async {
-      // On a device with no screen reader running, the accessibility channel
-      // has no listener and the send never completes. Awaiting it left every
-      // button here disabled forever. The default test binding answers the
-      // channel immediately, which is why the other tests in this file pass
-      // either way — so this one makes the channel behave like the device.
       tester.binding.defaultBinaryMessenger.setMockMessageHandler(
         SystemChannels.accessibility.name,
         (ByteData? message) => Completer<ByteData?>().future,

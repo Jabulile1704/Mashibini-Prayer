@@ -224,8 +224,6 @@ void main() {
     test(
       'an index that is valid JSON but not a list is also survived',
       () async {
-        // Different failure from unparseable: this one decodes cleanly into
-        // the wrong shape, which a try/catch alone would not notice.
         store.values[LocalJournalRepository.indexKey] = '{"not":"a list"}';
 
         expect(await journal.all(), isEmpty);

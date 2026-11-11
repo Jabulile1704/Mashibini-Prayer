@@ -11,10 +11,6 @@ import 'package:mashibini_prayer/src/domain/rota/rota_engine.dart';
 /// Families created before ADR-008 have counted ids — `m1`, `c1`. Families
 /// created after have random ones. A phone that was set up last week and
 /// updated today holds the first kind and will start writing the second.
-///
-/// Nothing migrates them, on purpose: the engine only ever *compares* ids, it
-/// never parses them, so the two styles mix freely. These tests are what make
-/// that a checked claim rather than a confident one.
 void main() {
   final CalendarDate anchor = CalendarDate(2026, 10, 18);
 
@@ -51,9 +47,6 @@ void main() {
     );
 
     final RotaEngine engine = RotaEngine.forFamily(after);
-    // Mama joins at the end of a cycle that already had two people, so she
-    // leads third: Sisi finishes the week in progress, then Jabulile and
-    // Sisi take their turns under the new epoch, then Mama.
     expect(engine.turnOn(anchor)!.leader.displayName, 'Sisi');
     expect(engine.turnOn(anchor.addDays(7))!.leader.displayName, 'Jabulile');
     expect(engine.turnOn(anchor.addDays(14))!.leader.displayName, 'Sisi');

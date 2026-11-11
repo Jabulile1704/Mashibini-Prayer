@@ -2,12 +2,6 @@ import 'package:mashibini_prayer/src/data/sources/notifications/reminders.dart';
 import 'package:mashibini_prayer/src/domain/reminders/reminder_plan.dart';
 
 /// Reminders that do not ring.
-///
-/// The interesting rules all live in `ReminderPlan`, which is pure. This
-/// stands in for the part that talks to the operating system, so the opt-in
-/// behaviour can be tested without a device that can make a noise — and so a
-/// test can assert that nothing was scheduled, which is the half of R5.1 that
-/// matters most.
 class FakeReminders implements Reminders {
   List<Reminder> scheduled = <Reminder>[];
   int cancelCount = 0;

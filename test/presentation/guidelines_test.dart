@@ -29,40 +29,6 @@ import '../support/family_fixtures.dart';
 
 /// The accessibility pass Day 13 did by hand, as four assertions that run on
 /// every commit.
-///
-/// Three things in this project have been promised and not measured:
-///
-/// - **`Touch.minimum`**'s own doc comment has said "Day 22's accessibility
-///   pass will measure against it" since Day 17. Nothing ever did.
-/// - **Contrast** is measured by `contrast_test.dart`, but only as the
-///   *palette* — pairs of colours from `Palette`.
-/// - **Every control has a name.** Asserted screen by screen, never swept.
-///
-/// Flutter ships matchers for all three, working on **rendered pixels**
-/// rather than on the source.
-///
-/// ## What this does not catch, measured rather than assumed
-///
-/// The first draft of this file claimed `textContrastGuideline` "would have
-/// caught Day 19". **It would not.** Reintroducing that defect on purpose —
-/// `enabled: false` on the turnover row — and scrolling it into view, the
-/// matcher passed. Written down because the claim was nearly committed, one
-/// day after #111 was withdrawn for exactly the same reason: believing what
-/// a test ought to measure instead of checking what it does.
-///
-/// The disabled-treatment gap is closed in `contrast_test.dart` instead, by
-/// asserting `ThemeData.disabledColor` against the surfaces it is painted
-/// on. That check fails when it should; this one does not.
-///
-/// It also only sees **what is painted**. A `ListView` does not build below
-/// the fold, so on a long screen most of it is never measured — Settings'
-/// turnover row is not even constructed at 390×844. Every screen here is
-/// therefore scrolled to the bottom and measured again.
-///
-/// A note on the font: widget tests render with a fixed-width placeholder,
-/// which made #111's width measurements meaningless. It does not affect
-/// these — contrast is a property of colour, and a tap target's size comes
-/// from its box rather than its glyphs.
 void main() {
   late LocalFamilyRepository family;
   late LocalDeviceSettingsRepository settings;
@@ -168,11 +134,6 @@ void main() {
   ];
 
   /// Pumps [screen] **with the app's real theme**.
-  ///
-  /// The sweep in `accessibility_test.dart` does not, which is defensible
-  /// there — it is looking for overflow, and a layout breaks the same way in
-  /// any theme. Here the theme *is* the subject: a contrast matcher run
-  /// against Flutter's defaults would be measuring somebody else's colours.
   Future<void> pump(WidgetTester tester, Widget screen) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -192,9 +153,6 @@ void main() {
 
   /// Drags each scrollable to the bottom, so the half of a long screen that
   /// a `ListView` has not built yet gets measured too.
-  ///
-  /// `drag` rather than `scrollUntilVisible`, because there is no particular
-  /// widget being looked for — the point is to reach everything.
   Future<void> scrollThrough(WidgetTester tester) async {
     final Finder scrollables = find.byType(Scrollable);
     for (int i = 0; i < scrollables.evaluate().length; i++) {
@@ -216,9 +174,6 @@ void main() {
   }
 
   group('every control is big enough to hit (N5)', () {
-    // 48dp on Android, 44pt on iOS. `Touch.minimum` is 48, which is the
-    // stricter of the two, so both are asserted rather than only the one
-    // the token happens to match.
     for (final String name in everyScreen) {
       testWidgets('$name, with a rota', (WidgetTester tester) async {
         await seed();
@@ -255,10 +210,6 @@ void main() {
   });
 
   group('text is readable against what is behind it (N5)', () {
-    // Samples the pixels a `Text` is painted over, so it sees combinations
-    // the palette test never pairs up. It does **not** see a disabled
-    // `ListTile` — see the note at the top of this file — so it is a second
-    // net rather than the one that catches Day 19's defect.
     for (final String name in everyScreen) {
       testWidgets(name, (WidgetTester tester) async {
         await seed();

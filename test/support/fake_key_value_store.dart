@@ -1,10 +1,6 @@
 import 'package:mashibini_prayer/src/data/sources/local/key_value_store.dart';
 
 /// An in-memory [KeyValueStore] for tests.
-///
-/// Lives in `test/` rather than `lib/` so it cannot be shipped by accident,
-/// and so the fake's own conveniences — [values], [writeCount], [failOnRead]
-/// — never appear in the production interface.
 class FakeKeyValueStore implements KeyValueStore {
   FakeKeyValueStore([Map<String, String>? initial])
     : values = <String, String>{...?initial};

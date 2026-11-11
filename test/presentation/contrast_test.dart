@@ -8,13 +8,6 @@ import 'package:mashibini_prayer/src/presentation/brand/theme.dart';
 /// N5 asks that the app is readable. Text scaling is only half of that; the
 /// other half is contrast, and nothing in this project measured it until
 /// Day 17.
-///
-/// Day 13's sweep catches a layout that clips. It cannot catch grey text on
-/// a grey card, which is why the version line added on Day 14 sat at **3.00**
-/// against a 4.5 requirement for eight days without anything objecting.
-///
-/// These are WCAG 2.1 ratios: **4.5:1** for body text, **3:1** for large text
-/// (roughly 24px, or 19px bold) and for meaningful non-text graphics.
 void main() {
   /// Relative luminance, per WCAG 2.1.
   double luminance(Color c) {
@@ -35,9 +28,6 @@ void main() {
 
   /// What [foreground] actually looks like once its alpha is applied over
   /// [background].
-  ///
-  /// This is the part that matters. Every failure found on Day 17 was a
-  /// colour that passes at full strength and fails once faded.
   Color composite(Color foreground, Color background) {
     final double a = foreground.a;
     return Color.fromARGB(
@@ -65,10 +55,6 @@ void main() {
     );
   }
 
-  // The checker is checked first. A contrast test that is itself wrong is
-  // worse than no contrast test, because it is believed — and the first
-  // version of this measurement, written as a throwaway script, read the
-  // alpha byte as red and reported black-on-white as 3.7:1.
   group('the measurement itself', () {
     test('black on white is 21:1 and white on white is 1:1', () {
       expect(
@@ -82,17 +68,6 @@ void main() {
     });
 
     test('a faded colour measures as what it looks like', () {
-      // Half-strength black on white composites to #808080, which is about
-      // 4:1 against white — not black's 21:1. That gap is the whole reason
-      // this helper exists.
-      //
-      // The figure was wrong on the first two attempts: I guessed 5–6, then
-      // 3.95 from memory of the usual mid-grey figure. It is 4.00, because
-      // 0x80 is 128/255 — a shade above half, not half.
-      //
-      // Pinned tightly rather than loosened to fit. A measurement tool that
-      // is allowed to be approximately right is a tool nobody can use to
-      // contradict themselves.
       final double faded = ratio(
         composite(const Color(0x80000000), const Color(0xFFFFFFFF)),
         const Color(0xFFFFFFFF),
@@ -146,10 +121,6 @@ void main() {
       });
 
       test('the accent clears the bar for graphics', () {
-        // The accent is only ever an icon or an arc of the mark — never
-        // text. Non-text content needs 3:1, and this asserts the lower bar
-        // deliberately rather than by accident. If the accent is ever used
-        // behind text, this is the test that should change.
         expectContrast(
           '$name secondary on surface',
           c.secondary,
@@ -165,10 +136,6 @@ void main() {
       });
 
       test('the accent can carry text, through its container', () {
-        // `secondary` on its own is for graphics. When Day 21 wants an
-        // accent-coloured chip with a word in it, this is the pair that is
-        // safe — and the gallery shows this one rather than the unsafe one,
-        // so nobody reaches for the wrong slot.
         expectContrast(
           '$name onSecondaryContainer on secondaryContainer',
           c.onSecondaryContainer,
@@ -178,11 +145,6 @@ void main() {
       });
 
       test('a faded body colour still clears the bar', () {
-        // The saying's English is set at 82% of onSurface where it stands
-        // alone, and at 70% where it is a gloss under the saying's own
-        // language — which is the fainter of the two and the one that was
-        // added without being measured. Both are checked, because the card
-        // renders whichever the data gives it.
         for (final double alpha in <double>[0.82, 0.70]) {
           expectContrast(
             '\$name saying text at \${(alpha * 100).round()}%',
@@ -194,10 +156,6 @@ void main() {
       });
 
       test('the version line is readable, which it was not', () {
-        // Added on Day 14 as `onSurfaceVariant` at 70%, which measured
-        // **3.00:1** in light and 4.07:1 in dark. It sat there for eight
-        // days: Day 13's sweep checks that text fits, not that it can be
-        // read.
         expectContrast(
           '$name version line',
           c.onSurfaceVariant,
@@ -206,26 +164,10 @@ void main() {
         );
       });
 
-      // Day 19 shipped a row at **2.42:1** and this file passed it, because
-      // every pair above comes from `Palette` and the offending colour did
-      // not: `enabled: false` paints a `ListTile` at `ThemeData.
-      // disabledColor`, which Flutter defaults to 38% black.
-      //
-      // Day 24 then tried Flutter's own `textContrastGuideline`, which
-      // measures rendered pixels and ought to be exactly the right tool.
-      // **It does not catch this.** Reintroducing the defect on purpose and
-      // scrolling the row into view, the matcher still passed. So the gap
-      // is closed here, where the value can at least be asserted.
       test('the disabled treatment is readable, or it is not used', () {
         final ThemeData theme = name == 'light'
             ? AppTheme.light()
             : AppTheme.dark();
-        // WCAG exempts genuinely inactive controls from a contrast
-        // requirement, and this is deliberately stricter: Day 19's row was
-        // not an inactive control, it was a **statement of fact** wearing
-        // the disabled treatment. 3:1 is the large-text and graphics bar —
-        // enough that a greyed label stays legible if anybody reaches for
-        // it again.
         expectContrast(
           '$name disabledColor on surface',
           theme.disabledColor,

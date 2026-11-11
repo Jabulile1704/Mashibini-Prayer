@@ -3,10 +3,6 @@ import 'dart:async';
 import 'package:mashibini_prayer/src/data/sources/platform/audio.dart';
 
 /// Audio without a file browser or a speaker.
-///
-/// [next] is what the picker "returns" — null for somebody who opened it
-/// and changed their mind, which is an ordinary answer and the case most
-/// worth testing.
 class FakeAudio implements Audio {
   FakeAudio({this.next, this.throws});
 

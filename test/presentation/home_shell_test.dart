@@ -20,15 +20,6 @@ import '../support/fake_sharing.dart';
 import '../support/family_fixtures.dart';
 
 /// The five destinations of ADR-016, ADR-020 and ADR-022.
-///
-/// Before Day 18 every destination was a `Navigator.push` from This Week,
-/// three of them from unlabelled icons in the top-right. These tests are
-/// mostly about the thing that replaced them being reachable and staying
-/// put.
-///
-/// The centre destination is a **raised comb cell with no visible label**
-/// (ADR-022), so anything here that finds a tab by its text has to find the
-/// other four that way and This week by its key.
 void main() {
   late LocalFamilyRepository family;
   late LocalDeviceSettingsRepository settings;
@@ -73,20 +64,11 @@ void main() {
   }
 
   Future<void> tapTab(WidgetTester tester, String label) async {
-    // By semantics rather than by text: the centre cell draws no word, and
-    // a helper that only worked for four of five destinations would quietly
-    // stop testing the most important one.
     await tester.tap(find.bySemanticsLabel(label).first);
     await tester.pumpAndSettle();
   }
 
   /// Brings a Settings row into view before touching it.
-  ///
-  /// Day 19 gave Settings enough rows to scroll, and a `ListView` does not
-  /// build what is below the fold — so a finder for an off-screen row reports
-  /// it missing rather than off-screen. Scrolling the right `Scrollable`
-  /// matters too: `IndexedStack` builds all four tabs, so there are four of
-  /// them in the tree at once.
   Future<void> reveal(WidgetTester tester, Key row) async {
     await tester.scrollUntilVisible(
       find.byKey(row),
@@ -103,9 +85,6 @@ void main() {
     testWidgets('the four around the edge carry a visible word', (
       WidgetTester tester,
     ) async {
-      // The labels being *visible* is the point. Day 13 gave the old icons
-      // screen-reader names; a name does not make an unlabelled icon
-      // discoverable to somebody looking at the screen.
       await family.save(familyOfFour());
       await open(tester);
 
@@ -122,8 +101,6 @@ void main() {
     testWidgets('each label is one word, so none of them wraps', (
       WidgetTester tester,
     ) async {
-      // "Weeks ahead" wrapped onto two lines, which pushed its icon up and
-      // left the row ragged. That is what produced ADR-022.
       await family.save(familyOfFour());
       await open(tester);
 
@@ -141,8 +118,6 @@ void main() {
             .map((CombDestination d) => d.label),
         <String>['This week'],
       );
-      // Scoped to the bar: the screen it opens has "This week" on its own
-      // card, which is the third place that phrase would have appeared.
       expect(
         find.descendant(
           of: find.byKey(HomeShell.bar),
@@ -181,10 +156,6 @@ void main() {
       await tapTab(tester, 'Journal');
       expect(find.textContaining('Nothing written yet'), findsOneWidget);
 
-      // The Family tab holds both the people and the songs. The songbook
-      // took the tab outright for part of Day 27 and the owner asked for
-      // it back under the family's name — "Songs" described the first
-      // screen rather than what the tab is for.
       await tapTab(tester, 'Family');
       expect(find.textContaining('Everyone in the family sees'), findsWidgets);
 
@@ -198,9 +169,6 @@ void main() {
     testWidgets('there are exactly five, with the middle one raised', (
       WidgetTester tester,
     ) async {
-      // Five is the ceiling. The number is asserted rather than left to
-      // drift upwards one request at a time, and `centre` must stay the
-      // middle index or the bar is lopsided.
       await family.save(familyOfFour());
       await open(tester);
 
@@ -219,9 +187,6 @@ void main() {
     testWidgets('a tab keeps its state while another is looked at', (
       WidgetTester tester,
     ) async {
-      // The reason for IndexedStack rather than swapping the body. Somebody
-      // part-way down their journal who checks whose week it is should come
-      // back to where they were, not to the top.
       await family.save(familyOfFour());
       await journal.write(
         date: anchor,
@@ -242,8 +207,6 @@ void main() {
     testWidgets('every tab is built, so none of them flashes empty', (
       WidgetTester tester,
     ) async {
-      // IndexedStack builds all four. That is the cost of keeping state,
-      // and it is why switching does not re-read storage.
       await family.save(familyOfFour());
       await open(tester);
 
@@ -255,8 +218,6 @@ void main() {
     testWidgets('reminders are a switch here, not a screen behind a bell', (
       WidgetTester tester,
     ) async {
-      // Day 18 put a chevron here that opened a screen holding one switch.
-      // Day 19 folded that screen in: the switch is the row.
       await family.save(familyOfFour());
       await open(tester);
       await tapTab(tester, 'Settings');
@@ -310,11 +271,6 @@ void main() {
       await tapTab(tester, 'Settings');
       await reveal(tester, SettingsScreen.aboutRow);
 
-      // Exactly one. The first version of this test asserted the version
-      // was *absent* while This Week was showing, and it failed — because
-      // IndexedStack builds every tab, so "not visible" is not "not in the
-      // tree". It was also finding a second copy: Settings had gained the
-      // version line while This Week had not yet lost it.
       expect(find.text('Version 1.0.0 (1)'), findsOneWidget);
     });
   });

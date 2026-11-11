@@ -54,9 +54,6 @@ void main() {
           ids: FakeIdGenerator(),
         ),
       );
-      // Past the splash. `pumpAndSettle` alone does not advance it: it
-      // pumps only while frames are scheduled, and a static splash
-      // schedules none (Day 18).
       await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle();
 
@@ -81,8 +78,6 @@ void main() {
         ),
       );
 
-      // Drained, or the splash's hold is still pending at teardown — which
-      // flutter_test treats as a failure, rightly.
       await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle();
 
@@ -119,10 +114,6 @@ void main() {
     testWidgets('opens in the theme that was stored, without a flash', (
       WidgetTester tester,
     ) async {
-      // `initialAppearance` is the whole point of this: the stream's first
-      // value arrives asynchronously, so a stream alone would paint one
-      // frame of the wrong theme — and because the splash is the first thing
-      // on screen, every cold start would flash.
       await settings.saveAppearance(Appearance.dark);
 
       await tester.pumpWidget(
@@ -196,14 +187,9 @@ void main() {
           ids: FakeIdGenerator(),
         ),
       );
-      // Past the splash. `pumpAndSettle` alone does not advance it: it
-      // pumps only while frames are scheduled, and a static splash
-      // schedules none (Day 18).
       await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle();
 
-      // Nothing is set up yet, so the first thing a new install shows is the
-      // invitation to set one up.
       expect(find.text('No rota yet'), findsOneWidget);
     });
   });

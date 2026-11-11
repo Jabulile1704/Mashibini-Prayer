@@ -8,13 +8,6 @@ import 'package:mashibini_prayer/src/presentation/screens/about_screen.dart';
 import '../support/fake_app_version.dart';
 
 /// Where the sayings come from, said in the app rather than in a repository.
-///
-/// The rest of About is covered alongside Settings, which is the screen that
-/// opens it. This file exists because one of these sections is not written
-/// text at all: it is read out of `assets/sayings.json`, and the thing worth
-/// testing is that it tells the truth about what it read — in particular
-/// that it does **not** quietly present unchecked isiXhosa and Sesotho as
-/// though a speaker had approved it (ADR-025).
 void main() {
   SayingForTheDay given({required bool reviewed, List<String>? languages}) =>
       SayingForTheDay(
@@ -105,10 +98,6 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // The person who wrote these does not speak the languages they are in.
-    // A family reading a misspelled proverb in their own tongue should be
-    // told it may be wrong, and asked, rather than left to assume the app
-    // knows better than they do.
     expect(find.textContaining('has checked the spelling'), findsOneWidget);
   });
 
@@ -123,9 +112,6 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Flipping one field in the data is the whole change. If this fails,
-    // the caveat has been written into the screen instead and will sit
-    // there apologising for wording that has since been approved.
     expect(find.textContaining('has checked the spelling'), findsNothing);
     expect(
       find.textContaining('2 Southern African sayings'),

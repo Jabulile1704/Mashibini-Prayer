@@ -80,9 +80,6 @@ void main() {
 
       await repository.load();
 
-      // One read of local storage is the entire cost of answering the
-      // question. There is no network call available to this class: nothing
-      // it imports can make one.
       expect(store.readCount, 1);
     });
   });

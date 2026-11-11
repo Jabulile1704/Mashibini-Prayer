@@ -22,12 +22,6 @@ import '../support/fake_sharing.dart';
 import '../support/family_fixtures.dart';
 
 /// Day 19's screen, and the defect it exists to fix.
-///
-/// The one that matters most is the first group. Until this screen, "which
-/// one are you" could be answered during setup and then — if answered wrongly
-/// — never again: the only other place that asked hid itself as soon as it
-/// had an answer. A phone that believes it belongs to Mama rings for Mama's
-/// weeks, and the only cure was to rebuild the rota.
 void main() {
   late LocalFamilyRepository family;
   late LocalDeviceSettingsRepository settings;
@@ -108,8 +102,6 @@ void main() {
     testWidgets('offers everyone in the rota, and can be changed', (
       WidgetTester tester,
     ) async {
-      // The defect. Before Day 19 there was no screen in the app that would
-      // let somebody change this answer once given.
       await family.save(familyOfFour());
       await settings.saveYouAre(mama.id);
       await open(tester);
@@ -129,8 +121,6 @@ void main() {
     testWidgets('changing it re-plans the reminders this phone holds', (
       WidgetTester tester,
     ) async {
-      // The quiet half. Saving the new name without re-planning would leave
-      // the phone ringing for the weeks of whoever it used to think it was.
       await family.save(familyOfFour());
       await settings.saveYouAre(jabulile.id);
       await settings.saveRemindersEnabled(enabled: true);
@@ -140,8 +130,6 @@ void main() {
       await tester.tap(find.text('Sisi').last);
       await tester.pumpAndSettle();
 
-      // Sisi leads the week after Jabulile, so her reminder is a week later
-      // than the one this phone was holding.
       expect(reminders.scheduled, isNotEmpty);
       expect(reminders.scheduled.first.turnStarts, anchor.addDays(7));
     });
@@ -191,9 +179,6 @@ void main() {
     testWidgets('it will not start before the app knows who you are', (
       WidgetTester tester,
     ) async {
-      // Signing in without linking puts nobody in `memberUids`, which is
-      // the field every rule reads — so it would look like it worked and
-      // sync nothing. Said rather than allowed.
       await family.save(familyOfFour());
       await open(tester);
       await tapRow(tester, SettingsScreen.signInRow);
@@ -257,9 +242,6 @@ void main() {
     testWidgets('an account already on somebody else says whose', (
       WidgetTester tester,
     ) async {
-      // Refused rather than moved: two members on one uid makes the
-      // journal's promise unenforceable, and the likely cause is the wrong
-      // name having been picked.
       await family.save(
         FamilyEditor.linkUid(
           familyOfFour(),
@@ -291,9 +273,6 @@ void main() {
     testWidgets('signing out keeps you in the rota and does not unlink', (
       WidgetTester tester,
     ) async {
-      // The distinction ADR-023 is about. Unlinking on sign-out would drop
-      // this person from `memberUids` and stop every *other* phone syncing
-      // the changes they make.
       await family.save(familyOfFour());
       await settings.saveYouAre(mama.id);
       identity.next = const SignedIn(uid: 'uid-mama');
@@ -381,8 +360,6 @@ void main() {
     testWidgets('when on, it says which reminder it is holding', (
       WidgetTester tester,
     ) async {
-      // A reminder you cannot see is a reminder you cannot trust. The
-      // Reminders screen listed three of these; one answers the question.
       await family.save(familyOfFour());
       await settings.saveYouAre(jabulile.id);
       await settings.saveRemindersEnabled(enabled: true);
@@ -452,12 +429,6 @@ void main() {
     testWidgets('it is a control now, which took two days to earn', (
       WidgetTester tester,
     ) async {
-      // This test asserted `onTap` was **null** for two days, and that was
-      // the right assertion at the time: the turnover day was one field on
-      // the family, `RotaEngine` refused a family whose cycles no longer
-      // began on it, and a tappable row would have thrown on the next frame
-      // of This Week (ADR-019). Day 20 made the day an epoch; this is the
-      // row it was waiting for (#100).
       await family.save(familyOfFour());
       await open(tester);
       await reveal(tester, SettingsScreen.turnoverRow);
@@ -470,12 +441,6 @@ void main() {
     });
   });
 
-  // Moving the turnover day (#100). Today is Sunday 18 October 2026 — a
-  // turnover day itself — so:
-  //
-  //   Sun 18–Sat 24 Oct  Jabulile   this week, never touched
-  //   Sun 25–Tue 27 Oct  Sisi       three days, because Wednesday falls there
-  //   Wed 28 Oct–…       Mama       the new epoch, carrying on from Sisi
   group('moving the day the week turns over', () {
     Future<void> choose(WidgetTester tester, String day) async {
       await tapRow(tester, SettingsScreen.turnoverRow);
@@ -506,10 +471,6 @@ void main() {
     testWidgets('it says the date, the short week and who gets it', (
       WidgetTester tester,
     ) async {
-      // The three sentences the dialog has, and it needs all three. Moving
-      // the day is the only edit in the app with a consequence nobody would
-      // guess: the week before the change is short, because the calendar
-      // does not divide (ADR-019).
       await family.save(familyOfFour());
       await open(tester);
       await choose(tester, 'Wednesday');
@@ -540,8 +501,6 @@ void main() {
     testWidgets('changing it writes the family the dialog described', (
       WidgetTester tester,
     ) async {
-      // Not a second one computed after the dialog closed. The ids would
-      // differ, and so could the dates if anything about "now" had moved.
       await family.save(familyOfFour());
       await open(tester);
       await choose(tester, 'Wednesday');
@@ -578,10 +537,6 @@ void main() {
     testWidgets('while a change is pending, the row says both days', (
       WidgetTester tester,
     ) async {
-      // For a few days there are two true answers, and
-      // `Family.turnoverWeekday` is the later one. A row showing only that
-      // would tell somebody their week ends on a Wednesday while the app,
-      // correctly, ends it on the Sunday.
       await family.save(familyOfFour());
       await open(tester);
       await choose(tester, 'Wednesday');
@@ -647,8 +602,6 @@ void main() {
     testWidgets('hands the whole journal to the share sheet', (
       WidgetTester tester,
     ) async {
-      // #104: a reinstall takes the journal with it, and on iOS a reinstall
-      // happens about weekly whether anybody wants one or not.
       await family.save(familyOfFour());
       await journal.write(
         date: anchor,
@@ -678,9 +631,6 @@ void main() {
     testWidgets('dates it the way the rest of the app does', (
       WidgetTester tester,
     ) async {
-      // The domain cannot reach a locale, so the screen passes the
-      // formatter. Worth asserting: the file should read the way the app
-      // reads, not in ISO.
       await family.save(familyOfFour());
       await journal.write(
         date: anchor,
@@ -715,8 +665,6 @@ void main() {
 
       await tapRow(tester, SettingsScreen.exportRow);
 
-      // Not swallowed. Somebody exporting a journal is doing it for a
-      // reason, and silence would read as success.
       expect(find.textContaining('could not share it'), findsOneWidget);
       expect(find.byType(SettingsScreen), findsOneWidget);
     });
@@ -755,9 +703,6 @@ void main() {
         reason: 'the family should not have to read a repository to find out',
       );
 
-      // #104. The journal is the only thing here that cannot be retyped,
-      // and "stays on your phone" reads as a safety guarantee unless this
-      // is said next to it.
       await tester.scrollUntilVisible(
         find.text('Reinstalling loses your journal'),
         160,

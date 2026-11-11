@@ -33,9 +33,6 @@ void main() {
         final List<Reminder> mine = plan(youAre: member.id);
 
         for (final Reminder reminder in mine) {
-          // Checked against the engine, not against itself. The first
-          // version of this compared a date with itself and was true no
-          // matter what the planner did — a test that cannot fail.
           expect(
             RotaEngine.forFamily(familyOfFour())
                 .turnOn(reminder.turnStarts)!
@@ -92,8 +89,6 @@ void main() {
     });
 
     test("the first one is this person's next turn, not the next turnover", () {
-      // Mama leads the third week; the reminder is the evening before that,
-      // not before Sisi's week.
       final List<Reminder> mine = plan(youAre: mama.id);
 
       expect(mine.first.turnStarts, anchor.addDays(14));
@@ -118,16 +113,12 @@ void main() {
 
       expect(first.title, 'Your week starts tomorrow');
       expect(first.body, contains('leading family prayer'));
-      // No name: it is this person phone, and being told your own name by
-      // your own phone is strange.
       expect(first.body, isNot(contains('Jabulile')));
     });
   });
 
   group('moments that have passed', () {
     test('a reminder already due is not scheduled', () {
-      // Standing on the evening of the 24th, after 19:00. Sisi week starts
-      // on the 25th, so that reminder has been and gone.
       final List<Reminder> mine = plan(
         youAre: sisi.id,
         today: anchor.addDays(6),
@@ -203,8 +194,6 @@ void main() {
     });
 
     test('equality matters because re-planning compares before replacing', () {
-      // Two plans computed from the same family on the same day must come
-      // out equal, or every recompute looks like a change.
       final List<Reminder> first = plan(youAre: jabulile.id);
       final List<Reminder> again = plan(youAre: jabulile.id);
 
@@ -235,8 +224,6 @@ void main() {
   });
 
   group('after the family moves the day it hands over (#100)', () {
-    // Decided on Tuesday 3 November: Sunday weeks become Wednesday weeks
-    // from Wednesday 11 November. Jabulile leads Wed 11–Tue 17.
     final Family moved = FamilyEditor.changeTurnoverDay(
       familyOfFour(),
       weekday: DateTime.wednesday,
@@ -245,11 +232,6 @@ void main() {
     );
 
     test('the reminder moves with it, rather than staying on Saturdays', () {
-      // The planner reads turn boundaries off the engine rather than
-      // stepping by seven days, so it needs no telling. Checked because a
-      // notification that kept arriving on the old evening is exactly the
-      // sort of thing nobody would report as a bug — they would just stop
-      // trusting it.
       final List<Reminder> mine = ReminderPlan.forDevice(
         family: moved,
         youAre: jabulile.id,

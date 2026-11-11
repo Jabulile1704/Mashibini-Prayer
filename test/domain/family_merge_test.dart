@@ -31,9 +31,6 @@ void main() {
     f.cycles
         .map((Cycle c) => '${c.id}@${c.effectiveFrom}:${c.order.join("-")}')
         .join(','),
-    // `withdrawn` is part of the fingerprint on purpose: without it, a merge
-    // that dropped a withdrawal would look identical to one that kept it,
-    // and the commutativity tests below would pass through the bug.
     f.skips
         .map(
           (SkippedTurn s) =>
@@ -178,8 +175,6 @@ void main() {
           tata,
         ],
       );
-      // The other phone also did something, so it is the one with more
-      // history and wins the scalars — the rename must still survive.
       final Family busier = FamilyEditor.addMember(
         familyOfFour(),
         displayName: 'Cousin',
@@ -246,9 +241,6 @@ void main() {
     });
 
     test('two phones that each moved it agree on which move won', () {
-      // Picked from the newer side as a scalar, this could disagree with the
-      // epochs it was meant to describe. Derived, the two phones agree
-      // because they agree about the cycles.
       final Family base = familyOfFour();
       final Family toWednesday = FamilyEditor.changeTurnoverDay(
         base,
@@ -269,8 +261,6 @@ void main() {
         merged.turnoverWeekday,
       );
       expect(merged.cycles, hasLength(3));
-      // Friday 13 November is later than Wednesday 11th, so it is the day in
-      // force once both have landed — and both phones compute that.
       expect(merged.turnoverWeekday, DateTime.friday);
     });
   });

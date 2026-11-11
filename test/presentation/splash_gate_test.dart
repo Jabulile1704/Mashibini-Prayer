@@ -11,11 +11,6 @@ void main() {
   late LocalFamilyRepository family;
 
   /// Advances past the splash's own minimum, then lets the crossfade run.
-  ///
-  /// `pumpAndSettle` alone is not enough and the first version of these
-  /// tests used it: it pumps only while frames are *scheduled*, and a
-  /// static splash schedules none, so the 650ms timer never fires and the
-  /// gate never opens. Time has to be advanced explicitly.
   Future<void> settlePast(WidgetTester tester) async {
     await tester.pump(const Duration(seconds: 1));
     await tester.pumpAndSettle();
@@ -44,9 +39,6 @@ void main() {
       expect(find.text('the rota'), findsNothing);
       expect(find.byType(RotaMark), findsOneWidget);
 
-      // Drained before the test ends. A pending timer at teardown is a
-      // failure in flutter_test, and rightly — a widget that leaves one
-      // behind is a widget that keeps working after it is gone.
       await settlePast(tester);
     });
 
@@ -63,9 +55,6 @@ void main() {
     testWidgets('it does not outlast its own minimum by much', (
       WidgetTester tester,
     ) async {
-      // A splash exists to cover work. One that outlasts the work is an
-      // animation somebody sits through every morning, so this pins the
-      // budget rather than trusting the constant not to grow.
       await family.save(familyOfFour());
       await open(tester);
 
@@ -81,9 +70,6 @@ void main() {
     testWidgets('a first run with nothing stored still resolves', (
       WidgetTester tester,
     ) async {
-      // Nothing saved. The read returns null, which is an answer — a splash
-      // that waits for data rather than for the read would hang here
-      // forever on the one launch that matters most.
       await open(tester);
       await settlePast(tester);
 

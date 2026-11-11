@@ -113,8 +113,6 @@ void main() {
       final Set<String> ids = <String>{
         for (final Member m in after.members) m.id,
       };
-      // Uniqueness is the requirement; the particular id is the generator's
-      // business. Asserting a value here would only be asserting the fake.
       expect(ids, hasLength(after.members.length));
       expect(ids, contains(after.members.last.id));
     });
@@ -140,9 +138,6 @@ void main() {
     });
 
     test('adding twice stacks epochs without disturbing the first', () {
-      // One generator for both edits: this is one phone, used twice. A fresh
-      // generator per call would mint the same id twice, which is the bug
-      // this whole mechanism exists to prevent.
       final FakeIdGenerator ids = FakeIdGenerator();
       Family family = familyOfFour();
       family = FamilyEditor.addMember(
@@ -160,9 +155,6 @@ void main() {
 
       expect(family.cycles, hasLength(3));
       expect(leaders(family, anchor, 2), <String>['Jabulile', 'Sisi']);
-      // Gogo joined a cycle that already had five people, so they lead sixth
-      // — after Sisi, not in place of her. "At the end" means the end of the
-      // cycle as it stood when they joined.
       expect(leaders(family, anchor.addDays(14), 6), <String>[
         'Mama',
         'Tata',
@@ -174,13 +166,6 @@ void main() {
     });
   });
 
-  // Moving the day the week turns over on (#100, ADR-019). The fixture hands
-  // over on Sunday from 18 October 2026, in the order Jabulile, Sisi, Mama,
-  // Tata. Decided on Tuesday 3 November, which is Mama's week:
-  //
-  //   Sun  1–Sat  7 Nov  Mama      the week it is decided in, untouched
-  //   Sun  8–Tue 10 Nov  Tata      three days, because Wednesday falls there
-  //   Wed 11–Tue 17 Nov  Jabulile  the new epoch, carrying on from Tata
   group('moving the day the week turns over (#100)', () {
     final CalendarDate decidedOn = CalendarDate(2026, 11, 3); // a Tuesday
     final CalendarDate shortWeek = CalendarDate(2026, 11, 8); // a Sunday
@@ -266,9 +251,6 @@ void main() {
 
     test('changing again before the first change lands takes effect after '
         'it, not before', () {
-      // The second epoch cannot be written earlier than the first, or the
-      // engine would resolve the first one anyway and the family would see
-      // nothing happen.
       final Family twice = FamilyEditor.changeTurnoverDay(
         moved(),
         weekday: DateTime.friday,
@@ -290,8 +272,6 @@ void main() {
     });
 
     test('putting it back is a change, not a no-op to be refused', () {
-      // Sunday is still the day in force this week, but it is no longer the
-      // day the family has chosen, so choosing it again is a correction.
       final Family back = FamilyEditor.changeTurnoverDay(
         moved(),
         weekday: DateTime.sunday,
@@ -357,8 +337,6 @@ void main() {
         ids: FakeIdGenerator(),
       );
 
-      // Nothing has led yet, so there is no leader to preserve; the order
-      // stands as it was, with the new person at the end.
       expect(after.cycles.last.order, <String>['m1', 'm2', 'm-1']);
       expect(RotaEngine.forFamily(after).turnOn(anchor), isNull);
     });

@@ -3,11 +3,6 @@ import 'package:mashibini_prayer/src/domain/entities/member.dart';
 import 'package:mashibini_prayer/src/domain/family/family_tree.dart';
 
 /// The shape of a family, without a screen (#109).
-///
-/// Every awkward family that would be a nuisance to reproduce by tapping is
-/// four lines here: a parent recorded after their child, a grandparent
-/// added later, two people who ended up as each other's parent through a
-/// merge.
 void main() {
   Member person(String id, {List<String> parents = const <String>[]}) =>
       Member(id: id, displayName: id, parentIds: parents);
@@ -19,8 +14,6 @@ void main() {
 
   group('generations', () {
     test('a family with no relationships is one row', () {
-      // Which is what the Family tab showed before any of this: the rota,
-      // in rota order.
       final List<List<Member>> rows = FamilyTree.generations(<Member>[
         person('tata'),
         person('mama'),
@@ -58,8 +51,6 @@ void main() {
     });
 
     test('a parent recorded after their child still sits above them', () {
-      // The order people were added in says nothing about the generations,
-      // and a family will almost always be entered rota-first.
       final List<List<Member>> rows = FamilyTree.generations(<Member>[
         person('jabulile', parents: <String>['tata']),
         person('tata'),
@@ -71,9 +62,6 @@ void main() {
     });
 
     test('depth follows the furthest parent, not the nearest', () {
-      // A child of both a grandparent and a parent belongs below the
-      // parent. Taking the minimum would draw them as their own parent's
-      // sibling.
       final List<List<Member>> rows = FamilyTree.generations(<Member>[
         person('gogo'),
         person('tata', parents: <String>['gogo']),
@@ -87,8 +75,6 @@ void main() {
     });
 
     test('a parent the family has no record of is not a parent', () {
-      // `parentIds` is denormalised and can drift, exactly as `cycle.order`
-      // can. A ghost id must not push somebody into a generation of one.
       final List<List<Member>> rows = FamilyTree.generations(<Member>[
         person('tata'),
         person('jabulile', parents: <String>['somebody-who-left']),
@@ -99,9 +85,6 @@ void main() {
     });
 
     test('two people recorded as each other\'s parent do not hang it', () {
-      // Unreachable through the UI — the screen will not offer a name that
-      // closes a loop — but two phones merging offline can produce it, and
-      // a stack overflow is a poor way to find out.
       final List<List<Member>> rows = FamilyTree.generations(<Member>[
         person('a', parents: <String>['b']),
         person('b', parents: <String>['a']),
@@ -169,9 +152,6 @@ void main() {
     });
 
     test('the list offered to a screen cannot contain a wrong answer', () {
-      // The refusal is an absence rather than an error message: a list that
-      // cannot hold a wrong answer beats one that holds it and complains
-      // after it is picked.
       final List<Member> offered = FamilyTree.possibleParentsFor(
         family,
         childId: 'gogo',

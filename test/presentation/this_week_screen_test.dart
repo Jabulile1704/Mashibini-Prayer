@@ -45,8 +45,6 @@ void main() {
     }
     await tester.pumpWidget(
       MaterialApp(
-        // The same locale configuration as the real app, so these assertions
-        // are about what the family actually sees rather than about en_US.
         localizationsDelegates: AppLocales.delegates,
         supportedLocales: AppLocales.supported,
         locale: const Locale('en', 'ZA'),
@@ -340,10 +338,6 @@ void main() {
 
       final Saying saying = shown(tester);
 
-      // Whichever saying today lands on, the English is on the screen and
-      // the language is named beneath it — R3.2 requires the attribution
-      // wherever a saying appears, and for a proverb the language *is* the
-      // attribution (ADR-025).
       expect(find.text(saying.text), findsOneWidget);
       expect(find.text(saying.language), findsOneWidget);
     });
@@ -356,9 +350,6 @@ void main() {
 
       final String? original = shown(tester).original;
       if (original == null) {
-        // Allowed by `Saying.original`, so not a failure — but every saying
-        // in the shipped file has one today, and this says so out loud
-        // rather than passing silently if that stops being true.
         return;
       }
 
@@ -441,10 +432,6 @@ void main() {
     testWidgets('the version is not here any more — it moved to Settings', (
       WidgetTester tester,
     ) async {
-      // It sat at the foot of this screen from Day 14 only because there
-      // was nowhere else to put it. ADR-016 gave it a home, and Day 8's
-      // "this screen answers one question" gets a little of its meaning
-      // back. Covered in home_shell_test.dart from the Settings side.
       await repository.save(familyOfFour());
 
       await show(tester, on: anchor);

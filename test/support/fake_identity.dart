@@ -3,10 +3,6 @@ import 'dart:async';
 import 'package:mashibini_prayer/src/data/sources/platform/identity.dart';
 
 /// Signing in without Google.
-///
-/// [next] is what the sheet "returns" — null for somebody who opened it and
-/// changed their mind, which is an ordinary answer and the case most worth
-/// testing. [throws] is a sheet that will not open at all.
 class FakeIdentity implements Identity {
   FakeIdentity({SignedIn? signedIn, this.next, this.throws})
     : _current = signedIn {

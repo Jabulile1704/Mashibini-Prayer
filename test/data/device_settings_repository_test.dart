@@ -77,9 +77,6 @@ void main() {
     });
 
     test('is stored as a word, not a position', () async {
-      // An index would be read against whatever order the enum happens to
-      // be declared in, so inserting a value would silently change what
-      // every phone had chosen.
       await settings.saveAppearance(Appearance.light);
 
       expect(
@@ -89,10 +86,6 @@ void main() {
     });
 
     test('a word this build does not know falls back to the phone', () async {
-      // What an older install reads after a newer build has written a
-      // fourth option. Following the phone is the only safe answer, and it
-      // has to be an answer rather than a throw: this is read before the
-      // first frame.
       await store.write(LocalDeviceSettingsRepository.appearanceKey, 'sepia');
 
       expect(await settings.loadAppearance(), Appearance.system);

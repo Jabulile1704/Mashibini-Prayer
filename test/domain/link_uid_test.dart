@@ -6,10 +6,6 @@ import 'package:mashibini_prayer/src/domain/rota/family_editor.dart';
 import '../support/family_fixtures.dart';
 
 /// Tying an account to a person (#76, ADR-023).
-///
-/// This is what makes `Family.memberUids` non-empty and therefore what lets
-/// anything sync at all — every path in `firestore.rules` asks whether
-/// `request.auth.uid` is in that list.
 void main() {
   group('linking', () {
     test('it puts the account on the member, and nowhere else', () {
@@ -39,8 +35,6 @@ void main() {
     });
 
     test('signing in twice on the same phone is not an error', () {
-      // Which happens on every reinstall, and on a free iOS provisioning
-      // profile that is roughly weekly.
       final Family once = FamilyEditor.linkUid(
         familyOfFour(),
         memberId: mama.id,
@@ -71,11 +65,6 @@ void main() {
 
   group('what it refuses', () {
     test('an account already belonging to somebody else', () {
-      // Two members on one account would make "only the author may read
-      // this journal" (R4.2) unenforceable — the database could not tell
-      // them apart. Refused rather than quietly moved, because it almost
-      // always means the wrong name was picked, and reassigning silently
-      // would hand one person another's journal.
       final Family taken = FamilyEditor.linkUid(
         familyOfFour(),
         memberId: mama.id,

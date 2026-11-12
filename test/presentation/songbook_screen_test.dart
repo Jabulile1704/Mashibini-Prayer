@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mashibini_prayer/src/app.dart';
+import 'package:mashibini_prayer/src/data/repositories/photo_library_repository.dart';
 import 'package:mashibini_prayer/src/data/repositories/audio_library_repository.dart';
 import 'package:mashibini_prayer/src/data/repositories/device_settings_repository.dart';
 import 'package:mashibini_prayer/src/data/repositories/local_family_repository.dart';
@@ -47,6 +48,7 @@ void main() {
           audio: audio,
           library: library,
           photos: FakePhotos(),
+          photoLibrary: PhotoLibraryRepository(store: FakeKeyValueStore()),
           ids: FakeIdGenerator(),
           today: () => anchor,
         ),

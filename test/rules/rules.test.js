@@ -315,6 +315,27 @@ describe('the document the app actually writes', () => {
     );
   });
 
+  it('names nothing that only exists on one phone', () => {
+    // #140. A photograph lives at an absolute path inside one handset's
+    // application directory; published here it is a dead path on every
+    // other phone, and the merge would carry it back and forth for ever.
+    //
+    // A tripwire rather than a proof: the fixture has no photograph, so
+    // this passes by construction today. It fails on the day somebody puts
+    // a device path back into the shared document, which is the only day it
+    // needs to work. The proof is on the Dart side, where every key the
+    // document may carry is listed.
+    const json = JSON.stringify(fromTheApp);
+    assert.ok(
+      !json.includes('photoPath'),
+      'the family document must not carry a path into one phone',
+    );
+    assert.ok(
+      !/\/data\/user\/|\/var\/mobile\/|app_flutter|\/tmp\//.test(json),
+      'the family document must not carry an absolute file path',
+    );
+  });
+
   it('a member who has not signed in is simply not in memberUids', () => {
     // Mama has no uid in the fixture. She is in the family and cannot
     // sync, which is the honest consequence rather than a loophole.

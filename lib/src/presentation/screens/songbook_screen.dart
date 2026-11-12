@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../data/repositories/device_settings_repository.dart';
 import '../../data/repositories/audio_library_repository.dart';
+import '../../data/repositories/photo_library_repository.dart';
 import '../../data/sources/platform/audio.dart';
 import '../../data/sources/platform/photos.dart';
 import '../../data/repositories/family_repository.dart';
@@ -26,6 +27,7 @@ class SongbookScreen extends StatefulWidget {
     required this.audio,
     required this.library,
     required this.photos,
+    required this.photoLibrary,
     required this.ids,
     this.today,
     super.key,
@@ -39,6 +41,7 @@ class SongbookScreen extends StatefulWidget {
   /// Only to hand on to the family tree, which lives behind this screen
   /// now (#124). This screen never touches it.
   final Photos photos;
+  final PhotoLibraryRepository photoLibrary;
 
   final IdGenerator ids;
   final CalendarDate Function()? today;
@@ -233,6 +236,7 @@ class _SongbookScreenState extends State<SongbookScreen> {
                 familyRepository: widget.familyRepository,
                 settings: widget.settings,
                 photos: widget.photos,
+                photoLibrary: widget.photoLibrary,
                 ids: widget.ids,
                 today: widget.today,
               ),

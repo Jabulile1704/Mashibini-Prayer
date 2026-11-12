@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mashibini_prayer/src/app.dart';
+import 'package:mashibini_prayer/src/data/repositories/photo_library_repository.dart';
 import 'package:mashibini_prayer/src/data/repositories/audio_library_repository.dart';
 import 'package:mashibini_prayer/src/data/repositories/device_settings_repository.dart';
 import 'package:mashibini_prayer/src/data/repositories/journal_repository.dart';
@@ -51,6 +52,7 @@ void main() {
           audio: FakeAudio(),
           library: AudioLibraryRepository(store: FakeKeyValueStore()),
           photos: FakePhotos(),
+          photoLibrary: PhotoLibraryRepository(store: FakeKeyValueStore()),
           ids: FakeIdGenerator(),
         ),
       );
@@ -74,6 +76,7 @@ void main() {
           audio: FakeAudio(),
           library: AudioLibraryRepository(store: FakeKeyValueStore()),
           photos: FakePhotos(),
+          photoLibrary: PhotoLibraryRepository(store: FakeKeyValueStore()),
           ids: FakeIdGenerator(),
         ),
       );
@@ -102,6 +105,7 @@ void main() {
           audio: FakeAudio(),
           library: AudioLibraryRepository(store: FakeKeyValueStore()),
           photos: FakePhotos(),
+          photoLibrary: PhotoLibraryRepository(store: FakeKeyValueStore()),
           ids: FakeIdGenerator(),
         ),
       );
@@ -128,6 +132,7 @@ void main() {
           audio: FakeAudio(),
           library: AudioLibraryRepository(store: FakeKeyValueStore()),
           photos: FakePhotos(),
+          photoLibrary: PhotoLibraryRepository(store: FakeKeyValueStore()),
           ids: FakeIdGenerator(),
           initialAppearance: await settings.loadAppearance(),
         ),
@@ -157,6 +162,7 @@ void main() {
           audio: FakeAudio(),
           library: AudioLibraryRepository(store: FakeKeyValueStore()),
           photos: FakePhotos(),
+          photoLibrary: PhotoLibraryRepository(store: FakeKeyValueStore()),
           ids: FakeIdGenerator(),
         ),
       );
@@ -184,6 +190,7 @@ void main() {
           audio: FakeAudio(),
           library: AudioLibraryRepository(store: FakeKeyValueStore()),
           photos: FakePhotos(),
+          photoLibrary: PhotoLibraryRepository(store: FakeKeyValueStore()),
           ids: FakeIdGenerator(),
         ),
       );

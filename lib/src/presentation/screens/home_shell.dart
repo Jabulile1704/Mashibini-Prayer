@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../data/repositories/audio_library_repository.dart';
+import '../../data/repositories/photo_library_repository.dart';
 import '../../data/sources/platform/audio.dart';
 import '../../data/repositories/device_settings_repository.dart';
 import '../../data/repositories/family_repository.dart';
@@ -33,6 +34,7 @@ class HomeShell extends StatefulWidget {
     required this.audio,
     required this.library,
     required this.photos,
+    required this.photoLibrary,
     required this.ids,
     this.today,
     super.key,
@@ -48,6 +50,7 @@ class HomeShell extends StatefulWidget {
   final Audio audio;
   final AudioLibraryRepository library;
   final Photos photos;
+  final PhotoLibraryRepository photoLibrary;
   final IdGenerator ids;
   final CalendarDate Function()? today;
 
@@ -124,6 +127,7 @@ class _HomeShellState extends State<HomeShell> {
             audio: widget.audio,
             library: widget.library,
             photos: widget.photos,
+            photoLibrary: widget.photoLibrary,
             ids: widget.ids,
             today: widget.today,
           ),

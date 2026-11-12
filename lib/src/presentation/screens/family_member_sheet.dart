@@ -9,18 +9,32 @@ import '../../domain/entities/member.dart';
 import '../../domain/family/family_tree.dart';
 import '../brand/tokens.dart';
 
+/// What the sheet hands back. The member belongs to the family and the
+/// photograph belongs to this phone, so they travel separately (#140).
+class MemberEdit {
+  const MemberEdit({required this.member, required this.photoPath});
+
+  final Member member;
+  final String? photoPath;
+}
+
 /// Editing one person in the family tree (#109): a photograph, a role, and
 /// who their parents are.
 class FamilyMemberSheet extends StatefulWidget {
   const FamilyMemberSheet({
     required this.family,
     required this.member,
+    required this.photoPath,
     required this.photos,
     super.key,
   });
 
   final Family family;
   final Member member;
+
+  /// Where this phone keeps their photograph, if it has one.
+  final String? photoPath;
+
   final Photos photos;
 
   static const Key roleField = Key('member.role');
@@ -39,7 +53,7 @@ class _FamilyMemberSheetState extends State<FamilyMemberSheet> {
   late final TextEditingController _role = TextEditingController(
     text: widget.member.role ?? '',
   );
-  late String? _photoPath = widget.member.photoPath;
+  late String? _photoPath = widget.photoPath;
   late final Set<String> _parents = <String>{...widget.member.parentIds};
 
   /// A photograph chosen in this sheet and then abandoned.
@@ -82,8 +96,6 @@ class _FamilyMemberSheetState extends State<FamilyMemberSheet> {
     final Member updated = widget.member.copyWith(
       role: role.isEmpty ? null : role,
       clearRole: role.isEmpty,
-      photoPath: _photoPath,
-      clearPhoto: _photoPath == null,
       parentIds: _parents.toList(),
     );
 
@@ -93,7 +105,8 @@ class _FamilyMemberSheetState extends State<FamilyMemberSheet> {
       }
     }
 
-    Navigator.of(context).pop(updated);
+    Navigator.of(context)
+        .pop(MemberEdit(member: updated, photoPath: _photoPath));
   }
 
   @override

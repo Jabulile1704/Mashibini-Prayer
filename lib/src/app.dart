@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import '../src/data/repositories/audio_library_repository.dart';
+import '../src/data/repositories/photo_library_repository.dart';
 import '../src/data/sources/platform/audio.dart';
 import '../src/data/repositories/device_settings_repository.dart';
 import '../src/data/repositories/family_repository.dart';
@@ -53,6 +54,7 @@ class MashibiniPrayerApp extends StatefulWidget {
     required this.audio,
     required this.library,
     required this.photos,
+    required this.photoLibrary,
     required this.ids,
     this.initialAppearance = Appearance.system,
     super.key,
@@ -68,6 +70,7 @@ class MashibiniPrayerApp extends StatefulWidget {
   final Audio audio;
   final AudioLibraryRepository library;
   final Photos photos;
+  final PhotoLibraryRepository photoLibrary;
   final IdGenerator ids;
 
   /// The stored appearance, read before the first frame.
@@ -116,6 +119,7 @@ class _MashibiniPrayerAppState extends State<MashibiniPrayerApp> {
                 audio: widget.audio,
                 library: widget.library,
                 photos: widget.photos,
+                photoLibrary: widget.photoLibrary,
                 ids: widget.ids,
               ),
             ),

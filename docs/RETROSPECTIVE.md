@@ -334,6 +334,53 @@ not the running app — the Function was never deployed and nothing in the app
 ever called it, so there was no behaviour to observe. Some defects have no
 symptom until the day they do.
 
+### And a sixth that was written down in advance
+
+Day 31, found while reading the document #75 was about to publish.
+`Member.photoPath` is an absolute path into one handset's application
+directory, and the family document carried it.
+
+That is ordinary enough. What makes it a species is where the analysis was
+already sitting — ADR-021, Decision 3, accepted six days earlier:
+
+> The field is a string and **will have to be dropped on the way in when
+> sync arrives**, because another phone's path means nothing here.
+
+Correct, specific, and addressed to nobody. An ADR records a decision; it is
+not an instrument, so it cannot fail, and nothing reads it at the moment it
+becomes relevant. The person who would need that paragraph is implementing a
+different issue a week later, in a different file.
+
+| | What existed | What was missing |
+|:--|:--|:--|
+| Days 20–29 | A check that could not do its job | — |
+| Day 30 | Nothing | Any check at all |
+| Day 31 | **Correct analysis, in prose** | Anything that could act on it |
+
+Two further things it taught, both worth more than the bug:
+
+**The written-down intention was also the wrong shape.** "Dropped on the way
+in" fixes the receiving phone and leaves every sending phone broadcasting a
+path into its own private storage. Being right about the problem is not the
+same as being right about the fix, and prose carries no test to tell them
+apart.
+
+**A convention established after a mistake does not reach back.** The
+songbook split device-local paths out correctly on 9 November, three days
+after ADR-021 was accepted —
+`AudioLibraryRepository`, and a comment in `pubspec.yaml` saying the path is
+kept out of the shared document. `DeviceSettingsRepository` opens with the
+same sentence. The rule was stated twice and applied forwards only. Nothing
+re-examined the code that predated it, because nothing could tell the
+difference until sync existed.
+
+So the defence is the one that keeps recurring here in different clothes:
+**turn the sentence into something that runs.** The guard for this is an
+allowlist of every key the shared document may carry rather than a test that
+`photoPath` is absent, because the next device-local field will have a
+different name and will be added by somebody thinking about a feature. N10
+is ADR-021's paragraph, rewritten as a thing that fails.
+
 ### PR hygiene has caught eight mistakes, and three are repeats
 
 | Day | What it caught |

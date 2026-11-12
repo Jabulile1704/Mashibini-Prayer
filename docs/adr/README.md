@@ -28,8 +28,9 @@ names it.
 | [018](ADR-018-release-branches-are-cut-from-main.md) | Release branches are cut from `main` | Accepted |
 | [019](ADR-019-the-turnover-day-is-an-epoch-not-a-setting.md) | The turnover day is an epoch, not a setting | Accepted |
 | [020](ADR-020-a-fifth-tab-and-what-four-was-worth.md) | A fifth tab, and what "four is the ceiling" was worth | Accepted |
-| [021](ADR-021-the-tree-is-not-the-rota.md) | The tree is not the rota, and photographs stay on the phone | Accepted |
+| [021](ADR-021-the-tree-is-not-the-rota.md) | The tree is not the rota, and photographs stay on the phone | Accepted, Decision 3 amended by 026 |
 | [022](ADR-022-the-centre-of-the-bar-is-a-comb-cell.md) | The centre of the bar is a comb cell | Accepted |
 | [023](ADR-023-each-person-signs-in-as-themselves.md) | Each person signs in as themselves (closes Q3) | Accepted |
 | [024](ADR-024-azure-is-a-spike-and-must-stay-disposable.md) | Azure is a spike, and must stay disposable | Accepted |
 | [025](ADR-025-the-daily-reading-is-an-african-saying.md) | The daily reading is an African saying, not a Bible verse | Accepted |
+| [026](ADR-026-device-local-data-is-not-in-the-shared-document.md) | Device-local data does not live in the shared document | Accepted |

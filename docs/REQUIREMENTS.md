@@ -94,15 +94,15 @@ nobody has to ask.
 - **Given** an established cycle, **when** a member is removed, **then** past
   turns still display their name, and only future turns are affected.
 
-**Delivered in the domain, unreachable in the app (Day 15).** `FamilyEditor`
-adds and removes members correctly and is covered by tests; nothing in the
-app calls it. The setup screen is the only place a family can be defined, and
-it is reachable only when no rota exists.
+**Delivered.** Unreachable in the app for ten days — `FamilyEditor` added
+and removed members correctly, was covered by tests, and nothing called it,
+which is the same shape of gap R1.4 carried before it. Settings → the
+family now reaches it (`FamilyMembersScreen`, 2026-11-05), and both criteria
+hold in the product rather than only where the code is exercised.
 
-So both criteria hold wherever the code is exercised, and a family that has
-started cannot change. This is the same shape of gap R1.4 carried for ten
-days: a requirement finished in the data model and absent from the product.
-Top of the v1.1 backlog.
+This paragraph said "top of the v1.1 backlog" for a week after it stopped
+being true, which is its own small lesson: a requirements document records
+the state of the work and nothing recomputes it.
 
 ---
 
@@ -212,10 +212,11 @@ one, and not taken here.
 | N3 | Journal entries are readable only by their author, enforced in the database, not only the UI | Firestore rules unit tests |
 | N4 | Only data the app needs is collected: names, cycle positions, journal text. No contacts, no location, no analytics on individuals | Data model review, documented in DATA-MODEL.md |
 | N5 | Text scales with the OS setting without clipping, and every control has a label a screen reader can read | Accessibility pass before release |
-| N6 | Every merge to `develop` is analysed, tested and built by CI from a clean checkout | GitHub Actions, required status checks — **which bind pull requests only**: `enforce_admins` is off, so a direct push by an administrator bypasses all of them (Day 30) |
+| N6 | Every merge to `develop` is analysed, tested and built by CI from a clean checkout | GitHub Actions, seven required status checks, with `enforce_admins` on for `develop` and `main` since Day 30 — so they bind the owner too, which is the only way the sentence on the left is a constraint rather than a convention |
 | N7 | The app's state survives being killed by the OS mid-session | Manual test case in the release checklist |
 | N8 | **Anything that signs, grants or hands out access decides *what* the caller may reach, not only *whether* they are who they say** | A test per decision, run in CI, that an authenticated caller cannot name a resource belonging to somebody else |
 | N9 | No dependency with a published advisory ships | OSV-Scanner over every lockfile in CI; exceptions carry a reason and an expiry |
+| N10 | **No field in the document the family shares means something on only one device** | An allowlist of every key that document may carry, walked at every level in CI; a new key fails until somebody adds it deliberately |
 
 > **N8 exists because N3 was too specific.** N3 says journal entries are
 > readable only by their author, and names Firestore rules as the way to
@@ -231,6 +232,15 @@ one, and not taken here.
 > **N9 is the same shape.** N6 says every merge is analysed, tested and
 > built, and every merge was. The advisories in the test harness had been
 > there for weeks, passing all of it, because none of it was looking.
+>
+> **N10 is the third, and it comes from a document rather than from code.**
+> ADR-021 recorded on 6 November that `Member.photoPath` "will have to be
+> dropped on the way in when sync arrives, because another phone's path
+> means nothing here". That is the correct analysis, written down six days
+> before anybody opened the file #75 would have to change, in an ADR about
+> the family tree. An ADR records a decision; it cannot fail, and nothing
+> reads it at the moment it becomes relevant. N10 is the same sentence in a
+> form that runs.
 
 ---
 
@@ -260,3 +270,5 @@ one, and not taken here.
 | 2026-10-27 | Q2 closed: WEBPB, public domain | Day 10: owner chose the WEB; the edition was chosen for "The LORD" over "Yahweh" and British spelling |
 | 2026-11-09 | E3 rewritten: African sayings, not verses. R3.2 recast as attribution by language; R3.3 added. Q2 moot, Q5 opened | Day 28, #108: the owner asked for African wisdom, and R3.2's licence test had nothing left to test |
 | 2026-11-11 | N8 and N9 added | Day 30: the SAS Function authenticated a caller and then authorised nothing, and no requirement had been broken — which is a gap in the requirements rather than only in the code |
+| 2026-11-12 | N6 corrected: `enforce_admins` is on. R2.3 marked delivered | Day 31: both had gone stale in the direction that flatters the project, which is the direction nobody checks |
+| 2026-11-12 | N10 added | Day 31, #140: a device-local file path was serialised into the document #75 is about to publish to the family's other phones. ADR-021 had foreseen it exactly and in writing, which is why this is a requirement and not a comment |

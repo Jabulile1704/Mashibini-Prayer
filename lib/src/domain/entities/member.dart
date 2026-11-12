@@ -4,7 +4,6 @@ class Member {
     required this.id,
     required this.displayName,
     this.role,
-    this.photoPath,
     this.parentIds = const <String>[],
     this.uid,
   });
@@ -17,9 +16,6 @@ class Member {
   /// What they are to the family — "Mama", "eldest sister", "born 2019".
   final String? role;
 
-  /// A photograph on **this phone**, as an absolute path.
-  final String? photoPath;
-
   /// Whoever this person is a child of, within this family.
   final List<String> parentIds;
 
@@ -29,16 +25,13 @@ class Member {
   Member copyWith({
     String? displayName,
     String? role,
-    String? photoPath,
     List<String>? parentIds,
     String? uid,
     bool clearRole = false,
-    bool clearPhoto = false,
   }) => Member(
     id: id,
     displayName: displayName ?? this.displayName,
     role: clearRole ? null : (role ?? this.role),
-    photoPath: clearPhoto ? null : (photoPath ?? this.photoPath),
     parentIds: parentIds ?? this.parentIds,
     uid: uid ?? this.uid,
   );
@@ -49,7 +42,6 @@ class Member {
       other.id == id &&
       other.displayName == displayName &&
       other.role == role &&
-      other.photoPath == photoPath &&
       other.uid == uid &&
       _sameIds(other.parentIds, parentIds);
 
@@ -66,14 +58,8 @@ class Member {
   }
 
   @override
-  int get hashCode => Object.hash(
-    id,
-    displayName,
-    role,
-    photoPath,
-    uid,
-    Object.hashAll(parentIds),
-  );
+  int get hashCode =>
+      Object.hash(id, displayName, role, uid, Object.hashAll(parentIds));
 
   @override
   String toString() => 'Member($id, $displayName)';

@@ -6,6 +6,8 @@ import 'package:mashibini_prayer/src/domain/entities/calendar_date.dart';
 import 'package:mashibini_prayer/src/domain/entities/cycle.dart';
 import 'package:mashibini_prayer/src/domain/entities/family.dart';
 import 'package:mashibini_prayer/src/domain/entities/member.dart';
+import 'package:mashibini_prayer/src/domain/entities/skipped_turn.dart';
+import 'package:mashibini_prayer/src/domain/entities/song.dart';
 
 /// Writes the document the **app** produces, for the rules tests to use.
 ///
@@ -34,11 +36,23 @@ void main(List<String> arguments) {
   // Two signed-in members and one who has not signed in, because that
   // mixture is what a real family looks like partway through adopting the
   // app — and it is the case where `memberUids` is a subset of `members`.
+  //
+  // Furnished rather than minimal: a skip, a song and a parent, because an
+  // empty list proves nothing about the field that holds it. `songs`
+  // arrived on Day 26 and the rules were written on Day 9; until this
+  // fixture carried one, no test had ever offered the rules a document with
+  // songs in it.
   final Family family = Family(
     id: 'f1',
     name: 'Mashibini',
     members: <Member>[
-      const Member(id: 'm1', displayName: 'Jabulile', uid: 'uid-jabulile'),
+      const Member(
+        id: 'm1',
+        displayName: 'Jabulile',
+        uid: 'uid-jabulile',
+        role: 'eldest',
+        parentIds: <String>['m3'],
+      ),
       const Member(id: 'm2', displayName: 'Sisi', uid: 'uid-sisi'),
       const Member(id: 'm3', displayName: 'Mama'),
     ],
@@ -47,6 +61,22 @@ void main(List<String> arguments) {
         id: 'c1',
         effectiveFrom: anchor,
         order: const <String>['m1', 'm2', 'm3'],
+      ),
+    ],
+    skips: <SkippedTurn>[
+      SkippedTurn(
+        id: 's1',
+        weekStart: anchor.addDays(7),
+        memberId: 'm2',
+        note: 'away that week',
+      ),
+    ],
+    songs: <Song>[
+      Song(
+        id: 'song-1',
+        title: 'Nkosi Sikelel iAfrika',
+        addedBy: 'm1',
+        addedOn: anchor,
       ),
     ],
   );
@@ -64,4 +94,5 @@ void main(List<String> arguments) {
   stdout.writeln('wrote $path');
   stdout.writeln('  memberUids: ${family.memberUids}');
   stdout.writeln('  schemaVersion: ${family.schemaVersion}');
+  stdout.writeln('  keys: ${FamilyJson.toMap(family).keys.join(', ')}');
 }

@@ -138,7 +138,7 @@ void main() {
         members: <Member>[
           jabulile,
           sisi,
-          mama.copyWith(role: 'Mama', photoPath: '/tmp/m.jpg'),
+          mama.copyWith(role: 'Mama', parentIds: <String>['m1']),
           tata,
         ],
       );
@@ -147,7 +147,7 @@ void main() {
 
       final Member after = family.membersById[mama.id]!;
       expect(after.role, 'Mama');
-      expect(after.photoPath, '/tmp/m.jpg');
+      expect(after.parentIds, <String>['m1']);
       expect(after.uid, isNull);
     });
 

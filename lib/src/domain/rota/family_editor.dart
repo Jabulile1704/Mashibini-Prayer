@@ -311,7 +311,6 @@ abstract final class FamilyEditor {
               id: each.id,
               displayName: each.displayName,
               role: each.role,
-              photoPath: each.photoPath,
               parentIds: each.parentIds,
             )
           else

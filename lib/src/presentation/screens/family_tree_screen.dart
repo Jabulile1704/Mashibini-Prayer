@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 
 import '../../data/repositories/device_settings_repository.dart';
 import '../../data/repositories/family_repository.dart';
+import '../../data/repositories/photo_library_repository.dart';
 import '../../data/sources/platform/photos.dart';
 import '../../domain/entities/calendar_date.dart';
 import '../../domain/entities/family.dart';
@@ -25,6 +27,7 @@ class FamilyTreeScreen extends StatefulWidget {
     required this.familyRepository,
     required this.settings,
     required this.photos,
+    required this.photoLibrary,
     required this.ids,
     this.today,
     super.key,
@@ -33,6 +36,10 @@ class FamilyTreeScreen extends StatefulWidget {
   final FamilyRepository familyRepository;
   final DeviceSettingsRepository settings;
   final Photos photos;
+
+  /// Where this phone keeps the photographs (#140). Not the family's.
+  final PhotoLibraryRepository photoLibrary;
+
   final IdGenerator ids;
   final CalendarDate Function()? today;
 
@@ -51,11 +58,26 @@ class FamilyTreeScreen extends StatefulWidget {
 class _FamilyTreeScreenState extends State<FamilyTreeScreen> {
   late final Stream<Family?> _families = widget.familyRepository.watch();
 
+  Map<String, String> _photos = const <String, String>{};
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_loadPhotos());
+  }
+
+  Future<void> _loadPhotos() async {
+    final Map<String, String> paths = await widget.photoLibrary.all();
+    if (mounted) {
+      setState(() => _photos = paths);
+    }
+  }
+
   CalendarDate get _today =>
       widget.today?.call() ?? CalendarDate.from(DateTime.now());
 
   Future<void> _edit(Family family, Member member) async {
-    final Member? updated = await showModalBottomSheet<Member>(
+    final MemberEdit? edited = await showModalBottomSheet<MemberEdit>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
@@ -63,14 +85,26 @@ class _FamilyTreeScreenState extends State<FamilyTreeScreen> {
       builder: (BuildContext context) => FamilyMemberSheet(
         family: family,
         member: member,
+        photoPath: _photos[member.id],
         photos: widget.photos,
       ),
     );
-    if (updated == null) {
+    if (edited == null) {
       return;
     }
+
+    // The photograph goes to this phone's store and the member record goes
+    // to the family's document. They are saved separately because they are
+    // not the same kind of thing (#140).
+    if (edited.photoPath case final String path) {
+      await widget.photoLibrary.remember(member.id, path);
+    } else {
+      await widget.photoLibrary.forget(member.id);
+    }
+    await _loadPhotos();
+
     await widget.familyRepository.save(
-      FamilyEditor.updateMember(family, updated),
+      FamilyEditor.updateMember(family, edited.member),
     );
   }
 
@@ -144,6 +178,7 @@ class _FamilyTreeScreenState extends State<FamilyTreeScreen> {
               for (final Member member in rows[row])
                 _Cell(
                   member: member,
+                  photoPath: _photos[member.id],
                   note: _noteFor(engine, member, inTheRota),
                   onTap: () => _edit(family, member),
                 ),
@@ -243,9 +278,18 @@ class _Branch extends StatelessWidget {
 
 /// One person: a hexagon, their name, and a line about them.
 class _Cell extends StatelessWidget {
-  const _Cell({required this.member, required this.note, required this.onTap});
+  const _Cell({
+    required this.member,
+    required this.photoPath,
+    required this.note,
+    required this.onTap,
+  });
 
   final Member member;
+
+  /// Where this phone keeps their photograph, if it has one.
+  final String? photoPath;
+
   final String note;
   final VoidCallback onTap;
 
@@ -303,7 +347,7 @@ class _Cell extends StatelessWidget {
   }
 
   Widget _face(ThemeData theme, String initial) {
-    final String? path = member.photoPath;
+    final String? path = photoPath;
     if (path == null) {
       return _initial(theme, initial);
     }

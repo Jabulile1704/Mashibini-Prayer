@@ -74,12 +74,31 @@ abstract final class FamilyJson {
     );
   }
 
+  /// Photographs that older documents stored on the member record, by
+  /// member id (#140).
+  ///
+  /// Read defensively rather than through [fromMap], because the migration
+  /// that calls this runs before anything has established that the stored
+  /// document is a family at all.
+  static Map<String, String> devicePhotosIn(Map<String, Object?> json) {
+    final Object? members = json['members'];
+    if (members is! List<Object?>) {
+      return const <String, String>{};
+    }
+    return <String, String>{
+      for (final Object? member in members)
+        if (member is Map<String, Object?>)
+          if (member['id'] case final String id)
+            if (member['photoPath'] case final String path)
+              if (path.isNotEmpty) id: path,
+    };
+  }
+
   static Map<String, Object?> _memberToMap(Member member) => <String, Object?>{
     'id': member.id,
     'displayName': member.displayName,
     if (member.uid != null) 'uid': member.uid,
     if (member.role != null) 'role': member.role,
-    if (member.photoPath != null) 'photoPath': member.photoPath,
     if (member.parentIds.isNotEmpty) 'parentIds': member.parentIds,
   };
 
@@ -87,7 +106,6 @@ abstract final class FamilyJson {
     id: readString(json, 'id'),
     displayName: readString(json, 'displayName'),
     role: readStringOrNull(json, 'role'),
-    photoPath: readStringOrNull(json, 'photoPath'),
     uid: readStringOrNull(json, 'uid'),
     parentIds: json.containsKey('parentIds')
         ? readStringList(json, 'parentIds')

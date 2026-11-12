@@ -6,7 +6,9 @@ import 'src/app.dart';
 import 'src/data/random_id_generator.dart';
 import 'src/data/repositories/device_settings_repository.dart';
 import 'src/data/repositories/journal_repository.dart';
+import 'src/data/migrations/photo_paths_off_the_family.dart';
 import 'src/data/repositories/local_family_repository.dart';
+import 'src/data/repositories/photo_library_repository.dart';
 import 'src/data/sources/local/preferences_key_value_store.dart';
 import 'src/data/sources/notifications/local_reminders.dart';
 import 'src/data/sources/platform/app_version.dart';
@@ -31,6 +33,15 @@ Future<void> main() async {
 
   final PreferencesKeyValueStore store = PreferencesKeyValueStore();
 
+  final PhotoLibraryRepository photoLibrary = PhotoLibraryRepository(
+    store: store,
+  );
+
+  // Before anything reads the family: a photograph chosen by an older build
+  // is recorded on the member, which is where it must not be once the
+  // document syncs (#140).
+  await PhotoPathsOffTheFamily.run(store: store, photos: photoLibrary);
+
   final LocalFamilyRepository repository = LocalFamilyRepository(
     store: store,
     onCorruptData: (Object error, StackTrace stack) {
@@ -54,6 +65,7 @@ Future<void> main() async {
       journal: LocalJournalRepository(store: store, ids: ids),
       sharing: const PlatformSharing(),
       photos: const PlatformPhotos(),
+      photoLibrary: photoLibrary,
       identity: identity,
       audio: PlatformAudio(),
       library: AudioLibraryRepository(store: store),

@@ -7,6 +7,7 @@ import 'package:mashibini_prayer/src/domain/entities/cycle.dart';
 import 'package:mashibini_prayer/src/domain/entities/family.dart';
 import 'package:mashibini_prayer/src/domain/entities/member.dart';
 import 'package:mashibini_prayer/src/domain/entities/skipped_turn.dart';
+import 'package:mashibini_prayer/src/domain/entities/song.dart';
 import 'package:mashibini_prayer/src/domain/rota/rota_engine.dart';
 
 import '../support/family_fixtures.dart';
@@ -429,6 +430,97 @@ void main() {
         cycles: const <Cycle>[],
       );
       expect(() => family.turnoverWeekday, throwsStateError);
+    });
+  });
+
+  group('nothing in the document describes this phone (#140)', () {
+    /// Every key the shared document is allowed to use, at every level.
+    ///
+    /// Written as a list rather than a `isNot(contains('photoPath'))`,
+    /// because the next device-local field will not be called photoPath.
+    /// A new key has to be added here deliberately, and whoever adds it has
+    /// to decide whether the rest of the family should receive it (R6.2).
+    const Set<String> allowed = <String>{
+      'schemaVersion',
+      'id',
+      'name',
+      'turnoverWeekday',
+      'memberUids',
+      'members',
+      'displayName',
+      'uid',
+      'role',
+      'parentIds',
+      'cycles',
+      'effectiveFrom',
+      'order',
+      'reason',
+      'skips',
+      'weekStart',
+      'memberId',
+      'withdrawn',
+      'note',
+      'songs',
+      'title',
+      'addedBy',
+      'addedOn',
+      'performer',
+      'link',
+      'removed',
+    };
+
+    Set<String> keysIn(Object? node) => switch (node) {
+      final Map<String, Object?> map => <String>{
+        ...map.keys,
+        for (final Object? value in map.values) ...keysIn(value),
+      },
+      final List<Object?> list => <String>{
+        for (final Object? value in list) ...keysIn(value),
+      },
+      _ => const <String>{},
+    };
+
+    test('a fully furnished family uses no other key', () {
+      final Family family =
+          familyOfFour(
+            skips: <SkippedTurn>[
+              SkippedTurn(
+                id: 's1',
+                weekStart: anchor,
+                memberId: 'm1',
+                withdrawn: true,
+                note: 'away',
+              ),
+            ],
+          ).copyWith(
+            members: <Member>[
+              jabulile.copyWith(
+                role: 'eldest',
+                uid: 'uid-jabulile',
+                parentIds: <String>['m3'],
+              ),
+              sisi,
+              mama,
+              tata,
+            ],
+            songs: <Song>[
+              Song(
+                id: 'song-1',
+                title: 'Nkosi Sikelel iAfrika',
+                addedBy: 'm1',
+                addedOn: anchor,
+                performer: 'Mama',
+                link: 'https://example.invalid/song',
+                removed: true,
+              ),
+            ],
+          );
+
+      expect(keysIn(FamilyJson.toMap(family)).difference(allowed), isEmpty);
+    });
+
+    test('and photoPath is specifically not one of them', () {
+      expect(allowed, isNot(contains('photoPath')));
     });
   });
 }

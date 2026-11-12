@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mashibini_prayer/src/app.dart';
 import 'package:mashibini_prayer/src/data/repositories/device_settings_repository.dart';
 import 'package:mashibini_prayer/src/data/repositories/local_family_repository.dart';
+import 'package:mashibini_prayer/src/data/repositories/photo_library_repository.dart';
+import 'package:mashibini_prayer/src/data/serialization/family_json.dart';
 import 'package:mashibini_prayer/src/domain/entities/family.dart';
 import 'package:mashibini_prayer/src/domain/entities/member.dart';
 import 'package:mashibini_prayer/src/domain/family/family_tree.dart';
@@ -19,11 +21,13 @@ void main() {
   late LocalFamilyRepository family;
   late LocalDeviceSettingsRepository settings;
   late FakePhotos photos;
+  late PhotoLibraryRepository photoLibrary;
 
   setUp(() {
     final FakeKeyValueStore store = FakeKeyValueStore();
     family = LocalFamilyRepository(store: store);
     settings = LocalDeviceSettingsRepository(store: store);
+    photoLibrary = PhotoLibraryRepository(store: store);
     photos = FakePhotos();
   });
 
@@ -42,6 +46,7 @@ void main() {
           familyRepository: family,
           settings: settings,
           photos: photos,
+          photoLibrary: photoLibrary,
           ids: FakeIdGenerator(),
           today: () => anchor,
         ),
@@ -325,10 +330,26 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(photos.askedFor, <String>['m3']);
-      expect(
-        (await family.load())!.membersById['m3']!.photoPath,
-        '/tmp/mashibini/m3-1.jpg',
-      );
+      expect(await photoLibrary.pathFor('m3'), '/tmp/mashibini/m3-1.jpg');
+    });
+
+    testWidgets('and the family document never learns where it is', (
+      WidgetTester tester,
+    ) async {
+      photos.next = '/tmp/mashibini/m3-1.jpg';
+      await family.save(familyOfFour());
+      await open(tester);
+      await openSheetFor(tester, 'm3');
+
+      await tester.tap(find.byKey(FamilyMemberSheet.choosePhoto));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(FamilyMemberSheet.save));
+      await tester.pumpAndSettle();
+
+      // The document the other phones will one day receive (#140, R6.2).
+      final String shared = FamilyJson.encode((await family.load())!);
+      expect(shared, isNot(contains('/tmp/mashibini/m3-1.jpg')));
+      expect(shared, isNot(contains('photoPath')));
     });
 
     testWidgets('declining the picker is an ordinary answer', (
@@ -379,19 +400,12 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(photos.removed, <String>['/tmp/first.jpg']);
-      expect(
-        (await family.load())!.membersById['m3']!.photoPath,
-        '/tmp/second.jpg',
-      );
+      expect(await photoLibrary.pathFor('m3'), '/tmp/second.jpg');
     });
 
     testWidgets('removing one clears it', (WidgetTester tester) async {
-      await saveWith(<Member>[
-        jabulile,
-        sisi,
-        mama.copyWith(photoPath: '/tmp/mama.jpg'),
-        tata,
-      ]);
+      await family.save(familyOfFour());
+      await photoLibrary.remember('m3', '/tmp/mama.jpg');
       await open(tester);
       await openSheetFor(tester, 'm3');
 
@@ -400,7 +414,7 @@ void main() {
       await tester.tap(find.byKey(FamilyMemberSheet.save));
       await tester.pumpAndSettle();
 
-      expect((await family.load())!.membersById['m3']!.photoPath, isNull);
+      expect(await photoLibrary.pathFor('m3'), isNull);
     });
   });
 }

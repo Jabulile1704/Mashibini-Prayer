@@ -97,6 +97,7 @@ before(async () => {
       entryDate: '2026-10-20',
       text: 'Private',
     });
+    await setDoc(doc(db, `memberships/${JABU}`), { familyId: 'f1' });
   });
 });
 
@@ -143,6 +144,51 @@ describe('journals are private by construction (R4.2, N3)', () => {
     // A rule that filtered rather than refused would leak the count.
     const db = env.authenticatedContext(SISI).firestore();
     await assertFails(getDocs(collection(db, `journals/${JABU}/entries`)));
+  });
+});
+
+describe('a membership says where to look, and nothing more (#75)', () => {
+  it('an account can write down which family it is in', async () => {
+    const db = env.authenticatedContext(JABU).firestore();
+    await assertSucceeds(
+      setDoc(doc(db, `memberships/${JABU}`), { familyId: 'f1' }),
+    );
+  });
+
+  it('and read it back after a reinstall', async () => {
+    const db = env.authenticatedContext(JABU).firestore();
+    await assertSucceeds(getDoc(doc(db, `memberships/${JABU}`)));
+  });
+
+  it('nobody else can read it', async () => {
+    // Not because the family id is a secret — it is in every copy of the
+    // document — but because who belongs to which family is not a question
+    // a stranger gets to ask.
+    const db = env.authenticatedContext(SISI).firestore();
+    await assertFails(getDoc(doc(db, `memberships/${JABU}`)));
+  });
+
+  it('and nobody can put somebody else in a family', async () => {
+    const db = env.authenticatedContext(STRANGER).firestore();
+    await assertFails(
+      setDoc(doc(db, `memberships/${JABU}`), { familyId: 'f1' }),
+    );
+  });
+
+  it('signed out, it is not there at all', async () => {
+    const db = env.unauthenticatedContext().firestore();
+    await assertFails(getDoc(doc(db, `memberships/${JABU}`)));
+  });
+
+  it('knowing the family id is still not a way in', async () => {
+    // The point of the collection, stated as a test. A membership record
+    // hands out a family id; the family document refuses anybody who is
+    // not already in memberUids, so the id on its own is worth nothing.
+    const db = env.authenticatedContext(STRANGER).firestore();
+    await assertSucceeds(
+      setDoc(doc(db, `memberships/${STRANGER}`), { familyId: 'f1' }),
+    );
+    await assertFails(getDoc(doc(db, 'families/f1')));
   });
 });
 
@@ -283,6 +329,7 @@ describe('the rules file is the one in the repository', () => {
   it('reads from firestore.rules rather than an inline copy', () => {
     const source = readFileSync('../../firestore.rules', 'utf8');
     assert.match(source, /match \/journals\/\{uid\}/);
+    assert.match(source, /match \/memberships\/\{uid\}/);
   });
 });
 

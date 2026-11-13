@@ -201,6 +201,18 @@ one, and not taken here.
   **then** the result is deterministic and the losing change is not silently
   discarded.
 
+**Half delivered (Day 32).** `SyncingFamilyRepository` publishes the family
+to Firestore, merges what arrives through `FamilyMerge`, and hands the merge
+back when it holds something the document does not — so two phones converge
+rather than alternate. A phone that signs in with no rota takes the document
+whole, which is the reinstall path.
+
+What is not delivered is a *second person* reaching an existing family. The
+rules refuse a phone that is not yet in `memberUids`, deliberately, so
+somebody already in the family has to admit them — ADR-027, issue #143. So
+the criterion holds for two phones that are both already in the family, and
+there is currently no way to get the second one there.
+
 ---
 
 ## Non-functional requirements
@@ -257,7 +269,7 @@ one, and not taken here.
 |:--|:--|:--|:--|
 | ~~Q1~~ | ~~Which weekday does the family's week actually turn over on?~~ **Closed Day 6: the setup screen asks. The weekday is a required answer and the app stores whichever one the family chooses; the picker merely opens on Sunday as a starting position.** | Stakeholder | — |
 | ~~Q2~~ | ~~Which Bible translation may be bundled and redistributed?~~ **Closed Day 10: the World English Bible, British Edition (WEBPB), public domain by explicit dedication — see ADR-009. Moot since Day 28: the app carries African sayings and bundles no translation at all (ADR-025). The question it leaves behind is Q5.** | PO + Developer | — |
-| Q3 | Do members sign in individually, or is it one shared family install? | PO | Day 7 (auth) |
+| ~~Q3~~ | ~~Do members sign in individually, or is it one shared family install?~~ **Closed Day 11: each person signs in as themselves (ADR-023). Load-bearing since Day 32, when the Firestore rules stopped guarding a database nothing connected to — `request.auth.uid` is now the thing that decides what a phone may read.** | PO | — |
 | Q4 | Should the journal ever be shareable with the family by choice? | PO | Post-v1 |
 | Q5 | Who reads the sayings and confirms the spelling in each of the five languages? | PO | Before the wording is called reviewed |
 
@@ -271,4 +283,5 @@ one, and not taken here.
 | 2026-11-09 | E3 rewritten: African sayings, not verses. R3.2 recast as attribution by language; R3.3 added. Q2 moot, Q5 opened | Day 28, #108: the owner asked for African wisdom, and R3.2's licence test had nothing left to test |
 | 2026-11-11 | N8 and N9 added | Day 30: the SAS Function authenticated a caller and then authorised nothing, and no requirement had been broken — which is a gap in the requirements rather than only in the code |
 | 2026-11-12 | N6 corrected: `enforce_admins` is on. R2.3 marked delivered | Day 31: both had gone stale in the direction that flatters the project, which is the direction nobody checks |
+| 2026-11-13 | R6.2 marked half delivered; Q3 closed | Day 32, #75: the family document now syncs, and the rules that have been tested since Day 9 finally guard something. Joining an existing family is a separate decision — ADR-027 |
 | 2026-11-12 | N10 added | Day 31, #140: a device-local file path was serialised into the document #75 is about to publish to the family's other phones. ADR-021 had foreseen it exactly and in writing, which is why this is a requirement and not a comment |

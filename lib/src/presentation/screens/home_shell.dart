@@ -36,6 +36,7 @@ class HomeShell extends StatefulWidget {
     required this.photos,
     required this.photoLibrary,
     required this.ids,
+    this.whenSignedIn,
     this.today,
     super.key,
   });
@@ -52,6 +53,7 @@ class HomeShell extends StatefulWidget {
   final Photos photos;
   final PhotoLibraryRepository photoLibrary;
   final IdGenerator ids;
+  final Future<void> Function()? whenSignedIn;
   final CalendarDate Function()? today;
 
   static const Key bar = Key('shell.bar');
@@ -140,6 +142,7 @@ class _HomeShellState extends State<HomeShell> {
             appVersion: widget.appVersion,
             identity: widget.identity,
             ids: widget.ids,
+            whenSignedIn: widget.whenSignedIn,
             today: widget.today,
           ),
         ],

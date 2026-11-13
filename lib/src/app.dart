@@ -56,6 +56,7 @@ class MashibiniPrayerApp extends StatefulWidget {
     required this.photos,
     required this.photoLibrary,
     required this.ids,
+    this.whenSignedIn,
     this.initialAppearance = Appearance.system,
     super.key,
   });
@@ -72,6 +73,7 @@ class MashibiniPrayerApp extends StatefulWidget {
   final Photos photos;
   final PhotoLibraryRepository photoLibrary;
   final IdGenerator ids;
+  final Future<void> Function()? whenSignedIn;
 
   /// The stored appearance, read before the first frame.
   final Appearance initialAppearance;
@@ -121,6 +123,7 @@ class _MashibiniPrayerAppState extends State<MashibiniPrayerApp> {
                 photos: widget.photos,
                 photoLibrary: widget.photoLibrary,
                 ids: widget.ids,
+                whenSignedIn: widget.whenSignedIn,
               ),
             ),
     );

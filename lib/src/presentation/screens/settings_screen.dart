@@ -37,6 +37,7 @@ class SettingsScreen extends StatefulWidget {
     required this.appVersion,
     required this.identity,
     required this.ids,
+    this.whenSignedIn,
     this.today,
     this.now,
     super.key,
@@ -50,6 +51,11 @@ class SettingsScreen extends StatefulWidget {
   final AppVersion appVersion;
   final Identity identity;
   final IdGenerator ids;
+
+  /// Run once this phone has both an account and a family, so the account
+  /// can record which family it is in (#75). Absent when Firebase did not
+  /// start, which is also when there is nothing to record it to.
+  final Future<void> Function()? whenSignedIn;
   final CalendarDate Function()? today;
   final DateTime Function()? now;
 
@@ -153,6 +159,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             FamilyEditor.linkUid(latest, memberId: youAre, uid: who.uid),
           );
         }
+        // Before the next launch rather than at it: somebody who signs in
+        // and then loses the phone has already been written down.
+        await widget.whenSignedIn?.call();
       }
     } on ArgumentError catch (error) {
       _say(error.message.toString());

@@ -84,6 +84,19 @@ service cloud.firestore {
       }
     }
 
+    // Which family a phone belongs to, so a phone that has been wiped can
+    // find its way home (#75). One document per account, holding a family
+    // id and nothing else.
+    //
+    // It is deliberately NOT a way in. Knowing a family id gets you
+    // nothing: `families/{familyId}` still refuses anybody who is not
+    // already in `memberUids`, and only somebody already in the family can
+    // put you there. This collection answers "which family did I say I was
+    // in", for the one account that wrote it, and no other question.
+    match /memberships/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
     // The whole of R4.2 and N3, in one line. Nothing a family-level query can
     // do reaches here, because this is not in the family's tree.
     match /journals/{uid}/{document=**} {

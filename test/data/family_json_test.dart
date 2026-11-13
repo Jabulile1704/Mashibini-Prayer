@@ -523,4 +523,65 @@ void main() {
       expect(allowed, isNot(contains('photoPath')));
     });
   });
+
+  group('the shape Firestore hands back (#75)', () {
+    // `FamilyJson.decode` is always given `jsonDecode`'s output. Firestore
+    // gives `FamilyJson.fromMap` a `Map<String, dynamic>` whose nested
+    // collections are `List<dynamic>` and `Map<String, dynamic>` — the same
+    // static types, built by somebody else. The reads in `json_reads.dart`
+    // test with `is Map<String, Object?>`, which is a different question
+    // from `is Map<String, dynamic>` to read but the same one to answer.
+    //
+    // This is the one seam that cannot be exercised without a network, so
+    // it is asserted rather than assumed.
+    Map<String, dynamic> asFirestoreWould(Map<String, Object?> json) =>
+        <String, dynamic>{
+          for (final MapEntry<String, Object?> entry in json.entries)
+            entry.key: switch (entry.value) {
+              final List<Object?> list => <dynamic>[
+                for (final Object? item in list)
+                  item is Map<String, Object?> ? asFirestoreWould(item) : item,
+              ],
+              final Map<String, Object?> map => asFirestoreWould(map),
+              final Object? other => other,
+            },
+        };
+
+    test('a family read back out of it is the family that went in', () {
+      final Family original =
+          familyOfFour(
+            skips: <SkippedTurn>[
+              SkippedTurn(id: 's1', weekStart: anchor, memberId: 'm1'),
+            ],
+          ).copyWith(
+            members: <Member>[
+              jabulile.copyWith(uid: 'uid-jabulile', parentIds: <String>['m3']),
+              sisi,
+              mama,
+              tata,
+            ],
+            songs: <Song>[
+              Song(
+                id: 'song-1',
+                title: 'Nkosi Sikelel iAfrika',
+                addedBy: 'm1',
+                addedOn: anchor,
+              ),
+            ],
+          );
+
+      final Family back = FamilyJson.fromMap(
+        asFirestoreWould(FamilyJson.toMap(original)),
+      );
+
+      expect(FamilyJson.toMap(back), FamilyJson.toMap(original));
+    });
+
+    test('a document with no family in it is a FormatException', () {
+      expect(
+        () => FamilyJson.fromMap(<String, dynamic>{'something': 'else'}),
+        throwsFormatException,
+      );
+    });
+  });
 }

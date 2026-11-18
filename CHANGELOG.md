@@ -4,6 +4,64 @@ What changed, written for the family rather than for whoever wrote it.
 Versions follow [Semantic Versioning](https://semver.org); the process is in
 [docs/RELEASING.md](docs/RELEASING.md).
 
+## [2.2.0] — 2026-11-18
+
+**The phones can finally see each other.** Until now each phone kept its own
+rota, and they could quietly drift apart — four people, four answers to
+whose week it is, and nothing to say which was right. Now the family shares
+one rota. Change it on any phone and the others follow.
+
+### New
+
+- **The rota is the family's, not the phone's.** Sign in, and whose week it
+  is, who is in the rota, the turnover day and the songbook are the same on
+  every phone that belongs to the family. Change something while you have no
+  signal and it goes up when the signal comes back; the app never waits on a
+  network to tell you whose week it is.
+- **Somebody can be let into the family.** Settings → *The family's phones*.
+  Whoever is joining sends you their code, you pick their name from the rota
+  and paste it, and then you send them the family code. Nobody gets in
+  without being named by somebody already in the family — there is no link
+  or code that lets a stranger in, which is why the family code is safe to
+  send over WhatsApp.
+- **Reinstalling no longer costs you the rota.** Sign in on a phone with
+  nothing on it and the family's rota comes back. On an iPhone, where a free
+  Apple account makes the app stop working every seven days, this is the
+  difference between signing in and setting the whole thing up again.
+- **A much smaller download.** The Android file is now built for one kind of
+  phone instead of all of them. If it says *App not installed*, take the
+  `-any-phone` file instead — it is larger and works everywhere.
+
+### Changed
+
+- **Photographs really do stay on your phone now.** They were never
+  uploaded, but the *location* of each one was being written into the
+  family's shared information, which on anybody else's phone points at
+  nothing. The app keeps them to itself properly, and a photograph you have
+  already chosen is kept.
+- **Journal entries are unchanged and still only yours.** Nothing in this
+  release shares them, and nothing in this release ever will without saying
+  so first.
+
+### Fixed
+
+- A fault that would have let anybody with an account read or overwrite the
+  family's files on the server. It was found by reading the code, had never
+  been switched on, and is now impossible rather than merely disallowed.
+- Every family the app created shared one name internally, which would have
+  meant only the first family ever to sign in could use the new shared rota.
+  Existing families are given their own quietly, on first opening this
+  version.
+
+### If you are updating
+
+Nothing to do. Open the app and it carries on. To put the family on one
+rota, each person signs in under Settings and then one of you lets the
+others in.
+
+**Android 7.0 or newer.** On anything older Android refuses with *App not
+installed* and does not explain why.
+
 ## [2.1.0] — 2026-11-10
 
 **The app stopped being only about the rota.** There are songs in it now, the

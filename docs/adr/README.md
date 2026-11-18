@@ -35,3 +35,4 @@ names it.
 | [025](ADR-025-the-daily-reading-is-an-african-saying.md) | The daily reading is an African saying, not a Bible verse | Accepted |
 | [026](ADR-026-device-local-data-is-not-in-the-shared-document.md) | Device-local data does not live in the shared document | Accepted |
 | [027](ADR-027-the-invitation-is-a-person-not-a-link.md) | The invitation is a person, not a link | Accepted |
+| [028](ADR-028-the-rules-deploy-with-the-release.md) | The rules deploy with the release | Accepted |

@@ -159,9 +159,87 @@ jobs:
           name: apk
           path: mashibini-prayer-*.apk
 
+  rules:
+    name: Security rules are live
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The emulator is a Java program (day 9).
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: test/rules/package-lock.json
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+
+      - name: Emit the document the app actually writes
+        run: dart run tool/emit_rules_fixture.dart
+
+      - name: Install
+        working-directory: test/rules
+        run: npm ci
+
+      # Tested again here, on the tagged commit, rather than trusted from
+      # the pull request that merged it. Deploying rules that were never
+      # tested at this revision is the thing this job exists to prevent.
+      - name: Run the rules against the emulator
+        run: |
+          npx --yes firebase-tools@14 emulators:exec \
+            --only firestore \
+            --project demo-mashibini \
+            "cd test/rules && npm test"
+
+      # Absent rather than skipped. A deploy step that quietly does nothing
+      # when its credential is missing produces a release whose rules are
+      # whatever was last pushed by hand, which is the state this job was
+      # written to end.
+      - name: The service account is present
+        env:
+          ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$ACCOUNT" ]; then
+            echo "::error::FIREBASE_SERVICE_ACCOUNT is not set, so the rules cannot be deployed and this release is refused." >&2
+            echo "Create a service account with the Firebase Rules Admin role in the mashibini-prayer project, download its JSON key, and add the whole file as the repository secret FIREBASE_SERVICE_ACCOUNT. See docs/FIREBASE-SETUP.md." >&2
+            exit 1
+          fi
+
+      - name: Deploy them
+        env:
+          ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          printf '%s' "$ACCOUNT" > "$RUNNER_TEMP/service-account.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/service-account.json"
+          npx --yes firebase-tools@14 deploy \
+            --only firestore:rules \
+            --project mashibini-prayer \
+            --non-interactive
+          rm -f "$RUNNER_TEMP/service-account.json"
+
+      - name: Say so in the summary
+        run: |
+          {
+            echo "### Security rules"
+            echo ""
+            echo "\`firestore.rules\` as of \`${GITHUB_SHA}\` is live on \`mashibini-prayer\`."
+            echo ""
+            echo "Tested against the emulator on this commit before it was deployed."
+          } >> "$GITHUB_STEP_SUMMARY"
+
   publish:
     name: GitHub Release
-    needs: [verify, build]
+    needs: [verify, build, rules]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

@@ -9,8 +9,16 @@ import 'week.dart';
 /// needs.
 abstract final class RotaSetup {
   /// Builds a family whose rota already says what the person just told us.
+  ///
+  /// **The family's id is not a parameter** (#148). It became a Firestore
+  /// document path on Day 32, which makes it the one id in the app that has
+  /// to be unique between phones that have never met — and for twenty-five
+  /// days the only caller passed the literal `f1`, so every family in the
+  /// world shared a document.
+  ///
+  /// A caller who cannot name it cannot name it wrongly. The generator is
+  /// already here for the cycle.
   static Family build({
-    required String familyId,
     required String familyName,
     required List<Member> members,
     required int turnoverWeekday,
@@ -56,7 +64,7 @@ abstract final class RotaSetup {
     ];
 
     return Family(
-      id: familyId,
+      id: ids.newId('f'),
       name: familyName,
       members: List<Member>.unmodifiable(members),
       cycles: <Cycle>[

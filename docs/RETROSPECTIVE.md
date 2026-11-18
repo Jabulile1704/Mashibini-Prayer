@@ -381,6 +381,56 @@ allowlist of every key the shared document may carry rather than a test that
 different name and will be added by somebody thinking about a feature. N10
 is ADR-021's paragraph, rewritten as a thing that fails.
 
+### And a seventh: the check was looking at a different copy
+
+Day 33. `firestore.rules` has been tested against the Firestore emulator
+since Day 9 — thirty-four tests, in a required check, on every pull request.
+The live database served whatever was last pushed from somebody's laptop,
+which until 18 November was nothing at all.
+
+Both halves were working. The file was correct and was proved correct. The
+database was refusing everybody, exactly as a production-mode default does.
+Neither of them was wrong, and **they were not the same artefact.**
+
+| | What was checked | What was answering requests |
+|:--|:--|:--|
+| Day 33 | `firestore.rules` in the repository, in an emulator | a ruleset in Google's project, last written by hand |
+
+This is distinct from everything above it, and the distinction is worth
+keeping. The earlier entries are a check that could not fail, a check
+pointed at the wrong question, no check at all, and correct analysis with
+nothing to act on it. This one is a check that could fail, did its job
+honestly, and **was aimed at a copy.**
+
+What makes it hard to notice is that the gap is invisible from outside. The
+live answers after the deploy were:
+
+```
+families           403
+memberships        403
+journals           403
+not-a-collection   403
+```
+
+The same four as before it. A correct ruleset refuses an unauthenticated
+stranger, and so does a database with no rules — so there is no probe that
+distinguishes them. The only observer who could tell is an authenticated
+member of the family, holding a real phone.
+
+So "I deployed it" was an unverifiable claim, and would have stayed one.
+
+The defence is not another test. It is to **stop having two copies**: the
+release deploys the rules after testing them at the tagged commit, and
+`publish` depends on that job (ADR-028, N11). What is live is then what was
+tested by construction, and there is nothing left to compare — which is a
+better answer than a comparison, because a comparison is one more thing that
+can agree with itself.
+
+The generalisation, for the next time: **ask what the tested thing is a copy
+of.** A config file, an infrastructure template, a schema, a set of rules —
+anything that is authored in one place and executed in another has this
+shape, and the test will pass on the version nobody is running.
+
 ### PR hygiene has caught eight mistakes, and three are repeats
 
 | Day | What it caught |

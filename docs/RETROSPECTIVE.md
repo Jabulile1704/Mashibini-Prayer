@@ -431,6 +431,48 @@ of.** A config file, an infrastructure template, a schema, a set of rules —
 anything that is authored in one place and executed in another has this
 shape, and the test will pass on the version nobody is running.
 
+### And an eighth: the value was right until the field changed jobs
+
+Day 34, found in the first five minutes of starting #143.
+
+```dart
+familyId: 'f1',
+```
+
+Every family the app had ever created carried that id. Nothing read it: it
+distinguished one family from the others inside a single phone's storage,
+where there are none. A constant was correct, and no test had reason to
+object, because **nothing was wrong.**
+
+Day 32 made the field a Firestore document path. Every family in the world
+began writing to `families/f1`.
+
+| | Nothing was wrong with | What changed |
+|:--|:--|:--|
+| Day 34 | the value, under the field's original meaning | the field acquired a second job, and the value was never re-examined |
+
+The rules held — the first family to sign in owns the document and everybody
+else is refused, so no rota leaks — which means the symptom is not an
+exposure but silence: every other family's sync failing for ever, swallowed
+by a repository that is right to swallow a failed push.
+
+This is Day 31's entry from the other side. There, a *rule* was established
+after the mistake and never applied backwards. Here, a *meaning* was
+established after the value, and the value was never looked at again. The
+two together are the general case, and it is not "re-read the code" — there
+is no budget for that. It is narrower and therefore usable:
+
+**When a field acquires a second job, every existing value is a new input.**
+A field whose meaning has widened has a finite, greppable set of places that
+set it, and all of them are now unchecked.
+
+The fix went in twice on purpose. First the value, then the parameter: the
+family id is no longer something `RotaSetup.build` accepts, so there is
+nothing for a caller to fill in badly. That is the Day 30 move — a blocklist
+has to anticipate the input; making the bad input inexpressible does not —
+and it is the only one of these eight entries where the defect became
+unwritable rather than merely tested for.
+
 ### PR hygiene has caught eight mistakes, and three are repeats
 
 | Day | What it caught |

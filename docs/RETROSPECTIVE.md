@@ -576,6 +576,21 @@ Named here so it is not discovered later.
   today because of it.
 - **iOS builds expire after seven days** on free provisioning (ADR-013).
 
+> **Since, as of 18 November.** The list above is the state at v1.0.1 and is
+> left as written; this is what has happened to it, because a list of gaps
+> nobody annotates becomes a list of gaps nobody believes.
+>
+> | | |
+> |:--|:--|
+> | Phones do not sync | **Closed** — #75, Days 32–35. `FirestoreFamilySource` behind the seam, `FamilyMerge` finally called, and a second phone can be let in (ADR-027) |
+> | No way to change the family after setup | **Closed** — `FamilyMembersScreen`, 5 November |
+> | No sign-in | **Closed** — ADR-023, Day 11. Load-bearing since Day 32: `request.auth.uid` decides what a phone may read |
+> | No collective reminder | Open, #77, unchanged. Still ADR-010 |
+> | iOS builds expire after seven days | Unchanged, and the reason the reinstall path in #75 was worth building first |
+>
+> The one thing none of them has is evidence from a real phone. Every claim
+> above is a test against a fake or an emulator.
+
 ## v1.1
 
 Ordered by what the family would notice.

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import '../src/application/join_a_family.dart';
 import '../src/data/repositories/audio_library_repository.dart';
 import '../src/data/repositories/photo_library_repository.dart';
 import '../src/data/sources/platform/audio.dart';
@@ -57,6 +58,7 @@ class MashibiniPrayerApp extends StatefulWidget {
     required this.photoLibrary,
     required this.ids,
     this.whenSignedIn,
+    this.join,
     this.initialAppearance = Appearance.system,
     super.key,
   });
@@ -74,6 +76,7 @@ class MashibiniPrayerApp extends StatefulWidget {
   final PhotoLibraryRepository photoLibrary;
   final IdGenerator ids;
   final Future<void> Function()? whenSignedIn;
+  final JoinAFamily? join;
 
   /// The stored appearance, read before the first frame.
   final Appearance initialAppearance;
@@ -124,6 +127,7 @@ class _MashibiniPrayerAppState extends State<MashibiniPrayerApp> {
                 photoLibrary: widget.photoLibrary,
                 ids: widget.ids,
                 whenSignedIn: widget.whenSignedIn,
+                join: widget.join,
               ),
             ),
     );

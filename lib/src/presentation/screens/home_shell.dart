@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../application/join_a_family.dart';
 import '../../data/repositories/audio_library_repository.dart';
 import '../../data/repositories/photo_library_repository.dart';
 import '../../data/sources/platform/audio.dart';
@@ -37,6 +38,7 @@ class HomeShell extends StatefulWidget {
     required this.photoLibrary,
     required this.ids,
     this.whenSignedIn,
+    this.join,
     this.today,
     super.key,
   });
@@ -54,6 +56,7 @@ class HomeShell extends StatefulWidget {
   final PhotoLibraryRepository photoLibrary;
   final IdGenerator ids;
   final Future<void> Function()? whenSignedIn;
+  final JoinAFamily? join;
   final CalendarDate Function()? today;
 
   static const Key bar = Key('shell.bar');
@@ -143,6 +146,7 @@ class _HomeShellState extends State<HomeShell> {
             identity: widget.identity,
             ids: widget.ids,
             whenSignedIn: widget.whenSignedIn,
+            join: widget.join,
             today: widget.today,
           ),
         ],

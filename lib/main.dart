@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'firebase_options.dart';
 import 'src/app.dart';
 import 'src/application/find_my_family.dart';
+import 'src/application/join_a_family.dart';
 import 'src/data/random_id_generator.dart';
 import 'src/data/repositories/device_settings_repository.dart';
 import 'src/data/repositories/journal_repository.dart';
@@ -58,6 +59,10 @@ Future<void> main() async {
   // `f1`, and that is now a Firestore document path.
   await TheFamilyNeedsItsOwnId.run(store: store, ids: ids);
 
+  final LocalDeviceSettingsRepository settings = LocalDeviceSettingsRepository(
+    store: store,
+  );
+
   final LocalFamilyRepository onThisPhone = LocalFamilyRepository(
     store: store,
     onCorruptData: (Object error, StackTrace stack) {
@@ -69,6 +74,7 @@ Future<void> main() async {
   // no network anywhere in the read path (#75, R6.1).
   SyncingFamilyRepository? syncing;
   FindMyFamily? findMyFamily;
+  JoinAFamily? join;
   if (firestore case final FirebaseFirestore db) {
     syncing = SyncingFamilyRepository(
       local: onThisPhone,
@@ -88,13 +94,18 @@ Future<void> main() async {
       },
     );
     await findMyFamily();
+
+    join = JoinAFamily(
+      families: syncing,
+      settings: settings,
+      memberships: FirestoreMembership(firestore: db),
+      identity: identity,
+      remoteFor: (String familyId) =>
+          FirestoreFamilySource(familyId: familyId, firestore: db),
+    );
   }
 
   final FamilyRepository repository = syncing ?? onThisPhone;
-
-  final LocalDeviceSettingsRepository settings = LocalDeviceSettingsRepository(
-    store: store,
-  );
 
   final Appearance appearance = await settings.loadAppearance();
 
@@ -108,6 +119,7 @@ Future<void> main() async {
       photos: const PlatformPhotos(),
       photoLibrary: photoLibrary,
       whenSignedIn: findMyFamily?.call,
+      join: join,
       identity: identity,
       audio: PlatformAudio(),
       library: AudioLibraryRepository(store: store),

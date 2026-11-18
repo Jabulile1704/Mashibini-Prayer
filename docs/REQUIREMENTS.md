@@ -230,6 +230,7 @@ there is currently no way to get the second one there.
 | N9 | No dependency with a published advisory ships | OSV-Scanner over every lockfile in CI; exceptions carry a reason and an expiry |
 | N10 | **No field in the document the family shares means something on only one device** | An allowlist of every key that document may carry, walked at every level in CI; a new key fails until somebody adds it deliberately |
 | N11 | **What is deployed is what was tested** | The release workflow runs the rules suite on the tagged commit and deploys from it; `publish` depends on that job, and it fails rather than skips when its credential is missing |
+| N12 | **An identifier that leaves this phone is unique without coordination** | The generator, and no caller able to supply one: `RotaSetup.build` does not take a family id. Two independent generators produce no collision over a thousand ids |
 
 > **N8 exists because N3 was too specific.** N3 says journal entries are
 > readable only by their author, and names Firestore rules as the way to
@@ -245,6 +246,14 @@ there is currently no way to get the second one there.
 > **N9 is the same shape.** N6 says every merge is analysed, tested and
 > built, and every merge was. The advisories in the test harness had been
 > there for weeks, passing all of it, because none of it was looking.
+>
+> **N12 is the fifth, and it was true in prose for twenty-six days.**
+> `ids.dart` has promised an id "unique without coordination" since Day 8,
+> and members, cycles, skips and songs have had one. The family's own id —
+> the only one that has to be unique between phones that have never met —
+> was the literal `f1` until #148, because nothing read it until Day 32 made
+> it a document path. A promise in a doc comment is not a check; that is
+> Day 31's finding, and this is it again with a different author.
 >
 > **N11 is the fourth, and the subject is the pipeline rather than the
 > app.** N6 says every merge is analysed, tested and built. It was, and
@@ -292,6 +301,7 @@ there is currently no way to get the second one there.
 | 2026-11-09 | E3 rewritten: African sayings, not verses. R3.2 recast as attribution by language; R3.3 added. Q2 moot, Q5 opened | Day 28, #108: the owner asked for African wisdom, and R3.2's licence test had nothing left to test |
 | 2026-11-11 | N8 and N9 added | Day 30: the SAS Function authenticated a caller and then authorised nothing, and no requirement had been broken — which is a gap in the requirements rather than only in the code |
 | 2026-11-12 | N6 corrected: `enforce_admins` is on. R2.3 marked delivered | Day 31: both had gone stale in the direction that flatters the project, which is the direction nobody checks |
+| 2026-11-18 | N12 added | Day 34, #148: every family the app created was called `f1`, which became a shared Firestore document path on Day 32. The promise of collision-safe ids was eight days old and written in three places |
 | 2026-11-18 | N11 added | Day 33, #146: the rules were deployed by hand for the first time, and nothing in the repository could tell whether what was live was what CI had tested — a stranger's 403 looked identical either way |
 | 2026-11-13 | R6.2 marked half delivered; Q3 closed | Day 32, #75: the family document now syncs, and the rules that have been tested since Day 9 finally guard something. Joining an existing family is a separate decision — ADR-027 |
 | 2026-11-12 | N10 added | Day 31, #140: a device-local file path was serialised into the document #75 is about to publish to the family's other phones. ADR-021 had foreseen it exactly and in writing, which is why this is a requirement and not a comment |

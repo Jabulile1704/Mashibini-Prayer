@@ -43,7 +43,7 @@ on a project existing.
 | Local storage and the read path | Done (ADR-003, ADR-006) |
 | `FamilyRepository` seam | Done — nothing above it mentions Firestore |
 | Merge and conflict policy | Done and tested (ADR-008) |
-| Collision-safe ids | Done (ADR-008) |
+| Collision-safe ids | Done (ADR-008) — for members, cycles, skips and songs since Day 8, and for the **family's own id** only since #148, which is the one that becomes a document path |
 | Firestore schema design | Done (`DATA-MODEL.md`) |
 | Security rules | **Day 8** |
 | Firebase project, app registration, wiring | **This document** |

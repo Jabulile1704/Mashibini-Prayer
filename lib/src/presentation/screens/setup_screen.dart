@@ -146,10 +146,6 @@ class _SetupScreenState extends State<SetupScreen> {
     setState(() => _saving = true);
     try {
       final Family family = RotaSetup.build(
-        // Not a constant. This becomes `families/<id>` in Firestore, so it
-        // is the one id in the app that has to be unique between phones
-        // that have never met (#148).
-        familyId: widget.ids.newId('f'),
         familyName: 'Mashibini',
         members: members,
         turnoverWeekday: _turnoverWeekday,

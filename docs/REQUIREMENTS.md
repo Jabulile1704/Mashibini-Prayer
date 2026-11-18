@@ -201,17 +201,21 @@ one, and not taken here.
   **then** the result is deterministic and the losing change is not silently
   discarded.
 
-**Half delivered (Day 32).** `SyncingFamilyRepository` publishes the family
+**Delivered (Days 32–35).** `SyncingFamilyRepository` publishes the family
 to Firestore, merges what arrives through `FamilyMerge`, and hands the merge
 back when it holds something the document does not — so two phones converge
 rather than alternate. A phone that signs in with no rota takes the document
-whole, which is the reinstall path.
+whole, which is both the reinstall path and the last step of joining.
 
-What is not delivered is a *second person* reaching an existing family. The
-rules refuse a phone that is not yet in `memberUids`, deliberately, so
-somebody already in the family has to admit them — ADR-027, issue #143. So
-the criterion holds for two phones that are both already in the family, and
-there is currently no way to get the second one there.
+A second person reaches the family by being admitted: somebody already in it
+names them and pastes their account code, and nothing lets a phone in on its
+own (ADR-027, #143). Both halves are on `PhonesScreen`.
+
+**What is still unproven.** Every test here runs against a fake remote or
+the rules emulator. No two real phones have ever exchanged a document, and
+the criterion's words — "two members change the cycle while offline, both
+reconnect" — describe something that has not happened yet. The convergence
+is asserted, not observed.
 
 ---
 
@@ -301,6 +305,7 @@ there is currently no way to get the second one there.
 | 2026-11-09 | E3 rewritten: African sayings, not verses. R3.2 recast as attribution by language; R3.3 added. Q2 moot, Q5 opened | Day 28, #108: the owner asked for African wisdom, and R3.2's licence test had nothing left to test |
 | 2026-11-11 | N8 and N9 added | Day 30: the SAS Function authenticated a caller and then authorised nothing, and no requirement had been broken — which is a gap in the requirements rather than only in the code |
 | 2026-11-12 | N6 corrected: `enforce_admins` is on. R2.3 marked delivered | Day 31: both had gone stale in the direction that flatters the project, which is the direction nobody checks |
+| 2026-11-18 | R6.2 marked delivered, with what is still unproven named | Day 35, #143: a second phone can be admitted and join. No two real phones have exchanged a document, so the convergence is asserted rather than observed |
 | 2026-11-18 | N12 added | Day 34, #148: every family the app created was called `f1`, which became a shared Firestore document path on Day 32. The promise of collision-safe ids was eight days old and written in three places |
 | 2026-11-18 | N11 added | Day 33, #146: the rules were deployed by hand for the first time, and nothing in the repository could tell whether what was live was what CI had tested — a stranger's 403 looked identical either way |
 | 2026-11-13 | R6.2 marked half delivered; Q3 closed | Day 32, #75: the family document now syncs, and the rules that have been tested since Day 9 finally guard something. Joining an existing family is a separate decision — ADR-027 |

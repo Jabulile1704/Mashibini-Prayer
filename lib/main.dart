@@ -9,6 +9,7 @@ import 'src/data/random_id_generator.dart';
 import 'src/data/repositories/device_settings_repository.dart';
 import 'src/data/repositories/journal_repository.dart';
 import 'src/data/migrations/photo_paths_off_the_family.dart';
+import 'src/data/migrations/the_family_needs_its_own_id.dart';
 import 'src/data/repositories/local_family_repository.dart';
 import 'src/data/repositories/photo_library_repository.dart';
 import 'src/data/repositories/family_repository.dart';
@@ -41,6 +42,8 @@ Future<void> main() async {
 
   final PreferencesKeyValueStore store = PreferencesKeyValueStore();
 
+  final RandomIdGenerator ids = RandomIdGenerator();
+
   final PhotoLibraryRepository photoLibrary = PhotoLibraryRepository(
     store: store,
   );
@@ -49,6 +52,11 @@ Future<void> main() async {
   // is recorded on the member, which is where it must not be once the
   // document syncs (#140).
   await PhotoPathsOffTheFamily.run(store: store, photos: photoLibrary);
+
+  // Before the family is read, and before `FindMyFamily` writes down which
+  // family this account is in: every family built before #148 is called
+  // `f1`, and that is now a Firestore document path.
+  await TheFamilyNeedsItsOwnId.run(store: store, ids: ids);
 
   final LocalFamilyRepository onThisPhone = LocalFamilyRepository(
     store: store,
@@ -83,8 +91,6 @@ Future<void> main() async {
   }
 
   final FamilyRepository repository = syncing ?? onThisPhone;
-
-  final RandomIdGenerator ids = RandomIdGenerator();
 
   final LocalDeviceSettingsRepository settings = LocalDeviceSettingsRepository(
     store: store,

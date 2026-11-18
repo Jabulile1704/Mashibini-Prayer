@@ -6,6 +6,8 @@ import 'package:mashibini_prayer/src/data/repositories/local_family_repository.d
 import 'package:mashibini_prayer/src/domain/entities/calendar_date.dart';
 import 'package:mashibini_prayer/src/domain/entities/family.dart';
 import 'package:mashibini_prayer/src/domain/entities/member.dart';
+import 'package:mashibini_prayer/src/data/random_id_generator.dart';
+import 'package:mashibini_prayer/src/domain/ids.dart';
 import 'package:mashibini_prayer/src/domain/rota/rota_engine.dart';
 import 'package:mashibini_prayer/src/presentation/screens/setup_screen.dart';
 
@@ -28,7 +30,11 @@ void main() {
     await settings.dispose();
   });
 
-  Future<void> open(WidgetTester tester, {CalendarDate? on}) async {
+  Future<void> open(
+    WidgetTester tester, {
+    CalendarDate? on,
+    IdGenerator? ids,
+  }) async {
     await tester.pumpWidget(
       MaterialApp(
         localizationsDelegates: AppLocales.delegates,
@@ -37,7 +43,7 @@ void main() {
         home: SetupScreen(
           familyRepository: repository,
           settingsRepository: settings,
-          ids: FakeIdGenerator(),
+          ids: ids ?? FakeIdGenerator(),
           today: () => on ?? anchor,
         ),
       ),
@@ -263,6 +269,33 @@ void main() {
         'Jabulile',
         reason: 'and then it comes back round',
       );
+    });
+
+    testWidgets('the family is given an id of its own, not a constant', (
+      WidgetTester tester,
+    ) async {
+      // It became the Firestore document path on Day 32, so `f1` meant
+      // every family in the world writing to `families/f1` (#148).
+      await open(tester, ids: RandomIdGenerator());
+      await fillInTheMashibinis(tester);
+
+      await tapStart(tester);
+
+      final Family saved = (await repository.load())!;
+      expect(saved.id, isNot('f1'));
+      expect(saved.id, startsWith('f'));
+      expect(saved.id, hasLength(12));
+    });
+
+    testWidgets('and it comes from the generator everything else uses', (
+      WidgetTester tester,
+    ) async {
+      await open(tester, ids: FakeIdGenerator());
+      await fillInTheMashibinis(tester);
+
+      await tapStart(tester);
+
+      expect((await repository.load())!.id, 'f-1');
     });
 
     testWidgets('the turnover day is what was chosen', (

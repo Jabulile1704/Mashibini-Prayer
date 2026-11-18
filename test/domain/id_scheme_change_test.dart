@@ -11,6 +11,11 @@ import 'package:mashibini_prayer/src/domain/rota/rota_engine.dart';
 /// Families created before ADR-008 have counted ids — `m1`, `c1`. Families
 /// created after have random ones. A phone that was set up last week and
 /// updated today holds the first kind and will start writing the second.
+///
+/// True of everything **inside** a family, and never true of the family
+/// itself: its id was the literal `f1` until #148, whatever the scheme said.
+/// `TheFamilyNeedsItsOwnId` is the migration for that, and its tests are
+/// next to it.
 void main() {
   final CalendarDate anchor = CalendarDate(2026, 10, 18);
 

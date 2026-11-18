@@ -97,3 +97,26 @@ duplication.
 hand for v1.0.1. Rejected as the standing process: the release would then
 have to pull `develop`'s work across by cherry-pick anyway, which is the
 same work in the harder direction.
+
+---
+
+## Amendment, 2026-11-18 (v2.2.0)
+
+The cherry-pick now goes through a pull request. `develop` has refused
+direct pushes since Day 30, when `enforce_admins` was turned on, so the
+`git push` this ADR and `docs/RELEASING.md` both prescribed is rejected:
+
+```text
+remote: - Changes must be made through a pull request.
+remote: - 7 of 7 required status checks are expected.
+```
+
+Nothing about the decision changes — one commit, cherry-picked, never a
+merge. Only the mechanics do.
+
+Worth recording because of *when* it was found: at the first release after
+the protection was tightened, by the step failing. The instruction had said
+`git push` since Day 16 and had always been describing something branch
+protection claimed to forbid. It worked for six releases because the rule
+was not enforced against the person following it — which is the Day 30
+finding, arriving once more as a consequence rather than an observation.

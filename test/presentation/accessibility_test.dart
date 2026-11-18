@@ -7,6 +7,8 @@ import 'package:mashibini_prayer/src/data/repositories/audio_library_repository.
 import 'package:mashibini_prayer/src/data/repositories/device_settings_repository.dart';
 import 'package:mashibini_prayer/src/data/repositories/journal_repository.dart';
 import 'package:mashibini_prayer/src/data/repositories/local_family_repository.dart';
+import 'package:mashibini_prayer/src/data/sources/platform/identity.dart';
+import 'package:mashibini_prayer/src/presentation/screens/phones_screen.dart';
 import 'package:mashibini_prayer/src/presentation/screens/journal_screen.dart';
 import 'package:mashibini_prayer/src/presentation/screens/about_screen.dart';
 import 'package:mashibini_prayer/src/presentation/screens/family_members_screen.dart';
@@ -92,6 +94,17 @@ void main() {
       photoLibrary: PhotoLibraryRepository(store: FakeKeyValueStore()),
       ids: FakeIdGenerator(),
       today: () => anchor,
+    ),
+    // Added with the screen rather than later: Day 31 recorded that a
+    // sweep named "every screen" is one nobody re-reads the definition of,
+    // and this sweep had never built the navigation bar for ADR-016 days.
+    'The family\'s phones': PhonesScreen(
+      familyRepository: family,
+      identity: FakeIdentity(
+        signedIn: const SignedIn(uid: 'kJ8sQ2mNpR4tVwXyZa1bCd3e'),
+      ),
+      sharing: FakeSharing(),
+      join: null,
     ),
     'Family': FamilyTreeScreen(
       familyRepository: family,

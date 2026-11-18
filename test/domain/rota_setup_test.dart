@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mashibini_prayer/src/data/random_id_generator.dart';
 import 'package:mashibini_prayer/src/domain/entities/calendar_date.dart';
 import 'package:mashibini_prayer/src/domain/entities/member.dart';
 import 'package:mashibini_prayer/src/domain/entities/family.dart';
@@ -17,7 +18,6 @@ void main() {
     int turnoverWeekday = DateTime.sunday,
     CalendarDate? today,
   }) => RotaSetup.build(
-    familyId: 'f1',
     familyName: 'Mashibini',
     members: members,
     turnoverWeekday: turnoverWeekday,
@@ -91,7 +91,6 @@ void main() {
     test('nobody has to know what an anchor is (R2.2)', () {
       // The caller supplies only answerable things; no date arithmetic.
       final Family family = RotaSetup.build(
-        familyId: 'f1',
         familyName: 'Mashibini',
         members: four,
         turnoverWeekday: DateTime.sunday,
@@ -134,6 +133,36 @@ void main() {
     test('a weekday that is not a weekday', () {
       expect(() => build(turnoverWeekday: 0), throwsArgumentError);
       expect(() => build(turnoverWeekday: 8), throwsArgumentError);
+    });
+  });
+
+  group('the family id (#148)', () {
+    test('comes from the generator, because nobody can pass one', () {
+      expect(build().id, 'f-1');
+    });
+
+    test('and two phones setting up separately do not collide', () {
+      // The defect this replaced was a literal, so the useful assertion is
+      // not "it is random" but "two families that never met differ".
+      final Family here = RotaSetup.build(
+        familyName: 'Mashibini',
+        members: four,
+        turnoverWeekday: DateTime.sunday,
+        currentLeaderId: 'm1',
+        today: anchor,
+        ids: RandomIdGenerator(),
+      );
+      final Family there = RotaSetup.build(
+        familyName: 'Mashibini',
+        members: four,
+        turnoverWeekday: DateTime.sunday,
+        currentLeaderId: 'm1',
+        today: anchor,
+        ids: RandomIdGenerator(),
+      );
+
+      expect(here.id, isNot(there.id));
+      expect(here.id, isNot('f1'));
     });
   });
 }

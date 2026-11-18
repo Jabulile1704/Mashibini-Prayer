@@ -23,8 +23,19 @@ class FirestoreFamilySource implements RemoteFamilySource {
   DocumentReference<Map<String, dynamic>> get _document =>
       _firestore.collection(collection).doc(familyId);
 
+  /// Translates Firestore's refusal into the seam's own, so nothing above
+  /// the data layer has to know what a `FirebaseException` is.
   @override
-  Future<Family?> fetch() async => _read(await _document.get());
+  Future<Family?> fetch() async {
+    try {
+      return _read(await _document.get());
+    } on FirebaseException catch (error) {
+      if (error.code == 'permission-denied' || error.code == 'not-found') {
+        throw const RemoteRefused();
+      }
+      rethrow;
+    }
+  }
 
   @override
   Future<void> push(Family family) async {

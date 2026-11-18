@@ -12,3 +12,16 @@ abstract interface class RemoteFamilySource {
   /// Emits whenever another device changes the family.
   Stream<Family?> watch();
 }
+
+/// The document is not one this phone may see.
+///
+/// Either there is no family with that id or this account is not in it.
+/// Firestore answers both with the same refusal and ADR-027 says it should:
+/// if the two could be told apart, a family id would be worth something to
+/// somebody guessing.
+class RemoteRefused implements Exception {
+  const RemoteRefused();
+
+  @override
+  String toString() => 'RemoteRefused: no family there, or not yours';
+}

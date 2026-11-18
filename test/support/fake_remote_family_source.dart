@@ -20,11 +20,20 @@ class FakeRemoteFamilySource implements RemoteFamilySource {
   /// When set, [push] throws it — a phone with no signal.
   Object? failOnPush;
 
+  /// When set, [fetch] throws it. `RemoteRefused` is the interesting one.
+  Object? failOnFetch;
+
   int watchers = 0;
   int cancelled = 0;
 
   @override
-  Future<Family?> fetch() async => stored;
+  Future<Family?> fetch() async {
+    final Object? failure = failOnFetch;
+    if (failure != null) {
+      throw failure;
+    }
+    return stored;
+  }
 
   @override
   Future<void> push(Family family) async {

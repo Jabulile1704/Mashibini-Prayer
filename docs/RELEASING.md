@@ -86,13 +86,27 @@ git push origin v1.1.0
 
 The tag triggers the release. Watch it with `gh run watch`.
 
-**Then bring the release commit back to `develop` as a cherry-pick:**
+**Then bring the release commit back to `develop` as a cherry-pick.**
+
+`develop` has refused direct pushes since Day 30, when `enforce_admins` was
+turned on — so this goes through a pull request like everything else. Said
+out loud because the instruction here was `git push` for a month and only
+stopped working when the protection it had always claimed to respect was
+actually switched on:
 
 ```bash
-git checkout develop && git pull
+git checkout -b chore/v1.1.0-back-to-develop origin/develop
 git cherry-pick $(git log main -1 --pretty=%H --grep='^chore(release): v1.1.0')
-git push
+git push -u origin chore/v1.1.0-back-to-develop
+gh pr create --base develop --title "chore(release): v1.1.0 back into develop"
 ```
+
+**Open it before anything else.** v2.0.0's cherry-pick was missed and fixed
+two days later, by which time three commits had landed on `develop` above
+the marker — and v2.1.0 was then computed as nine commits instead of
+eighteen, nearly shipping without the songbook (#129, Day 29). The boundary
+is computed from content now, so the same miss would not cause the same
+disaster; it would still leave `develop` without its own version number.
 
 **Never `git merge main`.** That was the rule until v1.0.1 and it does not
 work here (ADR-015). Rebasing a release onto `main` makes copies of every

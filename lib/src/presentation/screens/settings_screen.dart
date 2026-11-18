@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../application/join_a_family.dart';
 import '../../application/reschedule_reminders.dart';
 import '../../data/repositories/device_settings_repository.dart';
 import '../../data/repositories/family_repository.dart';
@@ -24,6 +25,7 @@ import '../widgets/date_text.dart';
 import '../widgets/weekday_names.dart';
 import 'about_screen.dart';
 import 'family_members_screen.dart';
+import 'phones_screen.dart';
 import 'setup_screen.dart';
 
 /// Where everything that has no other home now lives (ADR-016).
@@ -38,6 +40,7 @@ class SettingsScreen extends StatefulWidget {
     required this.identity,
     required this.ids,
     this.whenSignedIn,
+    this.join,
     this.today,
     this.now,
     super.key,
@@ -56,11 +59,16 @@ class SettingsScreen extends StatefulWidget {
   /// can record which family it is in (#75). Absent when Firebase did not
   /// start, which is also when there is nothing to record it to.
   final Future<void> Function()? whenSignedIn;
+
+  /// Absent when Firebase did not start, which is also when there is no
+  /// family to join (#143).
+  final JoinAFamily? join;
   final CalendarDate Function()? today;
   final DateTime Function()? now;
 
   static const Key youAreRow = Key('settings.youAre');
   static const Key signInRow = Key('settings.signIn');
+  static const Key phonesRow = Key('settings.phones');
   static const Key confirmSignOut = Key('settings.signOut.confirm');
   static const Key remindersRow = Key('settings.reminders');
   static const Key appearanceRow = Key('settings.appearance');
@@ -172,6 +180,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (mounted) {
       setState(() => _busy = false);
     }
+  }
+
+  Future<void> _openPhones() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (BuildContext context) => PhonesScreen(
+          familyRepository: widget.familyRepository,
+          identity: widget.identity,
+          sharing: widget.sharing,
+          join: widget.join,
+        ),
+      ),
+    );
   }
 
   Future<void> _signOut() async {
@@ -625,6 +646,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
         onTap: _busy
             ? null
             : () => signedIn == null ? _signIn(family, youAre) : _signOut(),
+      ),
+      ListTile(
+        key: SettingsScreen.phonesRow,
+        title: const Text('The family\'s phones'),
+        subtitle: Text(
+          signedIn == null
+              ? 'Sign in, and the phones can find each other'
+              : family == null
+              ? 'Join the family somebody has added you to'
+              : 'Let somebody in, or send them the family code',
+        ),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: _busy ? null : _openPhones,
       ),
       ListTile(
         key: SettingsScreen.appearanceRow,

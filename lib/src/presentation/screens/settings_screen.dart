@@ -41,6 +41,7 @@ class SettingsScreen extends StatefulWidget {
     required this.ids,
     this.whenSignedIn,
     this.join,
+    this.canSync = false,
     this.today,
     this.now,
     super.key,
@@ -63,6 +64,9 @@ class SettingsScreen extends StatefulWidget {
   /// Absent when Firebase did not start, which is also when there is no
   /// family to join (#143).
   final JoinAFamily? join;
+
+  /// Whether this build shares the rota between phones (#157).
+  final bool canSync;
   final CalendarDate Function()? today;
   final DateTime Function()? now;
 
@@ -768,8 +772,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         trailing: const Icon(Icons.chevron_right),
         onTap: () => Navigator.of(context).push(
           MaterialPageRoute<void>(
-            builder: (BuildContext context) =>
-                AboutScreen(appVersion: widget.appVersion),
+            builder: (BuildContext context) => AboutScreen(
+              appVersion: widget.appVersion,
+              canSync: widget.canSync,
+            ),
           ),
         ),
       ),

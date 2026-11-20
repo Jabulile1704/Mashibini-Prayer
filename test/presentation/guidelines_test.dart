@@ -77,7 +77,14 @@ void main() {
       ids: FakeIdGenerator(),
       today: () => anchor,
     ),
-    'About': AboutScreen(appVersion: FakeAppVersion()),
+    'About, on a build that syncs': AboutScreen(
+      appVersion: FakeAppVersion(),
+      canSync: true,
+    ),
+    'About, on a build that does not': AboutScreen(
+      appVersion: FakeAppVersion(),
+      canSync: false,
+    ),
     'Set up the rota': SetupScreen(
       familyRepository: family,
       settingsRepository: settings,
@@ -137,18 +144,34 @@ void main() {
     ),
   };
 
+  // Written out, and checked against the map by a test below (#157). It
+  // cannot be derived: `screens()` needs repositories `setUp` has not built
+  // when the test list is being collected.
   const List<String> everyScreen = <String>[
     'This week',
     'The weeks ahead',
     'Journal',
     'Settings',
-    'About',
+    'About, on a build that syncs',
+    'About, on a build that does not',
     'Set up the rota',
     'Who takes a week',
-    'Family',
     'Songs we love',
+    'The family\'s phones',
+    'Family',
     'The shell',
   ];
+
+  test('the list of screens is the map of screens', () {
+    // The whole reason the list above is trustworthy. Add a screen to
+    // either and this fails until it is in both.
+    expect(screens().keys.toSet(), everyScreen.toSet());
+    expect(
+      everyScreen.length,
+      everyScreen.toSet().length,
+      reason: 'a name listed twice sweeps one screen and hides another',
+    );
+  });
 
   /// Pumps [screen] **with the app's real theme**.
   Future<void> pump(WidgetTester tester, Widget screen) async {

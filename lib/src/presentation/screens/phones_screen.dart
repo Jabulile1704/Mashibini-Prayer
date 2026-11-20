@@ -429,22 +429,19 @@ class _Heading extends StatelessWidget {
 
   final String text;
 
+  // No colour override, and uppercased, which is what Settings does.
+  //
+  // The first version tinted this `colorScheme.secondary` — the honey — and
+  // came out at a contrast ratio of 4.20 against the surface at 13pt, under
+  // the 4.5 that N5 requires. Nothing caught it for a day because the sweep
+  // that measures contrast was iterating a hand-kept list this screen was
+  // not on (#157).
   @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        Space.lg,
-        Space.xl,
-        Space.lg,
-        Space.sm,
-      ),
-      child: Text(
-        text,
-        style: theme.textTheme.labelLarge?.copyWith(
-          color: theme.colorScheme.secondary,
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(Space.lg, Space.xl, Space.lg, Space.sm),
+    child: Text(
+      text.toUpperCase(),
+      style: Theme.of(context).textTheme.labelLarge,
+    ),
+  );
 }

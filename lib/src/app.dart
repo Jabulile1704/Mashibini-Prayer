@@ -59,6 +59,7 @@ class MashibiniPrayerApp extends StatefulWidget {
     required this.ids,
     this.whenSignedIn,
     this.join,
+    this.canSync = false,
     this.initialAppearance = Appearance.system,
     super.key,
   });
@@ -77,6 +78,7 @@ class MashibiniPrayerApp extends StatefulWidget {
   final IdGenerator ids;
   final Future<void> Function()? whenSignedIn;
   final JoinAFamily? join;
+  final bool canSync;
 
   /// The stored appearance, read before the first frame.
   final Appearance initialAppearance;
@@ -128,6 +130,7 @@ class _MashibiniPrayerAppState extends State<MashibiniPrayerApp> {
                 ids: widget.ids,
                 whenSignedIn: widget.whenSignedIn,
                 join: widget.join,
+                canSync: widget.canSync,
               ),
             ),
     );

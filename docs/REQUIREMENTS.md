@@ -235,6 +235,7 @@ is asserted, not observed.
 | N10 | **No field in the document the family shares means something on only one device** | An allowlist of every key that document may carry, walked at every level in CI; a new key fails until somebody adds it deliberately |
 | N11 | **What is deployed is what was tested** | The release workflow runs the rules suite on the tagged commit and deploys from it; `publish` depends on that job, and it fails rather than skips when its credential is missing |
 | N12 | **An identifier that leaves this phone is unique without coordination** | The generator, and no caller able to supply one: `RotaSetup.build` does not take a family id. Two independent generators produce no collision over a thousand ids |
+| N13 | **A claim the app makes about itself is derived from the thing it claims about** | About is given what this build can do and says the true thing either way; a test asserts both branches, including that a syncing build does not carry the old sentence |
 
 > **N8 exists because N3 was too specific.** N3 says journal entries are
 > readable only by their author, and names Firestore rules as the way to
@@ -250,6 +251,14 @@ is asserted, not observed.
 > **N9 is the same shape.** N6 says every merge is analysed, tested and
 > built, and every merge was. The advisories in the test harness had been
 > there for weeks, passing all of it, because none of it was looking.
+>
+> **N13 is the sixth, and the check was the thing keeping it wrong.** About
+> said the phones could not see each other for two days after they could,
+> held there by a test asserting the sentence was present — written for a
+> good reason, and the only thing stopping the lie being deleted. N13 names
+> the shape that cannot go stale: the copy comes from the capability. R3.3
+> already did this for the sayings' review status on Day 28, which is why
+> the pattern was in the same file as the bug.
 >
 > **N12 is the fifth, and it was true in prose for twenty-six days.**
 > `ids.dart` has promised an id "unique without coordination" since Day 8,
@@ -306,6 +315,7 @@ is asserted, not observed.
 | 2026-11-11 | N8 and N9 added | Day 30: the SAS Function authenticated a caller and then authorised nothing, and no requirement had been broken — which is a gap in the requirements rather than only in the code |
 | 2026-11-12 | N6 corrected: `enforce_admins` is on. R2.3 marked delivered | Day 31: both had gone stale in the direction that flatters the project, which is the direction nobody checks |
 | 2026-11-18 | R6.2 marked delivered, with what is still unproven named | Day 35, #143: a second phone can be admitted and join. No two real phones have exchanged a document, so the convergence is asserted rather than observed |
+| 2026-11-20 | N13 added | Day 36, #157: About told the family the phones could not see each other, two days after v2.2.0 made them, and a test was holding the sentence in place |
 | 2026-11-18 | N12 added | Day 34, #148: every family the app created was called `f1`, which became a shared Firestore document path on Day 32. The promise of collision-safe ids was eight days old and written in three places |
 | 2026-11-18 | N11 added | Day 33, #146: the rules were deployed by hand for the first time, and nothing in the repository could tell whether what was live was what CI had tested — a stranger's 403 looked identical either way |
 | 2026-11-13 | R6.2 marked half delivered; Q3 closed | Day 32, #75: the family document now syncs, and the rules that have been tested since Day 9 finally guard something. Joining an existing family is a separate decision — ADR-027 |

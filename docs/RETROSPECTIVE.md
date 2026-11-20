@@ -473,6 +473,79 @@ has to anticipate the input; making the bad input inexpressible does not —
 and it is the only one of these eight entries where the defect became
 unwritable rather than merely tested for.
 
+### And a ninth: the check was holding the defect in place
+
+Day 36. The About screen, under **WHAT IT CANNOT DO YET**:
+
+> **The phones do not see each other**
+> Each phone keeps its own copy of the rota.
+
+True for thirty-four days, and the headline of the release cut two days
+before. And there was a test, which passed on all four sync pull requests:
+
+```dart
+expect(
+  find.textContaining('do not see each other'),
+  findsOneWidget,
+  reason: 'the family should not have to read a repository to find out',
+);
+```
+
+The reason is right. The assertion was keeping a false sentence on the
+screen: **delete the lie and the suite goes red.**
+
+| | What the check did |
+|:--|:--|
+| Days 20–29 | failed to notice a defect |
+| Day 30 | did not exist |
+| Day 31 | existed as prose, with nothing able to act on it |
+| Day 33 | tested a copy of the thing in production |
+| Day 36 | **enforced the defect** |
+
+Eight entries of checks that let something through. This one holds it in.
+And it is not a badly written test — pinning user-facing copy is a
+reasonable thing to want, and the comment explains why somebody wanted it.
+
+The fix is the one `_SayingsSection` in the same file already uses, from
+R3.3 on Day 28: **a claim the app makes about itself is derived from the
+thing it is claiming about.** About is handed `canSync` and says the true
+thing either way, and the test asserts both branches — including that a
+syncing build does *not* contain the old sentence, which is the inverse of
+the assertion that caused this.
+
+The general form, which is narrower than "keep docs up to date": **a test
+that asserts a sentence exists is a test that will defend it.** Worth
+writing only when the sentence is a fact the code cannot express — and when
+the code *can* express it, derive it instead.
+
+### The same day, the sweep had a second list
+
+Found while fixing the above, and the more embarrassing half.
+
+`everyScreen` in the accessibility and guidelines sweeps was a hand-kept
+list of names sitting **beside** the map of screens it indexed. It had
+drifted: `'Songs we love'` twice, and `'The family's phones'` not at all.
+
+So the screen added on Day 35 was never swept at any text size — in a commit
+whose own comment quotes Day 31's lesson that *"a sweep named 'every screen'
+is one nobody re-reads the definition of"*. The comment went into the map.
+The sweep iterated the list. Day 35's pull request claimed both sweeps built
+the screen from the day it existed; that was true of one map and false of
+every loop.
+
+Day 31's corollary was **"ask what the suite has never built."** Asked, and
+answered with the wrong artefact: the map, not the loop.
+
+The list cannot be derived — `screens()` needs repositories `setUp` has not
+built when the test list is collected — so it stays, and a test asserts it
+**is** the map and holds no duplicates. That guard found a real defect on its
+first run: a heading on the unswept screen at a contrast ratio of **4.20**
+against the surface, under the 4.5 N5 requires.
+
+Which is the eleven-times-repeated lesson in its cheapest form yet. The
+defect was a day old, the sweep that would have caught it existed, and the
+only thing between them was a list.
+
 ### PR hygiene has caught eight mistakes, and three are repeats
 
 | Day | What it caught |

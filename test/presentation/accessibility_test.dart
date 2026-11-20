@@ -77,7 +77,14 @@ void main() {
       ids: FakeIdGenerator(),
       today: () => anchor,
     ),
-    'About': AboutScreen(appVersion: FakeAppVersion()),
+    'About, on a build that syncs': AboutScreen(
+      appVersion: FakeAppVersion(),
+      canSync: true,
+    ),
+    'About, on a build that does not': AboutScreen(
+      appVersion: FakeAppVersion(),
+      canSync: false,
+    ),
     'Who takes a week': FamilyMembersScreen(
       familyRepository: family,
       settings: settings,
@@ -167,19 +174,40 @@ void main() {
     // A small phone, because a narrow screen is where large text breaks.
     const Size phone = Size(360, 760);
 
+    // Written out, and checked against the map by the test below (#157).
+    //
+    // It cannot be derived — `screens()` needs repositories that `setUp`
+    // has not built when the test list is being collected. So it is a
+    // second list, and a second list is a second place for a screen to be
+    // missing from: this one had drifted to 'Songs we love' twice and no
+    // 'The family's phones' at all, so the screen added on Day 35 — in a
+    // commit whose comment quotes Day 31's lesson about sweeps nobody
+    // re-reads — was never swept at any text size.
     const List<String> everyScreen = <String>[
       'This week',
       'The weeks ahead',
-      'Journal',
       'Settings',
-      'About',
-      'Set up the rota',
+      'About, on a build that syncs',
+      'About, on a build that does not',
       'Who takes a week',
+      'Songs we love',
+      'The family\'s phones',
       'Family',
-      'Songs we love',
-      'Songs we love',
       'The shell, with its five tabs',
+      'Journal',
+      'Set up the rota',
     ];
+
+    test('the list of screens is the map of screens', () {
+      // The whole reason the list above is trustworthy. Add a screen to
+      // either and this fails until it is in both.
+      expect(screens().keys.toSet(), everyScreen.toSet());
+      expect(
+        everyScreen.length,
+        everyScreen.toSet().length,
+        reason: 'a name listed twice sweeps one screen and hides another',
+      );
+    });
 
     for (final double scale in <double>[1.0, 2.0, 3.1]) {
       for (final String name in everyScreen) {

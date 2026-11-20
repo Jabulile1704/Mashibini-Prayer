@@ -120,6 +120,7 @@ Future<void> main() async {
       photoLibrary: photoLibrary,
       whenSignedIn: findMyFamily?.call,
       join: join,
+      canSync: syncing != null,
       identity: identity,
       audio: PlatformAudio(),
       library: AudioLibraryRepository(store: store),

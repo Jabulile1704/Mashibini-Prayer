@@ -9,9 +9,23 @@ import '../brand/tokens.dart';
 
 /// What the app does, what it does not, and which build this is.
 class AboutScreen extends StatelessWidget {
-  const AboutScreen({required this.appVersion, this.sayings, super.key});
+  const AboutScreen({
+    required this.appVersion,
+    required this.canSync,
+    this.sayings,
+    super.key,
+  });
 
   final AppVersion appVersion;
+
+  /// Whether this build can share the rota between phones (#75).
+  ///
+  /// Passed in rather than written into the copy, because the copy was
+  /// wrong for the whole of v2.2.0's development and a test held it there
+  /// (#157). `_SayingsSection` below does the same thing with
+  /// `SayingSource.reviewed`, for the same reason: a claim the app makes
+  /// about itself should be derived from the thing it is claiming about.
+  final bool canSync;
 
   /// Only so a test can hand in its own. Null means the ones that ship,
   /// which is every case that is not a test.
@@ -75,8 +89,21 @@ class AboutScreen extends StatelessWidget {
               heading: 'Your journal stays on your phone',
               body:
                   'What you write is stored on this phone and sent nowhere. '
-                  'Nobody else in the family can read it, and neither can we.',
+                  'Nobody else in the family can read it, and neither can '
+                  'we. That is true even now that the rota is shared — the '
+                  'rota goes up, the journal never does.',
             ),
+            if (canSync)
+              _Section(
+                heading: 'The phones share one rota',
+                body:
+                    'Everybody who signs in sees the same rota. Skip a week '
+                    'on one phone and the others know. Change it with no '
+                    'signal and it goes up when the signal comes back.\n\n'
+                    'Somebody already in the family has to let a new phone '
+                    'in — see The family\'s phones in Settings. There is no '
+                    'code that lets a stranger in.',
+              ),
             _Section(
               heading: 'It works with no signal',
               body:
@@ -91,12 +118,13 @@ class AboutScreen extends StatelessWidget {
             const SizedBox(height: Space.sm),
             Text('WHAT IT CANNOT DO YET', style: theme.textTheme.labelLarge),
             const SizedBox(height: Space.md),
-            _Section(
-              heading: 'The phones do not see each other',
-              body:
-                  'Each phone keeps its own copy of the rota. Skipping a week '
-                  'on one phone does not show up on another one yet.',
-            ),
+            if (!canSync)
+              _Section(
+                heading: 'The phones do not see each other',
+                body:
+                    'Each phone keeps its own copy of the rota. Skipping a '
+                    'week on one phone does not show up on another one.',
+              ),
             _Section(
               heading: 'It cannot remind the whole family',
               body:
@@ -106,13 +134,24 @@ class AboutScreen extends StatelessWidget {
             ),
             _Section(
               heading: 'Reinstalling loses your journal',
-              body:
-                  'On an iPhone this app has to be installed again every '
-                  'week or so, and installing it removes the old copy along '
-                  'with everything on it. The rota takes a minute to enter '
-                  'again. What you wrote does not come back.\n\n'
-                  'Keep a copy from Settings before you reinstall. That is '
-                  'the only thing that saves it.',
+              body: canSync
+                  ? 'On an iPhone this app has to be installed again every '
+                        'week or so, and installing it removes the old copy '
+                        'along with everything on it.\n\n'
+                        'The rota comes back: sign in and it is there. Your '
+                        'journal does not, because it was never anywhere '
+                        'else. So the part anybody could type again in a '
+                        'minute is the part that survives, and the part '
+                        'nobody can is the part that does not.\n\n'
+                        'Keep a copy from Settings before you reinstall. '
+                        'That is the only thing that saves it.'
+                  : 'On an iPhone this app has to be installed again every '
+                        'week or so, and installing it removes the old copy '
+                        'along with everything on it. The rota takes a '
+                        'minute to enter again. What you wrote does not come '
+                        'back.\n\n'
+                        'Keep a copy from Settings before you reinstall. '
+                        'That is the only thing that saves it.',
             ),
           ],
         ),

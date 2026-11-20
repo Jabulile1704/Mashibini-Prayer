@@ -310,7 +310,7 @@ void main() {
       await reach(tester, PhonesScreen.familyCodeField);
 
       expect(find.byKey(PhonesScreen.familyCodeField), findsOneWidget);
-      expect(find.text('Join a different family'), findsOneWidget);
+      expect(find.text('JOIN A DIFFERENT FAMILY'), findsOneWidget);
     });
 
     testWidgets('is asked, and told what it is giving up', (

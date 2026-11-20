@@ -39,6 +39,7 @@ class HomeShell extends StatefulWidget {
     required this.ids,
     this.whenSignedIn,
     this.join,
+    this.canSync = false,
     this.today,
     super.key,
   });
@@ -57,6 +58,7 @@ class HomeShell extends StatefulWidget {
   final IdGenerator ids;
   final Future<void> Function()? whenSignedIn;
   final JoinAFamily? join;
+  final bool canSync;
   final CalendarDate Function()? today;
 
   static const Key bar = Key('shell.bar');
@@ -147,6 +149,7 @@ class _HomeShellState extends State<HomeShell> {
             ids: widget.ids,
             whenSignedIn: widget.whenSignedIn,
             join: widget.join,
+            canSync: widget.canSync,
             today: widget.today,
           ),
         ],

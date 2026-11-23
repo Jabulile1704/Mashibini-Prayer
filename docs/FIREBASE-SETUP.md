@@ -176,20 +176,49 @@ cannot ship an APK whose rules never went out.
 
 A service account, because a workflow cannot sign in as a person.
 
+**This is two tasks on two different websites, and they look like one.** It
+was attempted four times and the secret never arrived (#163), because the
+only thing the second half needs is a file the first half produces almost as
+an afterthought.
+
+#### First half — in a browser, and it ends with a file
+
 1. [Google Cloud console → Service accounts](https://console.cloud.google.com/iam-admin/serviceaccounts?project=mashibini-prayer)
    → **Create service account**. Any name; `release-rules` is a clear one.
-2. Grant it **Firebase Rules Admin** (`roles/firebaserules.admin`). It needs
-   nothing else — it is not for reading data, and it should not be able to.
-3. **Keys → Add key → JSON.** Download it.
-4. Repository → **Settings → Secrets and variables → Actions → New
-   repository secret**, named exactly `FIREBASE_SERVICE_ACCOUNT`, with the
-   whole JSON file as the value.
-5. Delete the downloaded file. The secret is the only copy that should exist.
+2. Grant it **Firebase Rules Admin** (`roles/firebaserules.admin`) and
+   nothing else. It is not for reading data and should not be able to.
+3. Open the account → **Keys → Add key → Create new key → JSON**.
+
+**Step 3 is the point of the whole thing.** Steps 1 and 2 feel like the work
+— they have the naming and the permissions — and they leave nothing behind
+that the second half can use. If no file downloads, nothing has been
+achieved.
+
+#### Second half — one command
+
+```bash
+tool/set_rules_secret.sh
+```
+
+It finds the newest key in `~/Downloads`, refuses anything that is not a
+service account for this project, sets the secret, and then **says whether
+it is actually there**. Every previous attempt ended with somebody believing
+it had worked, so the last part is not a courtesy.
+
+Hand it a path if the file is somewhere else:
+
+```bash
+tool/set_rules_secret.sh ~/some/other/key.json
+```
+
+Then delete the download — the secret should be the only copy. The script
+prints the command and deliberately does not run it: nothing of yours is
+removed by a script.
 
 Until that secret exists, **the release fails** at the "service account is
-present" step with those instructions. That is deliberate: a deploy step
-that quietly does nothing when its credential is missing is the bug in #146
-with an extra layer on top.
+present" step. That is deliberate: a deploy step that quietly does nothing
+when its credential is missing is the bug in #146 with an extra layer on
+top.
 
 ### The ordering hazard
 

@@ -172,6 +172,14 @@ rewritten around what an oral saying actually has. See
 
 - **Given** a turnover tomorrow, **when** the reminder time arrives, **then** the
   incoming leader is told their week starts tomorrow.
+
+**Broken by sync for three days, fixed on Day 37 (#160).** The reschedule
+was triggered by the two screens that edited the rota, which was every way a
+rota could change until v2.2.0. A merge arriving, a reinstalled phone
+signing in, and a phone joining another family all change it without a
+screen, so this criterion held only on the phone that made the change.
+`KeepRemindersInStep` follows the stored family and who this phone belongs
+to, and re-plans on either.
 - **Given** reminders have never been enabled, **when** the app is installed,
   **then** it sends nothing until asked — an app that starts notifying uninvited
   is not a good houseguest.
@@ -315,6 +323,7 @@ is asserted, not observed.
 | 2026-11-11 | N8 and N9 added | Day 30: the SAS Function authenticated a caller and then authorised nothing, and no requirement had been broken — which is a gap in the requirements rather than only in the code |
 | 2026-11-12 | N6 corrected: `enforce_admins` is on. R2.3 marked delivered | Day 31: both had gone stale in the direction that flatters the project, which is the direction nobody checks |
 | 2026-11-18 | R6.2 marked delivered, with what is still unproven named | Day 35, #143: a second phone can be admitted and join. No two real phones have exchanged a document, so the convergence is asserted rather than observed |
+| 2026-11-23 | R5.1's first criterion marked broken-and-fixed | Day 37, #160: sync gave the rota a second way to change, and the reschedule was only wired to the first |
 | 2026-11-20 | N13 added | Day 36, #157: About told the family the phones could not see each other, two days after v2.2.0 made them, and a test was holding the sentence in place |
 | 2026-11-18 | N12 added | Day 34, #148: every family the app created was called `f1`, which became a shared Firestore document path on Day 32. The promise of collision-safe ids was eight days old and written in three places |
 | 2026-11-18 | N11 added | Day 33, #146: the rules were deployed by hand for the first time, and nothing in the repository could tell whether what was live was what CI had tested — a stranger's 403 looked identical either way |

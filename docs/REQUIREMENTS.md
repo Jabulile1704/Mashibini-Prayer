@@ -184,15 +184,27 @@ to, and re-plans on either.
   **then** it sends nothing until asked — an app that starts notifying uninvited
   is not a good houseguest.
 
-**Delivered as a per-device reminder only (Day 12).** The first criterion is met
-for the person holding the phone and cannot be met for anybody else: sending a
-push needs a sender in a trusted environment, and the Spark plan has no Cloud
-Functions to host one (ADR-010). No device can notify another.
+**Delivered as a per-device reminder only (Day 12), and both ends of a week
+since Day 38.** The first criterion is met for the person holding the phone
+and cannot be met for anybody else: sending a push needs a sender in a
+trusted environment, and the Spark plan has no Cloud Functions to host one
+(ADR-010). Sync did not change that — a document arriving on a phone is not
+a notification. No device can notify another.
 
-What that leaves open: somebody who never opens the app and never switches
-reminders on is told nothing. Closing it needs either a paid plan or a nominated
-device volunteering to be the sender — a product decision, not an implementation
-one, and not taken here.
+**What Day 38 added (#165)** is the only reach the free tier allows. On the
+evening their week ends, the outgoing leader is told who leads from
+tomorrow, so they can say so. It routes the handover through the one phone
+that is certainly in use: whoever has been leading prayer all week has been
+opening the app all week.
+
+What that still leaves open: it reaches the **outgoing** leader, so if that
+person has reminders switched off it reaches nobody — the same gap, one
+person along. The gap now needs one member of the family to have reminders
+on rather than all four, and that member is self-selecting.
+
+Closing it properly needs either a paid plan or a nominated device
+volunteering to be the sender (#77) — a product decision, not an
+implementation one, and not taken here.
 
 ---
 
@@ -323,6 +335,7 @@ is asserted, not observed.
 | 2026-11-11 | N8 and N9 added | Day 30: the SAS Function authenticated a caller and then authorised nothing, and no requirement had been broken — which is a gap in the requirements rather than only in the code |
 | 2026-11-12 | N6 corrected: `enforce_admins` is on. R2.3 marked delivered | Day 31: both had gone stale in the direction that flatters the project, which is the direction nobody checks |
 | 2026-11-18 | R6.2 marked delivered, with what is still unproven named | Day 35, #143: a second phone can be admitted and join. No two real phones have exchanged a document, so the convergence is asserted rather than observed |
+| 2026-11-23 | R5.1's scope widened to both ends of a week | Day 38, #165: nothing can reach the family, but the phone of whoever is leading this week is certainly in use, and that person can tell the next one |
 | 2026-11-23 | R5.1's first criterion marked broken-and-fixed | Day 37, #160: sync gave the rota a second way to change, and the reschedule was only wired to the first |
 | 2026-11-20 | N13 added | Day 36, #157: About told the family the phones could not see each other, two days after v2.2.0 made them, and a test was holding the sentence in place |
 | 2026-11-18 | N12 added | Day 34, #148: every family the app created was called `f1`, which became a shared Firestore document path on Day 32. The promise of collision-safe ids was eight days old and written in three places |

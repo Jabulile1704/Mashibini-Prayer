@@ -546,6 +546,66 @@ Which is the eleven-times-repeated lesson in its cheapest form yet. The
 defect was a day old, the sweep that would have caught it existed, and the
 only thing between them was a list.
 
+### A tenth: the trigger was the screen, and the screen stopped being the only one
+
+Day 37. `RescheduleReminders` was called from exactly two places, both
+screens, both running when somebody on this phone edited the rota. For
+twenty-five days that was the only way a rota could change, so a screen was
+the right place for it.
+
+v2.2.0 made the rota change by itself. Nothing re-planned the reminders, so
+R5.1's first criterion — *the incoming leader is told their week starts
+tomorrow* — became false on **every phone except the one that made the
+change**, three days before anybody looked.
+
+This is not a check that failed. There was no check, and there had been no
+need for one: the invariant held by construction, because only one thing
+could break it and that thing also fixed it.
+
+| | What changed | What quietly stopped holding |
+|:--|:--|:--|
+| Day 37 | a second way for the rota to change | every invariant that was maintained at the first way |
+
+The general form, and it is the sibling of Day 34's: **when a second way to
+change something arrives, every invariant that was maintained at the first
+way is now unmaintained.** Day 34 was a *value* that stopped being right
+when its field changed jobs. This is a *reaction* that stopped being
+reachable when its cause acquired a twin.
+
+The fix follows state rather than screens. The cheap question for next time
+is not "what did I break" but "what used to be true because only one thing
+could change this".
+
+### And the same day, a branch cut from the wrong place
+
+Recorded because of how long it survived and what passed on it.
+
+`fix/160` was cut from `main` instead of `develop` — `main` had been checked
+out to push the v2.2.0 tag and never left. So the pull request, against
+`develop`, would have **reverted the previous day's work**: the About
+screen's derived copy and the sweeps' drift guard.
+
+**All seven required checks passed.** They were right to: the branch was
+internally consistent and the suite genuinely passed on it. That is Day 29's
+finding arriving on an ordinary feature branch rather than a release —
+*"both sets are internally coherent; the smaller one is a perfectly good
+app, it is just not this one."*
+
+What caught it was a number. The suite reported 854; `develop` had been
+measured at 868 the day before. Twenty-one tests had vanished, and the first
+instinct was to explain the gap away — the pull request's original body
+contains a sentence invented to do exactly that. Measuring `develop` in a
+throwaway worktree and diffing the per-file counts found them: 9 → 4, 77 →
+70, 49 → 40, which is precisely the previous day's work.
+
+`tool/release.sh` refuses to continue unless `git diff develop` is empty, and
+that check exists because of Day 29. Nothing makes it for an ordinary
+branch, and `git merge-base --is-ancestor origin/develop HEAD` is one line.
+
+The habit worth keeping is smaller than a check: **a test count is only
+meaningful against a baseline measured on the other branch, and when it
+disagrees, measure rather than explain.**
+
 ### PR hygiene has caught eight mistakes, and three are repeats
 
 | Day | What it caught |

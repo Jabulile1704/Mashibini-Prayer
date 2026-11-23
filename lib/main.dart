@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'firebase_options.dart';
 import 'src/app.dart';
 import 'src/application/find_my_family.dart';
+import 'src/application/keep_reminders_in_step.dart';
 import 'src/application/join_a_family.dart';
 import 'src/data/random_id_generator.dart';
 import 'src/data/repositories/device_settings_repository.dart';
@@ -107,6 +108,20 @@ Future<void> main() async {
 
   final FamilyRepository repository = syncing ?? onThisPhone;
 
+  // The rota can now change without anybody touching this phone — a merge
+  // arriving, a reinstalled phone signing in, a phone joining another
+  // family. Reminders follow the stored family rather than the screens that
+  // used to be the only thing able to change it (#160).
+  final LocalReminders reminders = LocalReminders();
+  KeepRemindersInStep(
+    families: repository,
+    settings: settings,
+    reminders: reminders,
+    onTrouble: (Object error, StackTrace stack) {
+      debugPrint('Reminders could not be re-planned: $error');
+    },
+  ).start();
+
   final Appearance appearance = await settings.loadAppearance();
 
   runApp(
@@ -124,7 +139,7 @@ Future<void> main() async {
       identity: identity,
       audio: PlatformAudio(),
       library: AudioLibraryRepository(store: store),
-      reminders: LocalReminders(),
+      reminders: reminders,
       appVersion: const PlatformAppVersion(),
       ids: ids,
     ),

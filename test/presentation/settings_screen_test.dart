@@ -360,8 +360,26 @@ void main() {
     testWidgets('when on, it says which reminder it is holding', (
       WidgetTester tester,
     ) async {
+      // The clock here is the Sunday Jabulile's week begins, so the
+      // reminder for its start has gone and the soonest thing left is the
+      // handover on his last evening (#165). Saying that is more use than
+      // naming his next turn four weeks out.
       await family.save(familyOfFour());
       await settings.saveYouAre(jabulile.id);
+      await settings.saveRemindersEnabled(enabled: true);
+      await open(tester);
+
+      expect(
+        find.textContaining('Next: the evening your week ends'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('and names the start when that is what is next', (
+      WidgetTester tester,
+    ) async {
+      await family.save(familyOfFour());
+      await settings.saveYouAre(sisi.id);
       await settings.saveRemindersEnabled(enabled: true);
       await open(tester);
 

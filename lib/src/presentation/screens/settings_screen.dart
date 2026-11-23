@@ -308,8 +308,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (next.isEmpty) {
       return 'Nothing to remind you about yet';
     }
-    return 'Next: the evening before '
-        '${DateLabels.dayAndDate(context, next.first.turnStarts)}';
+    final Reminder soonest = next.first;
+    return soonest.isHandover
+        ? 'Next: the evening your week ends, '
+              '${DateLabels.dayAndDate(context, soonest.turnStarts.subtractDays(1))}'
+        : 'Next: the evening before '
+              '${DateLabels.dayAndDate(context, soonest.turnStarts)}';
   }
 
   // ─────────────────────────────── appearance ──────────────────────────────
@@ -679,18 +683,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
         onChanged: _busy
             ? null
             : (bool to) => _setRemindersEnabled(enabled: to),
-        title: const Text('Remind me before my week'),
+        title: const Text('Remind me about my week'),
         subtitle: Text(
           remindersOn
               ? _nextReminder(family, youAre)
-              : 'The evening before your turn starts',
+              : 'The evening before it starts, and the evening it ends',
         ),
       ),
       Padding(
         padding: const EdgeInsets.fromLTRB(Space.lg, 0, Space.lg, Space.sm),
         child: Text(
-          'This phone reminds you, and only you. The app cannot send '
-          'anything to anyone else\'s phone.',
+          'This phone reminds you, and only you. On your last evening it '
+          'names whoever is next, so you can tell them.',
           style: theme.textTheme.bodySmall,
         ),
       ),

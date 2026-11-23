@@ -7,6 +7,13 @@ class FakeReminders implements Reminders {
   int cancelCount = 0;
   int permissionRequests = 0;
 
+  /// How many times a plan was handed over, which is what #160 is about:
+  /// the plan can be identical and still have to be re-made.
+  int scheduleCalls = 0;
+
+  /// Set to stand in for a phone that will not schedule anything.
+  Object? throwOnSchedule;
+
   /// What the phone says when asked. Set false to test a refusal.
   bool permissionGranted = true;
 
@@ -18,6 +25,10 @@ class FakeReminders implements Reminders {
 
   @override
   Future<void> schedule(List<Reminder> reminders) async {
+    scheduleCalls++;
+    if (throwOnSchedule case final Object error) {
+      throw error;
+    }
     scheduled = List<Reminder>.of(reminders);
   }
 
